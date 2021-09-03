@@ -13,16 +13,16 @@ pub struct SwapChainMgr {
     image_available_semaphores: Vec<vk::Semaphore>,
     render_finish_semaphores: Vec<vk::Semaphore>,
 
-    image_index_to_present: u32,
-    semaphore_index: u32,
-    prev_semaphore_index: u32,
+    image_index_to_present: usize,
+    semaphore_index: usize,
+    prev_semaphore_index: usize,
     pub format: ash::vk::Format,
 }
 
 impl SwapChainMgr {
     pub unsafe fn create(device: &DeviceMgr, window_width: u32, window_height: u32) -> Self {
         let surface_loader = &device.surface_loader;
-        let surface_capabilities = device.swapchain_loader
+        let surface_capabilities = surface_loader
             .get_physical_device_surface_capabilities(device.physical_device, device.surface)
             .unwrap();
         let mut desired_image_count = surface_capabilities.min_image_count + 1;
@@ -75,11 +75,11 @@ impl SwapChainMgr {
             .clipped(true)
             .image_array_layers(1);
 
-        let swapchain = swapchain_loader
+        let swapchain = device.swapchain_loader
             .create_swapchain(&swapchain_create_info, None)
             .unwrap();
 
-        let present_images = swapchain_loader.get_swapchain_images(swapchain).unwrap();
+        let present_images = device.swapchain_loader.get_swapchain_images(swapchain).unwrap();
 
         let present_image_views = present_images.iter().map(|&image| {
             let create_view_info = vk::ImageViewCreateInfo::builder().
@@ -141,14 +141,14 @@ impl SwapChainMgr {
             self.present_image_views.iter().for_each(|&image_view| {
                 device.device.destroy_image_view(image_view, None);
             });
-            self.swapchain_loader.destroy_swapchain(self.swapchain, None);
+            device.swapchain_loader.destroy_swapchain(self.swapchain, None);
         }
     }
 
     pub fn get_present_image_count(&self) -> u32 {
         self.present_images.len() as u32
     }
-    
+
     pub fn wait_for_swap_chain(&mut self, device_mgr: &DeviceMgr) -> u32 {
         unsafe {
             let (present_index, success) = device_mgr.swapchain_loader.
@@ -157,23 +157,23 @@ impl SwapChainMgr {
             assert!(success, "not success");
             self.prev_semaphore_index = self.semaphore_index;
             self.semaphore_index += 1;
-            if self.semaphore_index >= self.present_images.len() as u32 {
+            if self.semaphore_index >= self.present_images.len() {
                 self.semaphore_index = 0;
             }
 
-            device_mgr.device.wait_for_fences(&self.cmd_buf_execute_fences[self.prev_semaphore_index], true, std::u64::MAX).expect("wait fence failed");
-            device_mgr.device.reset_fences(&self.cmd_buf_execute_fences[self.prev_semaphore_index]).expect("reset fence failed");
+            device_mgr.device.wait_for_fences(&[self.cmd_buf_execute_fences[self.prev_semaphore_index]], true, std::u64::MAX).expect("wait fence failed");
+            device_mgr.device.reset_fences(&[self.cmd_buf_execute_fences[self.prev_semaphore_index]]).expect("reset fence failed");
 
             present_index
         }
     }
-    
+
     pub fn present(&self, device_mgr: &DeviceMgr) {
         unsafe {
             let present_ci = vk::PresentInfoKHR::builder().wait_semaphores(&[self.render_finish_semaphores[self.semaphore_index]]).
-                swapchains(&[self.swapchain]).image_indices(&[self.image_index_to_present]).build();
+                swapchains(&[self.swapchain]).image_indices(&[self.image_index_to_present as u32]).build();
             let res = device_mgr.swapchain_loader.queue_present(device_mgr.present_queue, &present_ci).unwrap();
-            assert(res, "queue present failed");
+            assert!(res, "queue present failed");
         }
     }
 
@@ -218,7 +218,7 @@ impl SwapChainMgr {
             attachments(&renderpass_attachments).dependencies(&dependencies).subpasses(&subpasses).build();
 
         unsafe {
-            device_mgr.device.create_render_pass(&renderpass_create_info).unwrap()
+            device_mgr.device.create_render_pass(&renderpass_create_info, None).unwrap()
         }
     }
 
@@ -227,7 +227,7 @@ impl SwapChainMgr {
             let frame_buffer_create_info = vk::FramebufferCreateInfo::builder().
                 render_pass(*render_pass).attachments(&[view]).width(device_mgr.window_width).height(device_mgr.window_height).layers(1).build();
             unsafe {
-                device_mgr.device.create_framebuffer(&frame_buffer_create_info, None)
+                device_mgr.device.create_framebuffer(&frame_buffer_create_info, None).unwrap()
             }
         }).collect()
     }

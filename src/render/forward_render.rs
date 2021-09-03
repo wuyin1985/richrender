@@ -26,7 +26,7 @@ struct ForwardRender {
 impl ForwardRender {
     pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
         unsafe {
-            if let Some(&mut rt) = self.resolve_texture {
+            if let Some(rt) = self.resolve_texture.as_mut() {
                 rt.destroy(device_mgr);
                 device_mgr.device.destroy_image_view(self.resolve_view.unwrap(), None);
             }
@@ -50,7 +50,7 @@ impl ForwardRender {
             let color_texture =
                 RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
                                                        device_mgr.window_height, render_config.color_format,
-                                                       mass,
+                                                       msaa,
                                                        vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
                                                        "color_render_texture", vk::ImageCreateFlags::empty());
 
@@ -139,7 +139,7 @@ impl ForwardRender {
 
             let renderpass_create_info = vk::RenderPassCreateInfo::builder()
                 .attachments(&renderpass_attachment).subpasses(&subpasses).dependencies(&dependencies).build();
-            let renderpass = device_mgr.device.create_render_pass(&renderpass_create_info, None).unwrap();
+            let render_pass = device_mgr.device.create_render_pass(&renderpass_create_info, None).unwrap();
 
             let mut frame_buffer_views = vec![
                 color_view,
@@ -151,20 +151,22 @@ impl ForwardRender {
             let mut resolve_view: Option<vk::ImageView> = None;
 
             if msaa_on {
-                resolve_texture =
-                    Some(RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
-                                                                device_mgr.window_height, render_config.color_format,
-                                                                vk::SampleCountFlags::TYPE_1,
-                                                                vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
-                                                                "resolve_texture", vk::ImageCreateFlags::empty()));
+                let l_resolve_texture =
+                    RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
+                                                           device_mgr.window_height, render_config.color_format,
+                                                           vk::SampleCountFlags::TYPE_1,
+                                                           vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
+                                                           "resolve_texture", vk::ImageCreateFlags::empty());
 
 
-                resolve_view = Some(resolve_texture.unwrap().create_color_view(device_mgr));
-
-                frame_buffer_views.push(resolve_view.unwrap());
+                let l_resolve_view = l_resolve_texture.create_color_view(device_mgr);
+                frame_buffer_views.push(l_resolve_view);
+                
+                resolve_texture = Some(l_resolve_texture);
+                resolve_view = Some(l_resolve_view);
             }
 
-            let frame_buffer_ci = vk::FramebufferCreateInfo::builder().render_pass(renderpass).layers(1).
+            let frame_buffer_ci = vk::FramebufferCreateInfo::builder().render_pass(render_pass).layers(1).
                 width(device_mgr.window_width).height(device_mgr.window_height).attachments(&frame_buffer_views).build();
 
             let frame_buffer = device_mgr.device.create_framebuffer(&frame_buffer_ci, None).unwrap();

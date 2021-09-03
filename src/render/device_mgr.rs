@@ -17,6 +17,7 @@ pub struct DeviceMgr {
     pub present_queue: vk::Queue,
     pub device_memory_properties: vk::PhysicalDeviceMemoryProperties,
     pub swapchain_loader: ash::extensions::khr::Swapchain,
+    pub graphics_queue_family_index: u32,
 }
 
 
@@ -184,6 +185,7 @@ impl DeviceMgr {
             swapchain_loader,
             surface,
             debug_call_back,
+            graphics_queue_family_index: queue_family_index_u,
         }
     }
 

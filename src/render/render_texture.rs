@@ -57,7 +57,7 @@ impl RenderTexture {
         }
     }
 
-    pub fn create_as_render_target(device_mgr: &'a DeviceMgr, width: u32, height: u32, format: vk::Format,
+    pub fn create_as_render_target(device_mgr: &DeviceMgr, width: u32, height: u32, format: vk::Format,
                                    msaa: vk::SampleCountFlags, usage: vk::ImageUsageFlags,
                                    name: &str, flags: vk::ImageCreateFlags) -> Self {
         let image_info = vk::ImageCreateInfo {
@@ -95,8 +95,6 @@ impl RenderTexture {
                 depth: 1,
             },
             usage: vk::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT | vk::ImageUsageFlags::SAMPLED,
-            flags: flags,
-
             tiling: vk::ImageTiling::OPTIMAL,
             image_type: vk::ImageType::TYPE_2D,
             mip_levels: 1,
