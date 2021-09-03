@@ -33,6 +33,9 @@ impl RenderMgr {
 
     pub fn update(&mut self, world: &mut World) {
         self.handle_window_created_event(world);
+        if self.context.is_some() {
+            self.context.as_mut().unwrap().draw();
+        }
     }
 }
 

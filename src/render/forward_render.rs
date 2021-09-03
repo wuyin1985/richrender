@@ -1,18 +1,10 @@
 ﻿use crate::render::render_texture::RenderTexture;
 use ash::vk;
-use crate::render::device_mgr::DeviceMgr;
+use crate::render::device_mgr::{DeviceMgr, RenderConfig};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use ash::vk::ImageLayout;
 
-pub struct ForwardRenderConfig {
-    msaa: vk::SampleCountFlags,
-    apply_post_effect: bool,
-    apply_shadow: bool,
-    color_format: vk::Format,
-    depth_format: vk::Format,
-}
-
-struct ForwardRender {
+pub struct ForwardRenderPass {
     color_texture: RenderTexture,
     color_view: vk::ImageView,
     depth_texture: RenderTexture,
@@ -23,7 +15,7 @@ struct ForwardRender {
     frame_buffer: vk::Framebuffer,
 }
 
-impl ForwardRender {
+impl ForwardRenderPass {
     pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
         unsafe {
             if let Some(rt) = self.resolve_texture.as_mut() {
@@ -42,8 +34,9 @@ impl ForwardRender {
         }
     }
 
-    pub fn create(device_mgr: &DeviceMgr, swap_chain_mgr: &SwapChainMgr, render_config: &ForwardRenderConfig) -> Self {
+    pub fn create(device_mgr: &DeviceMgr, swap_chain_mgr: &SwapChainMgr) -> Self {
         unsafe {
+            let render_config = &device_mgr.render_config;
             let msaa_on = render_config.msaa != vk::SampleCountFlags::TYPE_1;
             let msaa = render_config.msaa;
 
@@ -161,7 +154,7 @@ impl ForwardRender {
 
                 let l_resolve_view = l_resolve_texture.create_color_view(device_mgr);
                 frame_buffer_views.push(l_resolve_view);
-                
+
                 resolve_texture = Some(l_resolve_texture);
                 resolve_view = Some(l_resolve_view);
             }
@@ -171,7 +164,7 @@ impl ForwardRender {
 
             let frame_buffer = device_mgr.device.create_framebuffer(&frame_buffer_ci, None).unwrap();
 
-            ForwardRender {
+            ForwardRenderPass {
                 depth_texture,
                 depth_view,
                 color_texture,
@@ -181,6 +174,53 @@ impl ForwardRender {
                 resolve_texture,
                 resolve_view,
             }
+        }
+    }
+
+    pub fn get_native_render_pass(&self) -> vk::RenderPass {
+        self.render_pass
+    }
+
+    pub fn begin_render_pass(&self, device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, command_buffer: vk::CommandBuffer) {
+        let clear_values = [
+            vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.0, 0.0, 0.0, 1.0],
+                },
+            },
+            vk::ClearValue {
+                depth_stencil: vk::ClearDepthStencilValue {
+                    depth: 1.0,
+                    stencil: 0,
+                },
+            },
+        ];
+
+        let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
+            .render_pass(self.render_pass)
+            .framebuffer(self.frame_buffer)
+            .render_area(vk::Rect2D {
+                offset: vk::Offset2D { x: 0, y: 0 },
+                extent: vk::Extent2D {
+                    width: device_mgr.window_width,
+                    height: device_mgr.window_height,
+                },
+            })
+            .clear_values(&clear_values)
+            .build();
+
+        unsafe {
+            device_mgr.device.cmd_begin_render_pass(
+                command_buffer,
+                &render_pass_begin_info,
+                vk::SubpassContents::INLINE,
+            )
+        };
+    }
+
+    pub fn end_pass(&self, device_mgr: &DeviceMgr, command_buffer: vk::CommandBuffer) {
+        unsafe {
+            device_mgr.device.cmd_end_render_pass(command_buffer);
         }
     }
 }

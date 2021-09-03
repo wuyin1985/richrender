@@ -14,7 +14,7 @@ impl CommandBufferList {
         }
     }
 
-    pub fn create(count: u32, device_mgr: DeviceMgr) -> Self {
+    pub fn create(count: u32, device_mgr: &DeviceMgr) -> Self {
         unsafe {
             let pool_ci = vk::CommandPoolCreateInfo {
                 queue_family_index: device_mgr.graphics_queue_family_index,

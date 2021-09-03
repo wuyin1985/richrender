@@ -2,6 +2,15 @@ use std::ffi::{CString, CStr};
 use ash::vk;
 use std::borrow::Cow;
 use raw_window_handle::HasRawWindowHandle;
+use crate::render::swapchain_mgr::SwapchainSupportDetails;
+
+pub struct RenderConfig {
+    pub msaa: vk::SampleCountFlags,
+    pub apply_post_effect: bool,
+    pub apply_shadow: bool,
+    pub color_format: vk::Format,
+    pub depth_format: vk::Format,
+}
 
 pub struct DeviceMgr {
     pub window_width: u32,
@@ -14,10 +23,12 @@ pub struct DeviceMgr {
     pub physical_device: vk::PhysicalDevice,
     pub device: ash::Device,
     pub instance: ash::Instance,
+    pub graphics_queue: vk::Queue,
     pub present_queue: vk::Queue,
     pub device_memory_properties: vk::PhysicalDeviceMemoryProperties,
     pub swapchain_loader: ash::extensions::khr::Swapchain,
     pub graphics_queue_family_index: u32,
+    pub render_config: RenderConfig,
 }
 
 
@@ -63,6 +74,87 @@ impl DeviceMgr {
                 .destroy_debug_utils_messenger(self.debug_call_back, None);
             self.instance.destroy_instance(None);
         }
+    }
+
+    fn is_device_suitable(
+        instance: &ash::Instance,
+        surface: &ash::extensions::khr::Surface,
+        surface_khr: vk::SurfaceKHR,
+        device: vk::PhysicalDevice,
+    ) -> bool {
+        let (graphics, present) = Self::find_queue_families(instance, surface, surface_khr, device);
+        let extention_support = Self::check_device_extension_support(instance, device);
+        let is_swapchain_adequate = {
+            let details = SwapchainSupportDetails::new(device, surface, surface_khr);
+            !details.formats.is_empty() && !details.present_modes.is_empty()
+        };
+        let features = unsafe { instance.get_physical_device_features(device) };
+        graphics.is_some()
+            && present.is_some()
+            && extention_support
+            && is_swapchain_adequate
+            && features.sampler_anisotropy == vk::TRUE
+    }
+
+    fn get_required_device_extensions() -> [&'static CStr; 1] {
+        [ vk::KhrSwapchainFn::name()]
+    }
+
+    fn check_device_extension_support(instance: &ash::Instance, device: vk::PhysicalDevice) -> bool {
+        let required_extentions = Self::get_required_device_extensions();
+
+        let extension_props = unsafe {
+            instance
+                .enumerate_device_extension_properties(device)
+                .unwrap()
+        };
+
+        for required in required_extentions.iter() {
+            let found = extension_props.iter().any(|ext| {
+                let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
+                required == &name
+            });
+
+            if !found {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn find_queue_families(
+        instance: &ash::Instance,
+        surface: &ash::extensions::khr::Surface,
+        surface_khr: vk::SurfaceKHR,
+        device: vk::PhysicalDevice,
+    ) -> (Option<u32>, Option<u32>) {
+        let mut graphics = None;
+        let mut present = None;
+
+        let props = unsafe { instance.get_physical_device_queue_family_properties(device) };
+        for (index, family) in props.iter().filter(|f| f.queue_count > 0).enumerate() {
+            let index = index as u32;
+
+            if family.queue_flags.contains(vk::QueueFlags::GRAPHICS) && graphics.is_none() {
+                graphics = Some(index);
+            }
+
+            let present_support = unsafe {
+                surface
+                    .get_physical_device_surface_support(device, index, surface_khr)
+                    .unwrap()
+            };
+            if present_support && present.is_none() {
+                present = Some(index);
+            }
+
+            if graphics.is_some() && present.is_some() {
+                break;
+            }
+        }
+
+        (graphics, present)
     }
 
     pub unsafe fn create<W: HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
@@ -113,53 +205,47 @@ impl DeviceMgr {
             .unwrap();
         let surface = ash_window::create_surface(&entry, &instance, window, None).unwrap();
 
-        let pdevices = instance
+        let surface_loader = ash::extensions::khr::Surface::new(&entry, &instance);
+        
+        let devices = instance
             .enumerate_physical_devices()
             .expect("Physical device error");
-        let surface_loader = ash::extensions::khr::Surface::new(&entry, &instance);
-        let (physical_device, queue_family_index) = pdevices
-            .iter()
-            .map(|physical_device| {
-                instance
-                    .get_physical_device_queue_family_properties(*physical_device)
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(index, info)| {
-                        let supports_graphic_and_surface =
-                            info.queue_flags.contains(vk::QueueFlags::GRAPHICS)
-                                && surface_loader
-                                .get_physical_device_surface_support(
-                                    *physical_device,
-                                    index as u32,
-                                    surface,
-                                )
-                                .unwrap();
-                        if supports_graphic_and_surface {
-                            Some((*physical_device, index))
-                        } else {
-                            None
-                        }
-                    })
-                    .next()
-            })
-            .flatten()
-            .next()
-            .expect("Couldn't find suitable device.");
-        let queue_family_index_u = queue_family_index as u32;
+        
+        let physical_device = devices
+            .into_iter()
+            .find(|device| Self::is_device_suitable(&instance, &surface_loader, surface, *device))
+            .expect("No suitable physical device.");
+        let (graphics_index_o, present_index_o) = Self::find_queue_families(&instance, 
+                                                                            &surface_loader, surface, physical_device);
+        
+        let graphics_index = graphics_index_o.unwrap();
+        let present_index = present_index_o.unwrap();
+        
         let device_extension_names_raw = [ash::extensions::khr::Swapchain::name().as_ptr()];
         let features = vk::PhysicalDeviceFeatures {
             shader_clip_distance: 1,
             ..Default::default()
         };
-        let priorities = [1.0];
 
-        let queue_info = [vk::DeviceQueueCreateInfo::builder()
-            .queue_family_index(queue_family_index_u)
-            .queue_priorities(&priorities)
-            .build()];
+        let queue_priorities = [1.0f32];
+
+        let queue_create_infos = {
+            let mut indices = vec![graphics_index, present_index];
+            indices.dedup();
+            indices
+                .iter()
+                .map(|index| {
+                    vk::DeviceQueueCreateInfo::builder()
+                        .queue_family_index(*index)
+                        .queue_priorities(&queue_priorities)
+                        .build()
+                })
+                .collect::<Vec<_>>()
+        };
+
 
         let device_create_info = vk::DeviceCreateInfo::builder()
-            .queue_create_infos(&queue_info)
+            .queue_create_infos(&queue_create_infos)
             .enabled_extension_names(&device_extension_names_raw)
             .enabled_features(&features);
 
@@ -167,9 +253,18 @@ impl DeviceMgr {
             .create_device(physical_device, &device_create_info, None)
             .unwrap();
 
-        let present_queue = device.get_device_queue(queue_family_index_u, 0);
+        let present_queue = device.get_device_queue(present_index, 0);
+        let graphics_queue = device.get_device_queue(graphics_index, 0);
         let device_memory_properties = instance.get_physical_device_memory_properties(physical_device);
         let swapchain_loader = ash::extensions::khr::Swapchain::new(&instance, &device);
+
+        let render_config = RenderConfig {
+            msaa: vk::SampleCountFlags::TYPE_1,
+            apply_post_effect: false,
+            apply_shadow: false,
+            color_format: vk::Format::R16G16B16A16_SFLOAT,
+            depth_format: vk::Format::D32_SFLOAT,
+        };
 
         DeviceMgr {
             window_width,
@@ -178,6 +273,7 @@ impl DeviceMgr {
             instance,
             device,
             device_memory_properties,
+            graphics_queue,
             present_queue,
             debug_utils_loader,
             physical_device,
@@ -185,7 +281,8 @@ impl DeviceMgr {
             swapchain_loader,
             surface,
             debug_call_back,
-            graphics_queue_family_index: queue_family_index_u,
+            graphics_queue_family_index: graphics_index,
+            render_config,
         }
     }
 
