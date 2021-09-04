@@ -1,6 +1,6 @@
 use ash::vk;
 use crate::render::device_mgr::DeviceMgr;
-use ash::vk::ImageView;
+use ash::vk::{ImageView, Fence};
 use ash::extensions::khr::Surface;
 
 pub struct SwapChainMgr {
@@ -69,7 +69,7 @@ impl SwapChainMgr {
             .image_color_space(surface_format.color_space)
             .image_format(surface_format.format)
             .image_extent(surface_resolution)
-            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
+            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_DST)
             .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
             .pre_transform(pre_transform)
             .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
@@ -142,15 +142,38 @@ impl SwapChainMgr {
 
     pub fn destroy(&mut self, device: &DeviceMgr) {
         unsafe {
+            for sema in self.image_available_semaphores.iter() {
+                device.device.destroy_semaphore(*sema, None);
+            }
+
+            for sema in self.render_finish_semaphores.iter() {
+                device.device.destroy_semaphore(*sema, None);
+            }
+
+            for fence in self.cmd_buf_execute_fences.iter() {
+                device.device.destroy_fence(*fence, None);
+            }
+
             self.present_image_views.iter().for_each(|&image_view| {
                 device.device.destroy_image_view(image_view, None);
             });
+
+            device.device.destroy_render_pass(self.render_pass, None);
+
+            for buffer in self.frame_buffers.iter() {
+                device.device.destroy_framebuffer(*buffer, None);
+            }
+
             device.swapchain_loader.destroy_swapchain(self.swapchain, None);
         }
     }
 
     pub fn get_present_image_count(&self) -> u32 {
         self.present_images.len() as u32
+    }
+
+    pub fn get_current_present_image(&self) -> vk::Image {
+        self.present_images[self.image_index_to_present]
     }
 
     pub fn wait_for_swap_chain(&mut self, device_mgr: &DeviceMgr) -> (bool, usize) {
@@ -187,8 +210,12 @@ impl SwapChainMgr {
         unsafe {
             let present_ci = vk::PresentInfoKHR::builder().wait_semaphores(&[self.render_finish_semaphores[self.semaphore_index]]).
                 swapchains(&[self.swapchain]).image_indices(&[self.image_index_to_present as u32]).build();
-            let res = device_mgr.swapchain_loader.queue_present(device_mgr.present_queue, &present_ci).unwrap();
-            assert!(res, "queue present failed");
+            let result = device_mgr.swapchain_loader.queue_present(device_mgr.present_queue, &present_ci);
+            match result {
+                Ok(true) | Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {}
+                Err(error) => panic!("Failed to present queue. Cause: {}", error),
+                _ => {}
+            }
         }
     }
 

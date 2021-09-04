@@ -144,4 +144,8 @@ impl RenderTexture {
             device_mgr.device.create_image_view(&view_ci, None).unwrap()
         }
     }
+    
+    pub fn get_image(&self) -> vk::Image {
+        self.image
+    }
 }

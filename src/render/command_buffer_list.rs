@@ -11,6 +11,7 @@ impl CommandBufferList {
     pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
         unsafe {
             device_mgr.device.free_command_buffers(self.command_pool,&self.commands);
+            device_mgr.device.destroy_command_pool(self.command_pool, None);
         }
     }
 

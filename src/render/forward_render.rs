@@ -44,7 +44,7 @@ impl ForwardRenderPass {
                 RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
                                                        device_mgr.window_height, render_config.color_format,
                                                        msaa,
-                                                       vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
+                                                       vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
                                                        "color_render_texture", vk::ImageCreateFlags::empty());
 
             let color_view = color_texture.create_color_view(device_mgr);
@@ -221,6 +221,17 @@ impl ForwardRenderPass {
     pub fn end_pass(&self, device_mgr: &DeviceMgr, command_buffer: vk::CommandBuffer) {
         unsafe {
             device_mgr.device.cmd_end_render_pass(command_buffer);
+        }
+    }
+
+    pub fn get_final_render_image(&self) -> vk::Image {
+        match &self.resolve_texture {
+            Some(rt) => {
+                rt.get_image()
+            }
+            _ => {
+                self.color_texture.get_image()
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ use std::mem::size_of;
 use std::io::Cursor;
 use std::fs::File;
 use std::path::Path;
+use ash::vk::Pipeline;
 
 fn load_from_assets<P: AsRef<Path>>(path: P) -> Cursor<Vec<u8>> {
     use std::fs::File;
@@ -62,17 +63,27 @@ impl Vertex {
 
 pub struct SimpleDrawObject {
     graphic_pipeline: vk::Pipeline,
+    graphic_pipeline_layout: vk::PipelineLayout,
 }
 
 impl SimpleDrawObject {
+    pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
+        unsafe {
+            device_mgr.device.destroy_pipeline_layout(self.graphic_pipeline_layout,None);
+            device_mgr.device.destroy_pipeline(self.graphic_pipeline,None);
+        }
+    }
+
     pub fn create(device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass) -> Self {
+        let (pipeline, pipeline_layout) = Self::create_graphic_pipeline(device_mgr,
+                                                                        swapchain_mgr,
+                                                                        render_pass,
+                                                                        device_mgr.render_config.msaa,
+                                                                        "spv/simple_draw_object_vert.spv",
+                                                                        "spv/simple_draw_object_frag.spv");
         SimpleDrawObject {
-            graphic_pipeline: Self::create_graphic_pipeline(device_mgr,
-                                                            swapchain_mgr,
-                                                            render_pass,
-                                                            device_mgr.render_config.msaa,
-                                                            "spv/simple_draw_object_vert.spv",
-                                                            "spv/simple_draw_object_frag.spv")
+            graphic_pipeline: pipeline,
+            graphic_pipeline_layout: pipeline_layout,
         }
     }
 
@@ -84,7 +95,7 @@ impl SimpleDrawObject {
     }
 
     fn create_graphic_pipeline(device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
-                               msaa: vk::SampleCountFlags, vert_spv_path: &str, frag_spv_path: &str) -> vk::Pipeline {
+                               msaa: vk::SampleCountFlags, vert_spv_path: &str, frag_spv_path: &str) -> (vk::Pipeline, vk::PipelineLayout) {
         let device = &device_mgr.device;
 
         let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path);
@@ -234,7 +245,7 @@ impl SimpleDrawObject {
             device.destroy_shader_module(fragment_shader_module, None);
         };
 
-        pipeline
+        (pipeline, layout)
     }
 
     pub fn draw(&self, device_mgr: &DeviceMgr, command_buffer: vk::CommandBuffer) {
