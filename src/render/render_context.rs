@@ -50,7 +50,6 @@ impl RenderContext {
             if !success {
                 return;
             }
-            println!("require image {}", present_index);
 
             let command_buffer = self.command_buffer_list.get_command_buffer(present_index);
             {
@@ -161,7 +160,6 @@ impl RenderContext {
             self.device_mgr.device.queue_submit(self.device_mgr.graphics_queue, &[submit_info], cmd_buf_execute_fence);
 
             self.swapchain_mgr.present(&self.device_mgr);
-            println!("present success!")
         }
     }
 

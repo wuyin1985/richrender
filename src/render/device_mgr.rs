@@ -262,7 +262,7 @@ impl DeviceMgr {
             msaa: vk::SampleCountFlags::TYPE_1,
             apply_post_effect: false,
             apply_shadow: false,
-            color_format: vk::Format::R8G8B8A8_UNORM,
+            color_format: vk::Format::B8G8R8A8_UNORM,
             depth_format: vk::Format::D32_SFLOAT,
         };
 

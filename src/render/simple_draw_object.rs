@@ -169,23 +169,23 @@ impl SimpleDrawObject {
         let multisampling_info = vk::PipelineMultisampleStateCreateInfo::builder()
             .sample_shading_enable(false)
             .rasterization_samples(msaa)
-            .min_sample_shading(1.0)
+            //.min_sample_shading(1.0)
             // .sample_mask() // null
             .alpha_to_coverage_enable(false)
             .alpha_to_one_enable(false)
             .build();
 
-        let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo::builder()
-            .depth_test_enable(true)
-            .depth_write_enable(true)
-            .depth_compare_op(vk::CompareOp::LESS)
-            .depth_bounds_test_enable(false)
-            .min_depth_bounds(0.0)
-            .max_depth_bounds(1.0)
-            .stencil_test_enable(false)
-            .front(Default::default())
-            .back(Default::default())
-            .build();
+        // let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo::builder()
+        //     .depth_test_enable(false)
+        //     .depth_write_enable(false)
+        //     .depth_compare_op(vk::CompareOp::LESS)
+        //     .depth_bounds_test_enable(false)
+        //     .min_depth_bounds(0.0)
+        //     .max_depth_bounds(1.0)
+        //     .stencil_test_enable(false)
+        //     .front(Default::default())
+        //     .back(Default::default())
+        //     .build();
 
         let color_blend_attachment = vk::PipelineColorBlendAttachmentState::builder()
             .color_write_mask(vk::ColorComponentFlags::all())
@@ -223,7 +223,7 @@ impl SimpleDrawObject {
             .viewport_state(&viewport_info)
             .rasterization_state(&rasterizer_info)
             .multisample_state(&multisampling_info)
-            .depth_stencil_state(&depth_stencil_info)
+            //.depth_stencil_state(&depth_stencil_info)
             .color_blend_state(&color_blending_info)
             // .dynamic_state() null since don't have any dynamic states
             .layout(layout)
