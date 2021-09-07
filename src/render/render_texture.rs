@@ -1,5 +1,5 @@
 use ash::vk;
-use crate::render::device_mgr::DeviceMgr;
+use crate::render::render_context::RenderContext;
 use ash::vk::ImageUsageFlags;
 
 pub struct TextureHead {
@@ -19,14 +19,14 @@ pub struct RenderTexture {
 
 
 impl RenderTexture {
-    pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
+    pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
             device_mgr.device.destroy_image(self.image, None);
             device_mgr.device.free_memory(self.device_memory, None);
         }
     }
 
-    pub fn create(device_mgr: &DeviceMgr, image_info: &vk::ImageCreateInfo, name: &str) -> Self {
+    pub fn create(device_mgr: &RenderContext, image_info: &vk::ImageCreateInfo, name: &str) -> Self {
         let head = TextureHead {
             format: image_info.format,
             width: image_info.extent.width,
@@ -57,7 +57,7 @@ impl RenderTexture {
         }
     }
 
-    pub fn create_as_render_target(device_mgr: &DeviceMgr, width: u32, height: u32, format: vk::Format,
+    pub fn create_as_render_target(device_mgr: &RenderContext, width: u32, height: u32, format: vk::Format,
                                    msaa: vk::SampleCountFlags, usage: vk::ImageUsageFlags,
                                    name: &str, flags: vk::ImageCreateFlags) -> Self {
         let image_info = vk::ImageCreateInfo {
@@ -85,7 +85,7 @@ impl RenderTexture {
         RenderTexture::create(device_mgr, &image_info, name)
     }
 
-    pub fn create_as_depth_stencil(device_mgr: &DeviceMgr, width: u32, height: u32,
+    pub fn create_as_depth_stencil(device_mgr: &RenderContext, width: u32, height: u32,
                                    format: vk::Format, msaa: vk::SampleCountFlags, name: &str) -> RenderTexture {
         let image_info = vk::ImageCreateInfo {
             format: format,
@@ -115,7 +115,7 @@ impl RenderTexture {
         self.head.format
     }
 
-    pub fn create_color_view(&self, device_mgr: &DeviceMgr) -> vk::ImageView {
+    pub fn create_color_view(&self, device_mgr: &RenderContext) -> vk::ImageView {
         let view_ci = vk::ImageViewCreateInfo::builder().image(self.image).
             format(self.head.format).subresource_range(vk::ImageSubresourceRange {
             aspect_mask: vk::ImageAspectFlags::COLOR,
@@ -130,7 +130,7 @@ impl RenderTexture {
         }
     }
 
-    pub fn create_depth_view(&self, device_mgr: &DeviceMgr) -> vk::ImageView {
+    pub fn create_depth_view(&self, device_mgr: &RenderContext) -> vk::ImageView {
         let view_ci = vk::ImageViewCreateInfo::builder().image(self.image).
             format(self.head.format).subresource_range(vk::ImageSubresourceRange {
             aspect_mask: vk::ImageAspectFlags::DEPTH,

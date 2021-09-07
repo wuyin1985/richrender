@@ -1,6 +1,6 @@
 ﻿use ash::vk;
 use std::ffi::CString;
-use crate::render::device_mgr::DeviceMgr;
+use crate::render::render_context::RenderContext;
 use crate::render::swapchain_mgr::SwapChainMgr;
 use std::mem::size_of;
 use std::io::Cursor;
@@ -67,14 +67,14 @@ pub struct SimpleDrawObject {
 }
 
 impl SimpleDrawObject {
-    pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
+    pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
             device_mgr.device.destroy_pipeline_layout(self.graphic_pipeline_layout,None);
             device_mgr.device.destroy_pipeline(self.graphic_pipeline,None);
         }
     }
 
-    pub fn create(device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass) -> Self {
+    pub fn create(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass) -> Self {
         let (pipeline, pipeline_layout) = Self::create_graphic_pipeline(device_mgr,
                                                                         swapchain_mgr,
                                                                         render_pass,
@@ -87,14 +87,14 @@ impl SimpleDrawObject {
         }
     }
 
-    fn read_shader_data_from_file(device_mgr: &DeviceMgr, path: &str) -> vk::ShaderModule {
+    fn read_shader_data_from_file(device_mgr: &RenderContext, path: &str) -> vk::ShaderModule {
         let mut cursor = load_from_assets(path);
         let res = ash::util::read_spv(&mut cursor).expect(format!("failed to read spv {}", path).as_str());
         let create_info = vk::ShaderModuleCreateInfo::builder().code(res.as_slice()).build();
         unsafe { device_mgr.device.create_shader_module(&create_info, None).unwrap() }
     }
 
-    fn create_graphic_pipeline(device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
+    fn create_graphic_pipeline(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
                                msaa: vk::SampleCountFlags, vert_spv_path: &str, frag_spv_path: &str) -> (vk::Pipeline, vk::PipelineLayout) {
         let device = &device_mgr.device;
 
@@ -248,7 +248,7 @@ impl SimpleDrawObject {
         (pipeline, layout)
     }
 
-    pub fn draw(&self, device_mgr: &DeviceMgr, command_buffer: vk::CommandBuffer) {
+    pub fn draw(&self, device_mgr: &RenderContext, command_buffer: vk::CommandBuffer) {
         unsafe {
             device_mgr.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, self.graphic_pipeline);
             device_mgr.device.cmd_draw(command_buffer, 3, 1, 0, 0);

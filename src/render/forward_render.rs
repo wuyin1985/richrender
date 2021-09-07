@@ -1,6 +1,6 @@
 ﻿use crate::render::render_texture::RenderTexture;
 use ash::vk;
-use crate::render::device_mgr::{DeviceMgr, RenderConfig};
+use crate::render::render_context::{RenderContext, RenderConfig};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use ash::vk::ImageLayout;
 
@@ -16,7 +16,7 @@ pub struct ForwardRenderPass {
 }
 
 impl ForwardRenderPass {
-    pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
+    pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
             if let Some(rt) = self.resolve_texture.as_mut() {
                 rt.destroy(device_mgr);
@@ -34,7 +34,7 @@ impl ForwardRenderPass {
         }
     }
 
-    pub fn create(device_mgr: &DeviceMgr, swap_chain_mgr: &SwapChainMgr) -> Self {
+    pub fn create(device_mgr: &RenderContext, swap_chain_mgr: &SwapChainMgr) -> Self {
         unsafe {
             let render_config = &device_mgr.render_config;
             let msaa_on = render_config.msaa != vk::SampleCountFlags::TYPE_1;
@@ -183,7 +183,7 @@ impl ForwardRenderPass {
         self.render_pass
     }
 
-    pub fn begin_render_pass(&self, device_mgr: &DeviceMgr, swapchain_mgr: &SwapChainMgr, command_buffer: vk::CommandBuffer) {
+    pub fn begin_render_pass(&self, device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, command_buffer: vk::CommandBuffer) {
         let clear_values = [
             vk::ClearValue {
                 color: vk::ClearColorValue {
@@ -220,7 +220,7 @@ impl ForwardRenderPass {
         };
     }
 
-    pub fn end_pass(&self, device_mgr: &DeviceMgr, command_buffer: vk::CommandBuffer) {
+    pub fn end_pass(&self, device_mgr: &RenderContext, command_buffer: vk::CommandBuffer) {
         unsafe {
             device_mgr.device.cmd_end_render_pass(command_buffer);
         }

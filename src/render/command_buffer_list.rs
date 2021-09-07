@@ -1,5 +1,5 @@
 ﻿use ash::vk;
-use crate::render::device_mgr::DeviceMgr;
+use crate::render::render_context::RenderContext;
 use std::convert::TryInto;
 
 pub struct CommandBufferList {
@@ -8,14 +8,14 @@ pub struct CommandBufferList {
 }
 
 impl CommandBufferList {
-    pub fn destroy(&mut self, device_mgr: &DeviceMgr) {
+    pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
             device_mgr.device.free_command_buffers(self.command_pool,&self.commands);
             device_mgr.device.destroy_command_pool(self.command_pool, None);
         }
     }
 
-    pub fn create(count: u32, device_mgr: &DeviceMgr) -> Self {
+    pub fn create(count: u32, device_mgr: &RenderContext) -> Self {
         unsafe {
             let pool_ci = vk::CommandPoolCreateInfo {
                 queue_family_index: device_mgr.graphics_queue_family_index,

@@ -1,5 +1,5 @@
 use ash::vk;
-use crate::render::device_mgr::DeviceMgr;
+use crate::render::render_context::RenderContext;
 use ash::vk::{ImageView, Fence};
 use ash::extensions::khr::Surface;
 
@@ -22,7 +22,7 @@ pub struct SwapChainMgr {
 }
 
 impl SwapChainMgr {
-    pub unsafe fn create(device: &DeviceMgr, window_width: u32, window_height: u32) -> Self {
+    pub unsafe fn create(device: &RenderContext, window_width: u32, window_height: u32) -> Self {
         let surface_loader = &device.surface_loader;
         let surface_capabilities = surface_loader
             .get_physical_device_surface_capabilities(device.physical_device, device.surface)
@@ -140,7 +140,7 @@ impl SwapChainMgr {
         }
     }
 
-    pub fn destroy(&mut self, device: &DeviceMgr) {
+    pub fn destroy(&mut self, device: &RenderContext) {
         unsafe {
             for sema in self.image_available_semaphores.iter() {
                 device.device.destroy_semaphore(*sema, None);
@@ -176,7 +176,7 @@ impl SwapChainMgr {
         self.present_images[self.image_index_to_present]
     }
 
-    pub fn wait_for_swap_chain(&mut self, device_mgr: &DeviceMgr) -> (bool, usize) {
+    pub fn wait_for_swap_chain(&mut self, device_mgr: &RenderContext) -> (bool, usize) {
         unsafe {
             let result = device_mgr.swapchain_loader.
                 acquire_next_image(self.swapchain, std::u64::MAX,
@@ -206,7 +206,7 @@ impl SwapChainMgr {
         }
     }
 
-    pub fn present(&self, device_mgr: &DeviceMgr) {
+    pub fn present(&self, device_mgr: &RenderContext) {
         unsafe {
             let present_ci = vk::PresentInfoKHR::builder().wait_semaphores(&[self.render_finish_semaphores[self.semaphore_index]]).
                 swapchains(&[self.swapchain]).image_indices(&[self.image_index_to_present as u32]).build();
@@ -225,7 +225,7 @@ impl SwapChainMgr {
         *p_cmd_execute_fence = self.cmd_buf_execute_fences[self.semaphore_index];
     }
 
-    fn create_render_pass(format: vk::Format, device_mgr: &DeviceMgr) -> vk::RenderPass {
+    fn create_render_pass(format: vk::Format, device_mgr: &RenderContext) -> vk::RenderPass {
         let renderpass_attachments = [
             vk::AttachmentDescription {
                 format: format,
@@ -264,7 +264,7 @@ impl SwapChainMgr {
         }
     }
 
-    fn create_frame_buffers(device_mgr: &DeviceMgr, surface_resolution: &vk::Extent2D, present_image_views: &Vec<vk::ImageView>, render_pass: vk::RenderPass) -> Vec<vk::Framebuffer> {
+    fn create_frame_buffers(device_mgr: &RenderContext, surface_resolution: &vk::Extent2D, present_image_views: &Vec<vk::ImageView>, render_pass: vk::RenderPass) -> Vec<vk::Framebuffer> {
         present_image_views.iter().map(|&view| {
             let frame_buffer_create_info = vk::FramebufferCreateInfo::builder().
                 render_pass(render_pass).attachments(&[view]).width(surface_resolution.width).

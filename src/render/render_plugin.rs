@@ -2,15 +2,15 @@ use bevy::prelude::*;
 use bevy::app::{ManualEventReader, Events};
 use bevy::window::{WindowCreated, WindowResized, WindowId};
 use bevy::winit::WinitWindows;
-use crate::render::device_mgr::DeviceMgr;
-use crate::render::swapchain_mgr::SwapChainMgr;
 use crate::render::render_context::RenderContext;
+use crate::render::swapchain_mgr::SwapChainMgr;
+use crate::render::render_runner::RenderRunner;
 
 
 struct RenderMgr {
     window_created_event_reader: ManualEventReader<WindowCreated>,
     window_resized_event_reader: ManualEventReader<WindowResized>,
-    context: Option<RenderContext>,
+    context: Option<RenderRunner>,
 }
 
 
@@ -26,7 +26,7 @@ impl RenderMgr {
                 assert!(self.context.is_none());
                 let winit_windows = world.get_resource::<WinitWindows>().unwrap();
                 let winit_window = winit_windows.get_window(window.id()).unwrap();
-                self.context = Some(RenderContext::create(winit_window, window.physical_width(), window.physical_height()));
+                self.context = Some(RenderRunner::create(winit_window, window.physical_width(), window.physical_height()));
             }
         }
     }
