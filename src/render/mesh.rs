@@ -1,21 +1,86 @@
 use std::mem::size_of;
+use ash::vk;
 use crate::render::material::Material;
 use crate::render::aabb::Aabb;
+use crate::render::buffer::Buffer;
+use crate::render::render_context::RenderContext;
+use crate::render::vertex::*;
 
-#[derive(Clone, Copy, Debug)]
-struct Vertex {
-    position: [f32; 3],
-    normal: [f32; 3],
-    tex_coord: [f32; 2],
-    weight: [f32; 4],
-    joint: [u32; 4],
+
+pub struct Mesh {
+    primitives: Vec<Primitive>,
+    aabb: Aabb,
 }
 
-/// Vertex buffer byte offset / element count
-type VertexBufferPart = (usize, usize);
+impl Mesh {
+    fn new(primitives: Vec<Primitive>) -> Self {
+        let aabbs = primitives.iter().map(|p| p.aabb()).collect::<Vec<_>>();
+        let aabb = Aabb::union(&aabbs).unwrap();
+        Mesh { primitives, aabb }
+    }
+}
 
-/// Index buffer byte offset / element count
-type IndexBufferPart = (usize, usize);
+impl Mesh {
+    pub fn primitives(&self) -> &[Primitive] {
+        &self.primitives
+    }
+
+    pub fn primitive_count(&self) -> usize {
+        self.primitives.len()
+    }
+
+    pub fn aabb(&self) -> Aabb {
+        self.aabb
+    }
+}
+
+pub struct Meshes {
+    meshes: Vec<Mesh>,
+    vertices_buffer: Buffer,
+    indices_buffer: Option<Buffer>,
+}
+
+impl Meshes {
+    pub fn destroy(&mut self, context: &RenderContext) {
+        unsafe {
+            self.vertices_buffer.destroy(context);
+            if let Some(b) = &mut self.indices_buffer {
+                b.destroy(context);
+                self.indices_buffer = None;
+            }
+        }
+    }
+}
+
+pub struct Primitive {
+    index: usize,
+    vertices: VertexBufferPart,
+    indices: Option<IndexBufferPart>,
+    material: Material,
+    aabb: Aabb,
+}
+
+impl Primitive {
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn vertices(&self) -> &VertexBufferPart {
+        &self.vertices
+    }
+
+    pub fn indices(&self) -> &Option<IndexBufferPart> {
+        &self.indices
+    }
+
+    pub fn material(&self) -> Material {
+        self.material
+    }
+
+    pub fn aabb(&self) -> Aabb {
+        self.aabb
+    }
+}
 
 struct PrimitiveData {
     index: usize,
@@ -94,7 +159,8 @@ fn read_indices<'a, 's, F>(reader: &gltf::mesh::Reader<'a, 's, F>) -> Option<Vec
         .map(|indices| indices.into_u32().collect::<Vec<_>>())
 }
 
-fn load_meshes(document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) {
+fn load_meshes(context: &RenderContext, upload_command_buffer: vk::CommandBuffer,
+               document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Option<Meshes> {
     let mut meshes_data = Vec::<Vec<PrimitiveData>>::new();
     let mut all_vertices = Vec::<Vertex>::new();
     let mut all_indices = Vec::<u32>::new();
@@ -154,8 +220,43 @@ fn load_meshes(document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) {
                 })
             }
         }
-        
+
         meshes_data.push(primitives_buffers);
-        
     }
+
+    if !meshes_data.is_empty() {
+        let indices_buffer = if all_indices.is_empty() {
+            None
+        } else {
+            Some(Buffer::create_device_local_buffer(context, upload_command_buffer, vk::BufferUsageFlags::INDEX_BUFFER, &all_indices))
+        };
+
+        let vertices_buffer = Buffer::create_device_local_buffer(context, upload_command_buffer,
+                                                                 vk::BufferUsageFlags::VERTEX_BUFFER, &all_vertices);
+
+        let meshes = meshes_data
+            .iter()
+            .map(|primitive_datas| {
+                let primitives = primitive_datas
+                    .iter().map(|primitive_data| {
+                    Primitive {
+                        index: primitive_data.index,
+                        vertices: primitive_data.vertices,
+                        indices: primitive_data.indices,
+                        material: primitive_data.material,
+                        aabb: primitive_data.aabb,
+                    }
+                }).collect();
+
+                Mesh::new(primitives)
+            }).collect::<Vec<_>>();
+
+        return Some(Meshes {
+            meshes,
+            vertices_buffer,
+            indices_buffer,
+        });
+    }
+
+    None
 }

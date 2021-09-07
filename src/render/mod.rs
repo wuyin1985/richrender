@@ -10,6 +10,8 @@ mod model;
 mod aabb;
 mod material;
 mod mesh;
+mod buffer;
+mod vertex;
 
 pub use render_plugin::RenderPlugin;
 
