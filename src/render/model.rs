@@ -7,8 +7,11 @@ use std::mem::size_of;
 use crate::render::material::Material;
 use crate::render::render_context::RenderContext;
 use crate::render::texture::Texture;
+use crate::render::util;
 
 use ash::vk;
+use crate::render::mesh::Meshes;
+use crate::render::node::Nodes;
 
 struct Node {
     parent: Option<usize>,
@@ -21,19 +24,29 @@ struct Node {
 
 
 struct Model {
-    // root: usize,
-    // nodes: Vec<Node>,
+    meshes: Option<Meshes>,
+    nodes: Nodes,
+    textures: ModelTextures,
 }
 
 
-fn test_load_gltf(path: &str) -> Result<Model, Box<dyn Error>> {
-    Ok(Model {})
+fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, path: &str) -> Result<Model, Box<dyn Error>> {
+    let (document, buffers, images) = gltf::import(&path)?;
+    let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
+    let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
+    let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
+    Ok(
+        Model {
+            nodes,
+            textures,
+            meshes,
+        })
 }
 
 pub struct ModelTexture {
     pub texture: Texture,
     pub view: vk::ImageView,
-    pub sample: vk::Sampler,
+    pub sampler: vk::Sampler,
 }
 
 
@@ -42,44 +55,36 @@ pub struct ModelTextures {
 }
 
 
-fn gltf_texture_format_2_vk_format(gltf_format: gltf::image::Format) -> vk::Format {
-    match gltf_format {
-        gltf::image::Format::R8 => vk::Format::R8_UNORM,
-        gltf::image::Format::R8G8 => vk::Format::R8G8_UNORM,
-        gltf::image::Format::R8G8B8 => vk::Format::R8G8B8_UNORM,
-        gltf::image::Format::R8G8B8A8 => vk::Format::R8G8B8A8_UNORM,
-        gltf::image::Format::B8G8R8 => vk::Format::B8G8R8_UNORM,
-        gltf::image::Format::B8G8R8A8 => vk::Format::B8G8R8A8_UNORM,
-        gltf::image::Format::R16 => vk::Format::R16_UNORM,
-        gltf::image::Format::R16G16 => vk::Format::R16G16_UNORM,
-        gltf::image::Format::R16G16B16 => vk::Format::R16G16B16_UNORM,
-        gltf::image::Format::R16G16B16A16 => vk::Format::R16G16B16A16_UNORM,
-    }
+fn create_texture_by_gltf_image_data(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, image: &gltf::image::Data) -> Texture {
+    let max_mip_levels = ((image.width.min(image.height) as f32).log2().floor() + 1.0) as u32;
+    let vk_format = util::Gltf2VkConvertor::format(image.format);
+    let image_ci = vk::ImageCreateInfo::builder()
+        .extent(vk::Extent3D { width: image.width, height: image.height, depth: 1 })
+        .usage(vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED)
+        .sharing_mode(vk::SharingMode::EXCLUSIVE)
+        .mip_levels(max_mip_levels)
+        .initial_layout(vk::ImageLayout::UNDEFINED)
+        .samples(vk::SampleCountFlags::TYPE_1)
+        .format(vk_format)
+        .flags(vk::ImageCreateFlags::empty())
+        .build();
+
+    let texture = Texture::create_from_data(context, upload_command_buffer, &image_ci, &image.pixels);
+    texture
 }
 
-
 impl ModelTextures {
-    pub fn create_from_gltf_texture(context: &mut RenderContext, command_buffer: vk::CommandBuffer,
-                                    gltf_textures: gltf::iter::Textures, gltf_image_datas: &[gltf::image::Data]) {
-        let res = gltf_image_datas
-            .iter()
-            .map(|image|
-                {
-                    let max_mip_levels = ((image.width.min(image.height) as f32).log2().floor() + 1.0) as u32;
-                    let vk_format = gltf_texture_format_2_vk_format(image.format);
-                    let image_ci = vk::ImageCreateInfo::builder()
-                        .extent(vk::Extent3D { width: image.width, height: image.height, depth: 1 })
-                        .usage(vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED)
-                        .sharing_mode(vk::SharingMode::EXCLUSIVE)
-                        .mip_levels(max_mip_levels)
-                        .initial_layout(vk::ImageLayout::UNDEFINED)
-                        .samples(vk::SampleCountFlags::TYPE_1)
-                        .format(vk_format)
-                        .flags(vk::ImageCreateFlags::empty())
-                        .build();
-                       
-                    let texture = Texture::create_from_data(context, command_buffer, &image_ci, &image.pixels);
-                });
-            // .unzip::<_, _, Vec<_>, _>();
+    pub fn from_gltf(context: &mut RenderContext, command_buffer: vk::CommandBuffer,
+                     gltf_textures: gltf::iter::Textures, gltf_image_datas: &[gltf::image::Data]) -> ModelTextures {
+        let model_textures = gltf_textures.map(|t| {
+            let texture = create_texture_by_gltf_image_data(context, command_buffer, &gltf_image_datas[t.source().index()]);
+            let view = texture.create_color_view(context);
+            let sampler = util::Gltf2VkConvertor::sampler(context, &texture, t.sampler());
+            ModelTexture { texture, view, sampler }
+        }).collect::<Vec<_>>();
+
+        ModelTextures {
+            textures: model_textures
+        }
     }
 }

@@ -50,6 +50,11 @@ impl Meshes {
             }
         }
     }
+
+    pub fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer,
+                     document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Option<Meshes> {
+        load_meshes(context, upload_command_buffer, document, buffers)
+    }
 }
 
 pub struct Primitive {

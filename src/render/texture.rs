@@ -30,6 +30,7 @@ impl Texture {
         }
     }
 
+
     pub fn create(device_mgr: &RenderContext, image_info: &vk::ImageCreateInfo, name: &str) -> Self {
         let head = TextureHead {
             format: image_info.format,
@@ -86,9 +87,9 @@ impl Texture {
 
             texture.cmd_generate_mipmaps(context, upload_command_buffer, extent);
         }
-        
+
         context.push_staging_buffer(buffer);
-        
+
         texture
     }
 
@@ -165,7 +166,7 @@ impl Texture {
         }
     }
 
-    pub fn create_sample(&self, context: &RenderContext, max_mip_levels: u32) -> vk::Sampler {
+    pub fn create_sample(&self, context: &RenderContext) -> vk::Sampler {
         let sampler = {
             let sampler_info = vk::SamplerCreateInfo::builder()
                 .mag_filter(vk::Filter::LINEAR)
@@ -182,7 +183,7 @@ impl Texture {
                 .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
                 .mip_lod_bias(0.0)
                 .min_lod(0.0)
-                .max_lod(max_mip_levels as _);
+                .max_lod(self.head.mip_map_count as _);
 
             unsafe {
                 context.device
@@ -502,6 +503,10 @@ impl Texture {
 
     pub fn get_image(&self) -> vk::Image {
         self.image
+    }
+    
+    pub fn get_mip_map_count(&self) -> u32 {
+        self.head.mip_map_count
     }
 }
 

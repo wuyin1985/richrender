@@ -13,6 +13,8 @@ mod mesh;
 mod buffer;
 mod vertex;
 mod util;
+mod model_meta;
+mod node;
 
 pub use render_plugin::RenderPlugin;
 
