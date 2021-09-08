@@ -2,7 +2,7 @@ mod render_plugin;
 mod swapchain_mgr;
 mod render_context;
 mod render_runner;
-mod render_texture;
+mod texture;
 mod forward_render;
 mod command_buffer_list;
 mod simple_draw_object;
@@ -12,6 +12,7 @@ mod material;
 mod mesh;
 mod buffer;
 mod vertex;
+mod util;
 
 pub use render_plugin::RenderPlugin;
 

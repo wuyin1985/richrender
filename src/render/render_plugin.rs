@@ -47,8 +47,8 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
         context: None,
     };
 
-    move |world| {
-        r.update(world)
+    move |pworld| {
+        r.update(pworld)
     }
 }
 

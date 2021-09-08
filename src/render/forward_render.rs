@@ -1,15 +1,15 @@
-﻿use crate::render::render_texture::RenderTexture;
+﻿use crate::render::texture::Texture;
 use ash::vk;
 use crate::render::render_context::{RenderContext, RenderConfig};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use ash::vk::ImageLayout;
 
 pub struct ForwardRenderPass {
-    color_texture: RenderTexture,
+    color_texture: Texture,
     color_view: vk::ImageView,
-    depth_texture: RenderTexture,
+    depth_texture: Texture,
     depth_view: vk::ImageView,
-    resolve_texture: Option<RenderTexture>,
+    resolve_texture: Option<Texture>,
     resolve_view: Option<vk::ImageView>,
     render_pass: vk::RenderPass,
     frame_buffer: vk::Framebuffer,
@@ -41,7 +41,7 @@ impl ForwardRenderPass {
             let msaa = render_config.msaa;
 
             let color_texture =
-                RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
+                Texture::create_as_render_target(device_mgr, device_mgr.window_width,
                                                        device_mgr.window_height, render_config.color_format,
                                                        msaa,
                                                        vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
@@ -50,7 +50,7 @@ impl ForwardRenderPass {
             let color_view = color_texture.create_color_view(device_mgr);
 
             let depth_texture =
-                RenderTexture::create_as_depth_stencil(device_mgr, device_mgr.window_width,
+                Texture::create_as_depth_stencil(device_mgr, device_mgr.window_width,
                                                        device_mgr.window_height, render_config.depth_format,
                                                        vk::SampleCountFlags::TYPE_1,
                                                        "color_render_texture");
@@ -141,13 +141,13 @@ impl ForwardRenderPass {
                 //depth_view,
             ];
 
-            let mut resolve_texture: Option<RenderTexture> = None;
+            let mut resolve_texture: Option<Texture> = None;
 
             let mut resolve_view: Option<vk::ImageView> = None;
 
             if msaa_on {
                 let l_resolve_texture =
-                    RenderTexture::create_as_render_target(device_mgr, device_mgr.window_width,
+                    Texture::create_as_render_target(device_mgr, device_mgr.window_width,
                                                            device_mgr.window_height, render_config.color_format,
                                                            vk::SampleCountFlags::TYPE_1,
                                                            vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,

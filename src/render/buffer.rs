@@ -4,6 +4,8 @@ use std::mem::size_of;
 use std::ffi::c_void;
 
 struct MemoryMapPointer(*mut c_void);
+unsafe impl Send for MemoryMapPointer {}
+unsafe impl Sync for MemoryMapPointer {}
 
 pub struct Buffer {
     pub buffer: vk::Buffer,
@@ -66,17 +68,17 @@ impl Buffer {
         buffer
     }
 
-    pub fn create_device_local_buffer<T: Copy>(context: &RenderContext, upload_command_buffer: vk::CommandBuffer, usage: vk::BufferUsageFlags, data: &[T]) -> Buffer {
+    pub fn create_device_local_buffer<T: Copy>(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, usage: vk::BufferUsageFlags, data: &[T]) -> Buffer {
         let size = (data.len() * size_of::<T>()) as vk::DeviceSize;
         let mut staging_buffer = Self::create_host_visible_buffer(context, vk::BufferUsageFlags::TRANSFER_SRC, data);
         let device_buffer = Self::create(context, size, vk::BufferUsageFlags::TRANSFER_DST | usage, vk::MemoryPropertyFlags::DEVICE_LOCAL);
         device_buffer.cmd_copy(context, upload_command_buffer, &staging_buffer, size);
-        staging_buffer.destroy(context);
+        context.push_staging_buffer(staging_buffer);
         device_buffer
     }
 
 
-    fn map_memory(&mut self, context: &RenderContext) -> *mut c_void {
+    pub fn map_memory(&mut self, context: &RenderContext) -> *mut c_void {
         if let Some(ptr) = &self.mapped_ptr {
             ptr.0
         } else {

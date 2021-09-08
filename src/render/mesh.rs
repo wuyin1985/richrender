@@ -159,7 +159,7 @@ fn read_indices<'a, 's, F>(reader: &gltf::mesh::Reader<'a, 's, F>) -> Option<Vec
         .map(|indices| indices.into_u32().collect::<Vec<_>>())
 }
 
-fn load_meshes(context: &RenderContext, upload_command_buffer: vk::CommandBuffer,
+fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer,
                document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Option<Meshes> {
     let mut meshes_data = Vec::<Vec<PrimitiveData>>::new();
     let mut all_vertices = Vec::<Vertex>::new();

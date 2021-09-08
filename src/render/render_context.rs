@@ -3,6 +3,7 @@ use ash::vk;
 use std::borrow::Cow;
 use raw_window_handle::HasRawWindowHandle;
 use crate::render::swapchain_mgr::SwapchainSupportDetails;
+use crate::render::buffer::Buffer;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -29,6 +30,8 @@ pub struct RenderContext {
     pub swapchain_loader: ash::extensions::khr::Swapchain,
     pub graphics_queue_family_index: u32,
     pub render_config: RenderConfig,
+
+    staging_buffers: Vec<Buffer>,
 }
 
 
@@ -97,7 +100,7 @@ impl RenderContext {
     }
 
     fn get_required_device_extensions() -> [&'static CStr; 1] {
-        [ vk::KhrSwapchainFn::name()]
+        [vk::KhrSwapchainFn::name()]
     }
 
     fn check_device_extension_support(instance: &ash::Instance, device: vk::PhysicalDevice) -> bool {
@@ -206,21 +209,21 @@ impl RenderContext {
         let surface = ash_window::create_surface(&entry, &instance, window, None).unwrap();
 
         let surface_loader = ash::extensions::khr::Surface::new(&entry, &instance);
-        
+
         let devices = instance
             .enumerate_physical_devices()
             .expect("Physical device error");
-        
+
         let physical_device = devices
             .into_iter()
             .find(|device| Self::is_device_suitable(&instance, &surface_loader, surface, *device))
             .expect("No suitable physical device.");
-        let (graphics_index_o, present_index_o) = Self::find_queue_families(&instance, 
+        let (graphics_index_o, present_index_o) = Self::find_queue_families(&instance,
                                                                             &surface_loader, surface, physical_device);
-        
+
         let graphics_index = graphics_index_o.unwrap();
         let present_index = present_index_o.unwrap();
-        
+
         let device_extension_names_raw = [ash::extensions::khr::Swapchain::name().as_ptr()];
         let features = vk::PhysicalDeviceFeatures {
             shader_clip_distance: 1,
@@ -283,6 +286,7 @@ impl RenderContext {
             debug_call_back,
             graphics_queue_family_index: graphics_index,
             render_config,
+            staging_buffers: vec![],
         }
     }
 
@@ -299,5 +303,9 @@ impl RenderContext {
                     && memory_type.property_flags & flags == flags
             })
             .map(|(index, _memory_type)| index as _)
+    }
+
+    pub fn push_staging_buffer(&mut self, buffer: Buffer) {
+        self.staging_buffers.push(buffer);
     }
 }
