@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 use bevy::prelude::*;
 use crate::render::RenderPlugin;
 

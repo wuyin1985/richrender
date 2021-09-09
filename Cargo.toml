@@ -12,6 +12,7 @@ ash = "0.33"
 ash-window = "0.7"
 raw-window-handle = "0.3"
 glam = "0.18"
+lazy_static = "1.4"
 
 [dependencies.gltf]
 version = "0.16"

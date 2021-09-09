@@ -37,22 +37,19 @@ impl Mesh {
 pub struct Meshes {
     meshes: Vec<Mesh>,
     vertices_buffer: Buffer,
-    indices_buffer: Option<Buffer>,
+    indices_buffer: Buffer,
 }
 
 impl Meshes {
     pub fn destroy(&mut self, context: &RenderContext) {
         unsafe {
             self.vertices_buffer.destroy(context);
-            if let Some(b) = &mut self.indices_buffer {
-                b.destroy(context);
-                self.indices_buffer = None;
-            }
+            self.indices_buffer.destroy(context);
         }
     }
 
     pub fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer,
-                     document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Option<Meshes> {
+                     document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Meshes {
         load_meshes(context, upload_command_buffer, document, buffers)
     }
 }
@@ -165,7 +162,7 @@ fn read_indices<'a, 's, F>(reader: &gltf::mesh::Reader<'a, 's, F>) -> Option<Vec
 }
 
 fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer,
-               document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Option<Meshes> {
+               document: &gltf::Document, buffers: &Vec<gltf::buffer::Data>) -> Meshes {
     let mut meshes_data = Vec::<Vec<PrimitiveData>>::new();
     let mut all_vertices = Vec::<Vertex>::new();
     let mut all_indices = Vec::<u32>::new();
@@ -229,39 +226,40 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
         meshes_data.push(primitives_buffers);
     }
 
-    if !meshes_data.is_empty() {
-        let indices_buffer = if all_indices.is_empty() {
-            None
-        } else {
-            Some(Buffer::create_device_local_buffer(context, upload_command_buffer, vk::BufferUsageFlags::INDEX_BUFFER, &all_indices))
-        };
-
-        let vertices_buffer = Buffer::create_device_local_buffer(context, upload_command_buffer,
-                                                                 vk::BufferUsageFlags::VERTEX_BUFFER, &all_vertices);
-
-        let meshes = meshes_data
-            .iter()
-            .map(|primitive_datas| {
-                let primitives = primitive_datas
-                    .iter().map(|primitive_data| {
-                    Primitive {
-                        index: primitive_data.index,
-                        vertices: primitive_data.vertices,
-                        indices: primitive_data.indices,
-                        material: primitive_data.material,
-                        aabb: primitive_data.aabb,
-                    }
-                }).collect();
-
-                Mesh::new(primitives)
-            }).collect::<Vec<_>>();
-
-        return Some(Meshes {
-            meshes,
-            vertices_buffer,
-            indices_buffer,
-        });
+    if meshes_data.is_empty() {
+        panic!("the mesh data is empty");
     }
 
-    None
+    if all_indices.is_empty() {
+        panic!("the indices is empty");
+    }
+
+    let indices_buffer =
+        Buffer::create_device_local_buffer(context, upload_command_buffer, vk::BufferUsageFlags::INDEX_BUFFER, &all_indices);
+
+    let vertices_buffer = Buffer::create_device_local_buffer(context, upload_command_buffer,
+                                                             vk::BufferUsageFlags::VERTEX_BUFFER, &all_vertices);
+
+    let meshes = meshes_data
+        .iter()
+        .map(|primitive_datas| {
+            let primitives = primitive_datas
+                .iter().map(|primitive_data| {
+                Primitive {
+                    index: primitive_data.index,
+                    vertices: primitive_data.vertices,
+                    indices: primitive_data.indices,
+                    material: primitive_data.material,
+                    aabb: primitive_data.aabb,
+                }
+            }).collect();
+
+            Mesh::new(primitives)
+        }).collect::<Vec<_>>();
+
+    Meshes {
+        meshes,
+        vertices_buffer,
+        indices_buffer,
+    }
 }

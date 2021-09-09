@@ -1,12 +1,47 @@
-﻿use ash::vk;
-use std::ffi::CString;
+use ash::vk;
 use crate::render::render_context::RenderContext;
 use crate::render::swapchain_mgr::SwapChainMgr;
-use std::mem::size_of;
-use std::io::Cursor;
-use std::fs::File;
+use std::ffi::CString;
 use std::path::Path;
-use ash::vk::Pipeline;
+use std::io::Cursor;
+
+pub struct PipelineVertexInputInfo {
+    ci: vk::PipelineVertexInputStateCreateInfo,
+}
+
+impl PipelineVertexInputInfo {
+    pub fn from(binding: &[vk::VertexInputBindingDescription], attributes: &[vk::VertexInputAttributeDescription]) -> Self {
+        PipelineVertexInputInfo {
+            ci: vk::PipelineVertexInputStateCreateInfo::builder().
+                vertex_binding_descriptions(binding).vertex_attribute_descriptions(attributes).build()
+        }
+    }
+
+    pub fn get_ci(&self) -> &vk::PipelineVertexInputStateCreateInfo {
+        &self.ci
+    }
+}
+
+pub struct PipelineLayoutInfo {
+    ci: vk::PipelineLayoutCreateInfo,
+}
+
+impl PipelineLayoutInfo {
+    pub fn from(ci: vk::PipelineLayoutCreateInfo) -> Self {
+        PipelineLayoutInfo {
+            ci
+        }
+    }
+
+    pub fn get_ci(&self) -> &vk::PipelineLayoutCreateInfo {
+        &self.ci
+    }
+}
+
+pub struct GraphicPipeline {
+    pipeline: vk::Pipeline,
+    pipeline_layout: vk::PipelineLayout,
+}
 
 fn load_from_assets<P: AsRef<Path>>(path: P) -> Cursor<Vec<u8>> {
     use std::fs::File;
@@ -20,73 +55,7 @@ fn load_from_assets<P: AsRef<Path>>(path: P) -> Cursor<Vec<u8>> {
 }
 
 
-#[derive(Clone, Copy)]
-#[allow(dead_code)]
-struct Vertex {
-    pos: [f32; 3],
-    color: [f32; 3],
-    coords: [f32; 2],
-}
-
-impl Vertex {
-    fn get_binding_description() -> vk::VertexInputBindingDescription {
-        vk::VertexInputBindingDescription::builder()
-            .binding(0)
-            .stride(size_of::<Vertex>() as _)
-            .input_rate(vk::VertexInputRate::VERTEX)
-            .build()
-    }
-
-    fn get_attribute_descriptions() -> [vk::VertexInputAttributeDescription; 3] {
-        let position_desc = vk::VertexInputAttributeDescription::builder()
-            .binding(0)
-            .location(0)
-            .format(vk::Format::R32G32B32_SFLOAT)
-            .offset(0)
-            .build();
-        let color_desc = vk::VertexInputAttributeDescription::builder()
-            .binding(0)
-            .location(1)
-            .format(vk::Format::R32G32B32_SFLOAT)
-            .offset(12)
-            .build();
-        let coords_desc = vk::VertexInputAttributeDescription::builder()
-            .binding(0)
-            .location(2)
-            .format(vk::Format::R32G32_SFLOAT)
-            .offset(24)
-            .build();
-        [position_desc, color_desc, coords_desc]
-    }
-}
-
-
-pub struct SimpleDrawObject {
-    graphic_pipeline: vk::Pipeline,
-    graphic_pipeline_layout: vk::PipelineLayout,
-}
-
-impl SimpleDrawObject {
-    pub fn destroy(&mut self, device_mgr: &RenderContext) {
-        unsafe {
-            device_mgr.device.destroy_pipeline_layout(self.graphic_pipeline_layout,None);
-            device_mgr.device.destroy_pipeline(self.graphic_pipeline,None);
-        }
-    }
-
-    pub fn create(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass) -> Self {
-        let (pipeline, pipeline_layout) = Self::create_graphic_pipeline(device_mgr,
-                                                                        swapchain_mgr,
-                                                                        render_pass,
-                                                                        device_mgr.render_config.msaa,
-                                                                        "spv/simple_draw_object_vert.spv",
-                                                                        "spv/simple_draw_object_frag.spv");
-        SimpleDrawObject {
-            graphic_pipeline: pipeline,
-            graphic_pipeline_layout: pipeline_layout,
-        }
-    }
-
+impl GraphicPipeline {
     fn read_shader_data_from_file(device_mgr: &RenderContext, path: &str) -> vk::ShaderModule {
         let mut cursor = load_from_assets(path);
         let res = ash::util::read_spv(&mut cursor).expect(format!("failed to read spv {}", path).as_str());
@@ -94,8 +63,20 @@ impl SimpleDrawObject {
         unsafe { device_mgr.device.create_shader_module(&create_info, None).unwrap() }
     }
 
-    fn create_graphic_pipeline(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
-                               msaa: vk::SampleCountFlags, vert_spv_path: &str, frag_spv_path: &str) -> (vk::Pipeline, vk::PipelineLayout) {
+    pub fn destroy(&mut self, device_mgr: &RenderContext) {
+        unsafe {
+            device_mgr.device.destroy_pipeline_layout(self.pipeline_layout,None);
+            device_mgr.device.destroy_pipeline(self.pipeline,None);
+        }
+    }
+
+    pub fn create(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr,
+              render_pass: vk::RenderPass,
+              vertex_input: &PipelineVertexInputInfo,
+              pipeline_layout_info: &PipelineLayoutInfo,
+              msaa: vk::SampleCountFlags,
+              vert_spv_path: &str,
+              frag_spv_path: &str) -> Self {
         let device = &device_mgr.device;
 
         let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path);
@@ -114,18 +95,6 @@ impl SimpleDrawObject {
             .build();
         let shader_states_infos = [vertex_shader_state_info, fragment_shader_state_info];
 
-        // let vertex_binding_descs = [Vertex::get_binding_description()];
-        // let vertex_attribute_descs = Vertex::get_attribute_descriptions();
-        // let vertex_input_info = vk::PipelineVertexInputStateCreateInfo::builder()
-        //     .vertex_binding_descriptions(&vertex_binding_descs)
-        //     .vertex_attribute_descriptions(&vertex_attribute_descs)
-        //     .build();
-
-        let vertex_input_info = vk::PipelineVertexInputStateCreateInfo {
-            vertex_attribute_description_count: 0,
-            vertex_binding_description_count: 0,
-            ..Default::default()
-        };
 
         let input_assembly_info = vk::PipelineInputAssemblyStateCreateInfo::builder()
             .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
@@ -175,17 +144,17 @@ impl SimpleDrawObject {
             .alpha_to_one_enable(false)
             .build();
 
-        // let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo::builder()
-        //     .depth_test_enable(false)
-        //     .depth_write_enable(false)
-        //     .depth_compare_op(vk::CompareOp::LESS)
-        //     .depth_bounds_test_enable(false)
-        //     .min_depth_bounds(0.0)
-        //     .max_depth_bounds(1.0)
-        //     .stencil_test_enable(false)
-        //     .front(Default::default())
-        //     .back(Default::default())
-        //     .build();
+        let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo::builder()
+            .depth_test_enable(true)
+            .depth_write_enable(true)
+            .depth_compare_op(vk::CompareOp::LESS)
+            .depth_bounds_test_enable(false)
+            .min_depth_bounds(0.0)
+            .max_depth_bounds(1.0)
+            .stencil_test_enable(false)
+            .front(Default::default())
+            .back(Default::default())
+            .build();
 
         let color_blend_attachment = vk::PipelineColorBlendAttachmentState::builder()
             .color_write_mask(vk::ColorComponentFlags::all())
@@ -207,23 +176,18 @@ impl SimpleDrawObject {
             .build();
 
         let layout = {
-            //let layouts = [descriptor_set_layout];
-            let layout_info = vk::PipelineLayoutCreateInfo::builder()
-                //.set_layouts(&layouts)
-                // .push_constant_ranges
-                .build();
-
-            unsafe { device.create_pipeline_layout(&layout_info, None).unwrap() }
+            let layout_ci = pipeline_layout_info.get_ci();
+            unsafe { device.create_pipeline_layout(layout_ci, None).unwrap() }
         };
 
         let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
             .stages(&shader_states_infos)
-            .vertex_input_state(&vertex_input_info)
+            .vertex_input_state(vertex_input.get_ci())
             .input_assembly_state(&input_assembly_info)
             .viewport_state(&viewport_info)
             .rasterization_state(&rasterizer_info)
             .multisample_state(&multisampling_info)
-            //.depth_stencil_state(&depth_stencil_info)
+            .depth_stencil_state(&depth_stencil_info)
             .color_blend_state(&color_blending_info)
             // .dynamic_state() null since don't have any dynamic states
             .layout(layout)
@@ -245,13 +209,9 @@ impl SimpleDrawObject {
             device.destroy_shader_module(fragment_shader_module, None);
         };
 
-        (pipeline, layout)
-    }
-
-    pub fn draw(&self, device_mgr: &RenderContext, command_buffer: vk::CommandBuffer) {
-        unsafe {
-            device_mgr.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, self.graphic_pipeline);
-            device_mgr.device.cmd_draw(command_buffer, 3, 1, 0, 0);
+        GraphicPipeline {
+            pipeline,
+            pipeline_layout: layout,
         }
     }
 }

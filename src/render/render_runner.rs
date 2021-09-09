@@ -2,30 +2,29 @@ use crate::render::render_context::RenderContext;
 use crate::render::swapchain_mgr::SwapChainMgr;
 use bevy::winit::WinitWindows;
 use crate::render::forward_render::ForwardRenderPass;
-use crate::render::simple_draw_object::SimpleDrawObject;
 use crate::render::command_buffer_list::CommandBufferList;
 use ash::vk;
 use std::time::SystemTime;
+use crate::render::model::Model;
 
 pub struct RenderRunner {
     device_mgr: RenderContext,
     swapchain_mgr: SwapChainMgr,
     command_buffer_list: CommandBufferList,
     forward_render_pass: ForwardRenderPass,
-    simple_draw_object: SimpleDrawObject,
     last_tick: SystemTime,
 }
 
 impl Drop for RenderRunner {
     fn drop(&mut self) {
         unsafe { self.device_mgr.device.device_wait_idle().unwrap(); }
-        self.simple_draw_object.destroy(&self.device_mgr);
         self.command_buffer_list.destroy(&self.device_mgr);
         self.forward_render_pass.destroy(&self.device_mgr);
         self.swapchain_mgr.destroy(&self.device_mgr);
         self.device_mgr.destroy();
     }
 }
+
 
 impl RenderRunner {
     pub fn create<W: raw_window_handle::HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
@@ -34,24 +33,24 @@ impl RenderRunner {
             let swapchain = SwapChainMgr::create(&device, window_width, window_height);
             let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &device);
             let forward_render_pass = ForwardRenderPass::create(&device, &swapchain);
-            let simple_draw_object = SimpleDrawObject::create(&device,
-                                                              &swapchain, forward_render_pass.get_native_render_pass());
             RenderRunner {
                 device_mgr: device,
                 swapchain_mgr: swapchain,
                 command_buffer_list,
                 forward_render_pass,
-                simple_draw_object,
                 last_tick: SystemTime::now(),
             }
         }
     }
 
+    fn load_model(&mut self, path: &str) {
+        let command_buffer = self.command_buffer_list.get_command_buffer(0);
+        let model = Model::from_gltf(&mut self.device_mgr, command_buffer, path);
+    }
+
     pub fn draw(&mut self) {
         unsafe {
-            
             let now = SystemTime::now();
-            println!("past time {} ms", now.duration_since(self.last_tick).unwrap().as_millis());
             self.last_tick = now;
             let (success, present_index) = self.swapchain_mgr.wait_for_swap_chain(&mut self.device_mgr);
             if !success {
@@ -66,7 +65,7 @@ impl RenderRunner {
             }
 
             self.forward_render_pass.begin_render_pass(&mut self.device_mgr, &mut self.swapchain_mgr, command_buffer);
-            self.simple_draw_object.draw(&mut self.device_mgr, command_buffer);
+
             self.forward_render_pass.end_pass(&mut self.device_mgr, command_buffer);
 
 

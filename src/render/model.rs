@@ -13,35 +13,28 @@ use ash::vk;
 use crate::render::mesh::Meshes;
 use crate::render::node::Nodes;
 
-struct Node {
-    parent: Option<usize>,
-    children: Option<Vec<usize>>,
-    translation: glam::Vec3,
-    scale: glam::Vec3,
-    rotation: glam::Quat,
-    mesh: Option<usize>,
-}
 
-
-struct Model {
-    meshes: Option<Meshes>,
+pub struct Model {
+    meshes: Meshes,
     nodes: Nodes,
     textures: ModelTextures,
 }
 
-
-fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, path: &str) -> Result<Model, Box<dyn Error>> {
-    let (document, buffers, images) = gltf::import(&path)?;
-    let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
-    let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
-    let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
-    Ok(
-        Model {
-            nodes,
-            textures,
-            meshes,
-        })
+impl Model {
+    pub fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, path: &str) -> Result<Model, Box<dyn Error>> {
+        let (document, buffers, images) = gltf::import(&path)?;
+        let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
+        let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
+        let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
+        Ok(
+            Model {
+                nodes,
+                textures,
+                meshes,
+            })
+    }
 }
+
 
 pub struct ModelTexture {
     pub texture: Texture,
