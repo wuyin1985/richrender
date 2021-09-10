@@ -71,18 +71,18 @@ impl ForwardRenderPass {
                     initial_layout: vk::ImageLayout::UNDEFINED,
                     final_layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 },
-                // depth
-                // vk::AttachmentDescription {
-                //     flags: Default::default(),
-                //     format: render_config.depth_format,
-                //     samples: msaa,
-                //     load_op: vk::AttachmentLoadOp::CLEAR,
-                //     store_op: vk::AttachmentStoreOp::DONT_CARE,
-                //     stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
-                //     stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
-                //     initial_layout: vk::ImageLayout::UNDEFINED,
-                //     final_layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                // },
+                //depth
+                vk::AttachmentDescription {
+                    flags: Default::default(),
+                    format: render_config.depth_format,
+                    samples: msaa,
+                    load_op: vk::AttachmentLoadOp::CLEAR,
+                    store_op: vk::AttachmentStoreOp::DONT_CARE,
+                    stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
+                    stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
+                    initial_layout: vk::ImageLayout::UNDEFINED,
+                    final_layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                },
             ];
 
             if msaa_on {
@@ -107,10 +107,10 @@ impl ForwardRenderPass {
                 layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
             }];
 
-            // let depth_attachment_ref = vk::AttachmentReference {
-            //     attachment: 1,
-            //     layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            // };
+            let depth_attachment_ref = vk::AttachmentReference {
+                attachment: 1,
+                layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            };
 
             let dependencies = [vk::SubpassDependency {
                 src_subpass: vk::SUBPASS_EXTERNAL,
@@ -122,7 +122,9 @@ impl ForwardRenderPass {
                 dependency_flags: vk::DependencyFlags::empty(),
             }];
 
-            let mut subpass_builder = vk::SubpassDescription::builder().color_attachments(&color_attachment_refs)
+            let mut subpass_builder = vk::SubpassDescription::builder()
+                .color_attachments(&color_attachment_refs)
+                .depth_stencil_attachment(&depth_attachment_ref)
                 .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS);
 
             if msaa_on {
@@ -140,7 +142,7 @@ impl ForwardRenderPass {
 
             let mut frame_buffer_views = vec![
                 color_view,
-                //depth_view,
+                depth_view,
             ];
 
             let mut resolve_texture: Option<Texture> = None;

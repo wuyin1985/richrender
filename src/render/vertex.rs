@@ -46,35 +46,35 @@ impl Vertex {
             vk::VertexInputAttributeDescription::builder().
                 format(vk::Format::R32G32B32_SFLOAT).
                 binding(0).
-                location(1).
+                location(0).
                 offset(POS_OFFSET).build(),
 
             //normal
             vk::VertexInputAttributeDescription::builder().
                 format(vk::Format::R32G32B32_SFLOAT).
                 binding(0).
-                location(2).
+                location(1).
                 offset(NORMAL_OFFSET).build(),
 
             //text_coord
             vk::VertexInputAttributeDescription::builder().
                 format(vk::Format::R32G32_SFLOAT).
                 binding(0).
-                location(3).
-                offset(NORMAL_OFFSET).build(),
+                location(2).
+                offset(TEX_COORD_OFFSET).build(),
 
             //weight
             vk::VertexInputAttributeDescription::builder().
                 format(vk::Format::R32G32B32A32_SFLOAT).
                 binding(0).
-                location(4).
+                location(3).
                 offset(WEIGHT_OFFSET).build(),
 
             //joint
             vk::VertexInputAttributeDescription::builder().
                 format(vk::Format::R32G32B32A32_SFLOAT).
                 binding(0).
-                location(5).
+                location(4).
                 offset(JOINT_OFFSET).build(),
         ]
     }
