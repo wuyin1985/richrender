@@ -240,7 +240,7 @@ impl ModelRenderer {
             let mut set_idx = 0;
             context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.model.get_vertex_buffer().buffer], &[0]);
             //todo index type
-            context.device.cmd_bind_index_buffer(command_buffer, self.model.get_vertex_buffer().buffer, 0, vk::IndexType::UINT32);
+            context.device.cmd_bind_index_buffer(command_buffer, self.model.get_indices_buffer().buffer, 0, vk::IndexType::UINT32);
             for mesh in self.model.get_meshes() {
                 for primitive in mesh.primitives() {
                     let set = self.descriptor_sets[set_idx];

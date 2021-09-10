@@ -88,6 +88,7 @@ impl RenderRunner {
 
         unsafe {
             context.device.end_command_buffer(command_buffer);
+            context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
             context.device.device_wait_idle();
         }
 
