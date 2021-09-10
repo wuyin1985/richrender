@@ -41,6 +41,12 @@ impl Buffer {
             }
         };
 
+        unsafe {
+            device
+                .bind_buffer_memory(buffer, memory, 0)
+                .expect("Failed to bind buffer memory")
+        };
+
         Buffer {
             buffer,
             size,
@@ -71,7 +77,7 @@ impl Buffer {
     pub fn create_device_local_buffer<T: Copy>(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, usage: vk::BufferUsageFlags, data: &[T]) -> Buffer {
         let size = (data.len() * size_of::<T>()) as vk::DeviceSize;
         let mut staging_buffer = Self::create_host_visible_buffer(context, vk::BufferUsageFlags::TRANSFER_SRC, data);
-        let device_buffer = Self::create(context, size, vk::BufferUsageFlags::TRANSFER_DST | usage, vk::MemoryPropertyFlags::DEVICE_LOCAL);
+        let mut device_buffer = Self::create(context, size, vk::BufferUsageFlags::TRANSFER_DST | usage, vk::MemoryPropertyFlags::DEVICE_LOCAL);
         device_buffer.cmd_copy(context, upload_command_buffer, &staging_buffer, size);
         context.push_staging_buffer(staging_buffer);
         device_buffer

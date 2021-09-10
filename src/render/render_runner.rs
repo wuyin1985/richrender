@@ -6,18 +6,21 @@ use crate::render::command_buffer_list::CommandBufferList;
 use ash::vk;
 use std::time::SystemTime;
 use crate::render::model::Model;
+use crate::render::model_renderer::ModelRenderer;
 
 pub struct RenderRunner {
     device_mgr: RenderContext,
     swapchain_mgr: SwapChainMgr,
     command_buffer_list: CommandBufferList,
     forward_render_pass: ForwardRenderPass,
+    model_renderer: ModelRenderer,
     last_tick: SystemTime,
 }
 
 impl Drop for RenderRunner {
     fn drop(&mut self) {
         unsafe { self.device_mgr.device.device_wait_idle().unwrap(); }
+        self.model_renderer.destroy(&self.device_mgr);
         self.command_buffer_list.destroy(&self.device_mgr);
         self.forward_render_pass.destroy(&self.device_mgr);
         self.swapchain_mgr.destroy(&self.device_mgr);
@@ -29,23 +32,68 @@ impl Drop for RenderRunner {
 impl RenderRunner {
     pub fn create<W: raw_window_handle::HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
         unsafe {
-            let device = RenderContext::create(window, window_width, window_height);
+            println!("start up");
+            let mut device = RenderContext::create(window, window_width, window_height);
+            println!("render context create complete");
             let swapchain = SwapChainMgr::create(&device, window_width, window_height);
             let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &device);
-            let forward_render_pass = ForwardRenderPass::create(&device, &swapchain);
+            let forward_render_pass = ForwardRenderPass::create(&mut device, &swapchain, &command_buffer_list);
+            println!("forward render pass create complete");
+
+            // unsafe {
+            //     let p = device.instance.get_physical_device_image_format_properties(device.physical_device,
+            //                                                                         vk::Format::R8G8B8_USCALED, vk::ImageType::TYPE_2D, vk::ImageTiling::OPTIMAL,
+            //                                                                         vk::ImageUsageFlags::SAMPLED, vk::ImageCreateFlags::empty());
+            // 
+            //     let pk = match p {
+            //         Ok(f) => {},
+            //         Err(error) => {
+            //             panic!("error {}", error);
+            //         }
+            //     };
+            // }
+
+            let model_renderer = Self::load_model(&mut device, &swapchain,
+                                                  forward_render_pass.get_native_render_pass(), &command_buffer_list);
+            println!("model renderer created complete");
             RenderRunner {
                 device_mgr: device,
                 swapchain_mgr: swapchain,
                 command_buffer_list,
                 forward_render_pass,
                 last_tick: SystemTime::now(),
+                model_renderer,
             }
         }
     }
 
-    fn load_model(&mut self, path: &str) {
-        let command_buffer = self.command_buffer_list.get_command_buffer(0);
-        let model = Model::from_gltf(&mut self.device_mgr, command_buffer, path);
+    fn load_model(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass, command_buffer_list: &CommandBufferList) -> ModelRenderer {
+        let command_buffer = command_buffer_list.get_command_buffer(0);
+        unsafe {
+            context.device.begin_command_buffer(command_buffer,
+                                                &vk::CommandBufferBeginInfo::builder().
+                                                    flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
+        }
+
+        let model_renderer = ModelRenderer::create(context,
+                                                   swapchain_mgr,
+                                                   render_pass,
+                                                   command_buffer,
+                                                   "assets/gltf/DamagedHelmet/DamagedHelmet.gltf",
+                                                   "spv/simple_draw_object_vert.spv",
+                                                   "spv/simple_draw_object_frag.spv");
+
+
+        println!("model renderer create complete~");
+
+        unsafe {
+            context.device.end_command_buffer(command_buffer);
+            context.device.device_wait_idle();
+        }
+
+        context.flush_staging_buffer();
+
+        model_renderer
     }
 
     pub fn draw(&mut self) {
@@ -66,8 +114,9 @@ impl RenderRunner {
 
             self.forward_render_pass.begin_render_pass(&mut self.device_mgr, &mut self.swapchain_mgr, command_buffer);
 
-            self.forward_render_pass.end_pass(&mut self.device_mgr, command_buffer);
+            self.model_renderer.draw(&self.device_mgr, command_buffer);
 
+            self.forward_render_pass.end_pass(&mut self.device_mgr, command_buffer);
 
             let mut present_image_available_semaphore: vk::Semaphore = vk::Semaphore::null();
             let mut render_finish_semaphore: vk::Semaphore = vk::Semaphore::null();

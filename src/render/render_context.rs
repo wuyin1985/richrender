@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use raw_window_handle::HasRawWindowHandle;
 use crate::render::swapchain_mgr::SwapchainSupportDetails;
 use crate::render::buffer::Buffer;
+use std::mem;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -30,6 +31,7 @@ pub struct RenderContext {
     pub swapchain_loader: ash::extensions::khr::Swapchain,
     pub graphics_queue_family_index: u32,
     pub render_config: RenderConfig,
+    pub descriptor_pool: vk::DescriptorPool,
 
     staging_buffers: Vec<Buffer>,
 }
@@ -71,6 +73,7 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
+            self.device.destroy_descriptor_pool(self.descriptor_pool, None);
             self.device.destroy_device(None);
             self.surface_loader.destroy_surface(self.surface, None);
             self.debug_utils_loader
@@ -269,6 +272,23 @@ impl RenderContext {
             depth_format: vk::Format::D32_SFLOAT,
         };
 
+        //todo description size
+        let pool_size = [
+            vk::DescriptorPoolSize {
+                ty: vk::DescriptorType::UNIFORM_BUFFER,
+                descriptor_count: 10,
+            },
+            vk::DescriptorPoolSize {
+                ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
+                descriptor_count: 100,
+            },
+        ];
+
+        let descriptor_pool = device.create_descriptor_pool(
+            &vk::DescriptorPoolCreateInfo::builder().max_sets(200)
+                .pool_sizes(&pool_size).build(), None,
+        ).expect("create descriptor pool failed");
+
         RenderContext {
             window_width,
             window_height,
@@ -286,6 +306,7 @@ impl RenderContext {
             debug_call_back,
             graphics_queue_family_index: graphics_index,
             render_config,
+            descriptor_pool,
             staging_buffers: vec![],
         }
     }
@@ -307,5 +328,13 @@ impl RenderContext {
 
     pub fn push_staging_buffer(&mut self, buffer: Buffer) {
         self.staging_buffers.push(buffer);
+    }
+
+    pub fn flush_staging_buffer(&mut self) {
+        let mut buffers = mem::replace(&mut self.staging_buffers, Vec::new());
+        for buffer in buffers.iter_mut() {
+            buffer.destroy(self)
+        }
+        self.staging_buffers = buffers
     }
 }

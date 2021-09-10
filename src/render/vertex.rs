@@ -27,9 +27,9 @@ pub type VertexBufferPart = (usize, usize);
 pub type IndexBufferPart = (usize, usize);
 
 lazy_static! {
-    static ref VERTEX_BINDING_DESCS: [vk::VertexInputBindingDescription; 1] = Vertex::get_bindings_descs();
+    pub static ref VERTEX_BINDING_DESCS: [vk::VertexInputBindingDescription; 1] = Vertex::get_bindings_descs();
 
-    static ref VERTEX_ATTRIBUTE_DESCS: [vk::VertexInputAttributeDescription; 5] = Vertex::get_attribute_descs();
+    pub static ref VERTEX_ATTRIBUTE_DESCS: [vk::VertexInputAttributeDescription; 5] = Vertex::get_attribute_descs();
 }
 
 impl Vertex {

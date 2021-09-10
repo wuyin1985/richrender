@@ -32,7 +32,6 @@ impl PipelineLayoutInfo {
             ci
         }
     }
-
     pub fn get_ci(&self) -> &vk::PipelineLayoutCreateInfo {
         &self.ci
     }
@@ -46,7 +45,6 @@ pub struct GraphicPipeline {
 fn load_from_assets<P: AsRef<Path>>(path: P) -> Cursor<Vec<u8>> {
     use std::fs::File;
     use std::io::Read;
-
     let mut buf = Vec::new();
     let fullpath = &Path::new("assets").join(&path);
     let mut file = File::open(&fullpath).unwrap();
@@ -65,18 +63,19 @@ impl GraphicPipeline {
 
     pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
-            device_mgr.device.destroy_pipeline_layout(self.pipeline_layout,None);
-            device_mgr.device.destroy_pipeline(self.pipeline,None);
+            device_mgr.device.destroy_pipeline_layout(self.pipeline_layout, None);
+            device_mgr.device.destroy_pipeline(self.pipeline, None);
         }
     }
 
-    pub fn create(device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr,
-              render_pass: vk::RenderPass,
-              vertex_input: &PipelineVertexInputInfo,
-              pipeline_layout_info: &PipelineLayoutInfo,
-              msaa: vk::SampleCountFlags,
-              vert_spv_path: &str,
-              frag_spv_path: &str) -> Self {
+    pub fn create(device_mgr: &RenderContext,
+                  swapchain_mgr: &SwapChainMgr,
+                  render_pass: vk::RenderPass,
+                  vertex_input: &PipelineVertexInputInfo,
+                  pipeline_layout_ci: &vk::PipelineLayoutCreateInfo,
+                  msaa: vk::SampleCountFlags,
+                  vert_spv_path: &str,
+                  frag_spv_path: &str) -> Self {
         let device = &device_mgr.device;
 
         let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path);
@@ -176,8 +175,7 @@ impl GraphicPipeline {
             .build();
 
         let layout = {
-            let layout_ci = pipeline_layout_info.get_ci();
-            unsafe { device.create_pipeline_layout(layout_ci, None).unwrap() }
+            unsafe { device.create_pipeline_layout(pipeline_layout_ci, None).unwrap() }
         };
 
         let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
@@ -213,5 +211,13 @@ impl GraphicPipeline {
             pipeline,
             pipeline_layout: layout,
         }
+    }
+    
+    pub fn get_pipeline(&self) -> vk::Pipeline {
+        self.pipeline
+    }
+    
+    pub fn get_layout(&self) -> vk::PipelineLayout {
+        self.pipeline_layout
     }
 }

@@ -3,6 +3,8 @@ use ash::vk;
 use crate::render::render_context::{RenderContext, RenderConfig};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use ash::vk::ImageLayout;
+use crate::render::model_renderer::ModelRenderer;
+use crate::render::command_buffer_list::CommandBufferList;
 
 pub struct ForwardRenderPass {
     color_texture: Texture,
@@ -34,7 +36,7 @@ impl ForwardRenderPass {
         }
     }
 
-    pub fn create(device_mgr: &RenderContext, swap_chain_mgr: &SwapChainMgr) -> Self {
+    pub fn create(device_mgr: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, command_list: &CommandBufferList) -> Self {
         unsafe {
             let render_config = &device_mgr.render_config;
             let msaa_on = render_config.msaa != vk::SampleCountFlags::TYPE_1;
@@ -42,18 +44,18 @@ impl ForwardRenderPass {
 
             let color_texture =
                 Texture::create_as_render_target(device_mgr, device_mgr.window_width,
-                                                       device_mgr.window_height, render_config.color_format,
-                                                       msaa,
-                                                       vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
-                                                       "color_render_texture", vk::ImageCreateFlags::empty());
+                                                 device_mgr.window_height, render_config.color_format,
+                                                 msaa,
+                                                 vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
+                                                 "color_render_texture", vk::ImageCreateFlags::empty());
 
             let color_view = color_texture.create_color_view(device_mgr);
 
             let depth_texture =
                 Texture::create_as_depth_stencil(device_mgr, device_mgr.window_width,
-                                                       device_mgr.window_height, render_config.depth_format,
-                                                       vk::SampleCountFlags::TYPE_1,
-                                                       "color_render_texture");
+                                                 device_mgr.window_height, render_config.depth_format,
+                                                 vk::SampleCountFlags::TYPE_1,
+                                                 "color_render_texture");
             let depth_view = depth_texture.create_depth_view(device_mgr);
 
             let mut renderpass_attachment = vec![
@@ -117,7 +119,7 @@ impl ForwardRenderPass {
                 src_access_mask: vk::AccessFlags::empty(),
                 dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-                dependency_flags: vk::DependencyFlags::empty()
+                dependency_flags: vk::DependencyFlags::empty(),
             }];
 
             let mut subpass_builder = vk::SubpassDescription::builder().color_attachments(&color_attachment_refs)
@@ -148,10 +150,10 @@ impl ForwardRenderPass {
             if msaa_on {
                 let l_resolve_texture =
                     Texture::create_as_render_target(device_mgr, device_mgr.window_width,
-                                                           device_mgr.window_height, render_config.color_format,
-                                                           vk::SampleCountFlags::TYPE_1,
-                                                           vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
-                                                           "resolve_texture", vk::ImageCreateFlags::empty());
+                                                     device_mgr.window_height, render_config.color_format,
+                                                     vk::SampleCountFlags::TYPE_1,
+                                                     vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
+                                                     "resolve_texture", vk::ImageCreateFlags::empty());
 
 
                 let l_resolve_view = l_resolve_texture.create_color_view(device_mgr);
@@ -166,6 +168,9 @@ impl ForwardRenderPass {
 
             let frame_buffer = device_mgr.device.create_framebuffer(&frame_buffer_ci, None).unwrap();
 
+            let command_buffer = command_list.get_command_buffer(0);
+
+         
             ForwardRenderPass {
                 depth_texture,
                 depth_view,

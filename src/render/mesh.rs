@@ -18,6 +18,10 @@ impl Mesh {
         let aabb = Aabb::union(&aabbs).unwrap();
         Mesh { primitives, aabb }
     }
+
+    pub fn get_primitives(&self) -> &Vec<Primitive> {
+        &self.primitives
+    }
 }
 
 impl Mesh {
@@ -35,9 +39,9 @@ impl Mesh {
 }
 
 pub struct Meshes {
-    meshes: Vec<Mesh>,
-    vertices_buffer: Buffer,
-    indices_buffer: Buffer,
+    pub meshes: Vec<Mesh>,
+    pub vertices_buffer: Buffer,
+    pub indices_buffer: Buffer,
 }
 
 impl Meshes {
@@ -56,8 +60,8 @@ impl Meshes {
 
 pub struct Primitive {
     index: usize,
-    vertices: VertexBufferPart,
-    indices: Option<IndexBufferPart>,
+    pub vertices: VertexBufferPart,
+    pub indices: IndexBufferPart,
     material: Material,
     aabb: Aabb,
 }
@@ -71,7 +75,7 @@ impl Primitive {
         &self.vertices
     }
 
-    pub fn indices(&self) -> &Option<IndexBufferPart> {
+    pub fn indices(&self) -> &IndexBufferPart {
         &self.indices
     }
 
@@ -82,11 +86,15 @@ impl Primitive {
     pub fn aabb(&self) -> Aabb {
         self.aabb
     }
+
+    pub fn get_material(&self) -> &Material {
+        &self.material
+    }
 }
 
 struct PrimitiveData {
     index: usize,
-    indices: Option<IndexBufferPart>,
+    indices: IndexBufferPart,
     vertices: VertexBufferPart,
     material: Material,
     aabb: Aabb,
@@ -204,7 +212,7 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
                     let offset = all_indices.len() * size_of::<u32>();
                     all_indices.extend_from_slice(&indices);
                     (offset, indices.len())
-                });
+                }).expect("no indices read");
 
                 let vertex_offset = all_vertices.len() * size_of::<Vertex>();
                 all_vertices.extend_from_slice(&vertices);
