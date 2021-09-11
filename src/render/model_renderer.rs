@@ -8,6 +8,7 @@ use crate::render::vertex;
 use glam::{Mat4, Vec3};
 use std::mem::size_of;
 use crate::render::texture::Texture;
+use bevy::prelude::*;
 
 const UBO_BINDING: u32 = 0;
 const COLOR_SAMPLER_BINDING: u32 = 1;
@@ -222,9 +223,9 @@ impl ModelRenderer {
         let vertex_input = PipelineVertexInputInfo::from(&vertex::VERTEX_BINDING_DESCS[..],
                                                          &vertex::VERTEX_ATTRIBUTE_DESCS[..]);
 
-        println!("start load model {}", gltf_path);
+        info!("start load model {}", gltf_path);
         let model = Model::from_gltf(context, command_buffer, gltf_path).expect("load error");
-        println!("load model {} complete", gltf_path);
+        info!("load model {} complete", gltf_path);
         let uniform = UniformObject::create(context, UniformBufferData::create(context.window_width, context.window_height));
 
         let (descriptor_set_layout, descriptor_sets) = Self::create_model_descriptors(context, &model);

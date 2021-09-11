@@ -5,6 +5,7 @@ use raw_window_handle::HasRawWindowHandle;
 use crate::render::swapchain_mgr::SwapchainSupportDetails;
 use crate::render::buffer::Buffer;
 use std::mem;
+use bevy::prelude::*;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -58,14 +59,34 @@ unsafe extern "system" fn vulkan_debug_callback(
         CStr::from_ptr(callback_data.p_message).to_string_lossy()
     };
 
-    println!(
-        "{:?}:\n{:?} [{} ({})] : {}\n",
-        message_severity,
+    let output_string = format!(
+        "{:?} [{} ({})] : {}\n",
         message_type,
         message_id_name,
         &message_id_number.to_string(),
         message,
     );
+    
+    let output = output_string.as_str();
+
+    match message_severity {
+        vk::DebugUtilsMessageSeverityFlagsEXT::INFO | vk::DebugUtilsMessageSeverityFlagsEXT::VERBOSE
+        => {
+            info!(output)
+        }
+
+        vk::DebugUtilsMessageSeverityFlagsEXT::WARNING => {
+            warn!(output)
+        }
+
+        vk::DebugUtilsMessageSeverityFlagsEXT::ERROR => {
+            error!(output)
+        }
+
+        _ => {
+            panic!("unsupported message type")
+        }
+    }
 
     vk::FALSE
 }

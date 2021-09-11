@@ -7,6 +7,7 @@ use ash::vk;
 use std::time::SystemTime;
 use crate::render::model::Model;
 use crate::render::model_renderer::ModelRenderer;
+use bevy::prelude::*;
 
 pub struct RenderRunner {
     pub device_mgr: RenderContext,
@@ -32,13 +33,13 @@ impl Drop for RenderRunner {
 impl RenderRunner {
     pub fn create<W: raw_window_handle::HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
         unsafe {
-            println!("start up");
+            info!("start up");
             let mut device = RenderContext::create(window, window_width, window_height);
-            println!("render context create complete");
+            info!("render context create complete");
             let swapchain = SwapChainMgr::create(&device, window_width, window_height);
             let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &device);
             let forward_render_pass = ForwardRenderPass::create(&mut device, &swapchain, &command_buffer_list);
-            println!("forward render pass create complete");
+            info!("forward render pass create complete");
 
             // unsafe {
             //     let p = device.instance.get_physical_device_image_format_properties(device.physical_device,
@@ -55,7 +56,7 @@ impl RenderRunner {
 
             let model_renderer = Self::load_model(&mut device, &swapchain,
                                                   forward_render_pass.get_native_render_pass(), &command_buffer_list);
-            println!("model renderer created complete");
+            info!("model renderer created complete");
             RenderRunner {
                 device_mgr: device,
                 swapchain_mgr: swapchain,
@@ -83,8 +84,6 @@ impl RenderRunner {
                                                    "spv/simple_draw_object_vert.spv",
                                                    "spv/simple_draw_object_frag.spv");
 
-
-        println!("model renderer create complete~");
 
         unsafe {
             context.device.end_command_buffer(command_buffer);
