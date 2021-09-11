@@ -70,6 +70,7 @@ unsafe extern "system" fn vulkan_debug_callback(
     vk::FALSE
 }
 
+
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
@@ -285,7 +286,9 @@ impl RenderContext {
         ];
 
         let descriptor_pool = device.create_descriptor_pool(
-            &vk::DescriptorPoolCreateInfo::builder().max_sets(200)
+            &vk::DescriptorPoolCreateInfo::builder()
+                .max_sets(200)
+                .flags(vk::DescriptorPoolCreateFlags::FREE_DESCRIPTOR_SET)
                 .pool_sizes(&pool_size).build(), None,
         ).expect("create descriptor pool failed");
 

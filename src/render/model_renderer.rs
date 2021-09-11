@@ -14,7 +14,7 @@ const COLOR_SAMPLER_BINDING: u32 = 1;
 
 #[repr(C)]
 #[derive(Clone, Debug, Copy)]
-struct UniformBufferData {
+pub struct UniformBufferData {
     model: Mat4,
     view: Mat4,
     proj: Mat4,
@@ -56,9 +56,10 @@ fn create_uniform_descriptor_layout(context: &mut RenderContext) -> vk::Descript
 
 fn create_uniform_descriptor_sets(context: &mut RenderContext) {}
 
-struct UniformObject {
+pub struct UniformObject {
+    buffer: Buffer,
     data: UniformBufferData,
-    descriptor_set_layout: vk::DescriptorSetLayout,
+    pub descriptor_set_layout: vk::DescriptorSetLayout,
     descriptor_set: vk::DescriptorSet,
 }
 
@@ -68,31 +69,45 @@ impl UniformObject {
             context.device.free_descriptor_sets(context.descriptor_pool, &[self.descriptor_set]);
             context.device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
         }
+        self.buffer.destroy(context);
     }
 
     pub fn create(context: &mut RenderContext, data: UniformBufferData) -> UniformObject
     {
-        let uniform_buffer = Buffer::create_host_visible_buffer(context, vk::BufferUsageFlags::UNIFORM_BUFFER, &[data]);
+        let mut uniform_buffer = Buffer::create_host_visible_buffer(context, vk::BufferUsageFlags::UNIFORM_BUFFER, &[data]);
 
         let descriptor_set_layout = create_uniform_descriptor_layout(context);
+        let descriptor_sets = [descriptor_set_layout];
 
-        let descriptor_alloc_ci = vk::DescriptorSetAllocateInfo::builder().descriptor_pool(context.descriptor_pool)
-            .set_layouts(&[descriptor_set_layout]).build();
+        let descriptor_alloc_ci = vk::DescriptorSetAllocateInfo::builder()
+            .descriptor_pool(context.descriptor_pool)
+            .set_layouts(&descriptor_sets)
+            .build();
 
-        let descriptor_set = unsafe
-            { context.device.allocate_descriptor_sets(&descriptor_alloc_ci).expect("failed to allocate descriptor sets") }[0];
+        let descriptor_sets = unsafe
+            { context.device.allocate_descriptor_sets(&descriptor_alloc_ci).expect("failed to allocate descriptor sets") };
 
-        let descriptor_buffer_info = vk::DescriptorBufferInfo::builder()
-            .buffer(uniform_buffer.buffer).offset(0).range(size_of::<UniformBufferData>() as _).build();
+        let descriptor_set = descriptor_sets[0];
 
-        let descriptor_write_info = vk::WriteDescriptorSet::builder().descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
-            .dst_set(descriptor_set).dst_binding(0).buffer_info(&[descriptor_buffer_info]).build();
+        let descriptor_buffer_info = [vk::DescriptorBufferInfo::builder()
+            .buffer(uniform_buffer.buffer)
+            .offset(0)
+            .range(vk::WHOLE_SIZE)
+            .build()];
+
+        let descriptor_write_info = vk::WriteDescriptorSet::builder()
+            .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+            .dst_set(descriptor_set)
+            .dst_binding(0)
+            .buffer_info(&descriptor_buffer_info)
+            .build();
 
         unsafe {
             context.device.update_descriptor_sets(&[descriptor_write_info], &[]);
         }
 
         UniformObject {
+            buffer: uniform_buffer,
             data,
             descriptor_set,
             descriptor_set_layout,

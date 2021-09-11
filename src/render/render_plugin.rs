@@ -5,7 +5,10 @@ use bevy::winit::WinitWindows;
 use crate::render::render_context::RenderContext;
 use crate::render::swapchain_mgr::SwapChainMgr;
 use crate::render::render_runner::RenderRunner;
-
+use crate::render::model_renderer::{UniformObject, UniformBufferData};
+use crate::render::graphic_pipeline::{PipelineVertexInputInfo, GraphicPipeline};
+use ash::vk;
+use crate::render::vertex;
 
 struct RenderMgr {
     window_created_event_reader: ManualEventReader<WindowCreated>,

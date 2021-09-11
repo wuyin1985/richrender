@@ -9,10 +9,10 @@ use crate::render::model::Model;
 use crate::render::model_renderer::ModelRenderer;
 
 pub struct RenderRunner {
-    device_mgr: RenderContext,
-    swapchain_mgr: SwapChainMgr,
+    pub device_mgr: RenderContext,
+    pub swapchain_mgr: SwapChainMgr,
     command_buffer_list: CommandBufferList,
-    forward_render_pass: ForwardRenderPass,
+    pub forward_render_pass: ForwardRenderPass,
     model_renderer: ModelRenderer,
     last_tick: SystemTime,
 }
@@ -96,6 +96,7 @@ impl RenderRunner {
 
         model_renderer
     }
+    
 
     pub fn draw(&mut self) {
         unsafe {
