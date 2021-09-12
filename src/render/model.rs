@@ -13,6 +13,7 @@ use ash::vk;
 use crate::render::mesh::{Meshes, Mesh};
 use crate::render::node::Nodes;
 use crate::render::buffer::Buffer;
+use crate::render::vertex_layout::VertexLayout;
 
 
 pub struct Model {
@@ -48,12 +49,12 @@ impl Model {
         &self.meshes.meshes
     }
 
-    pub fn get_vertex_buffer(&self) -> &Buffer {
-        &self.meshes.vertices_buffer
+    pub fn get_vertex_layout(&self) -> &VertexLayout {
+        &self.meshes.meshes[0].primitives()[0].get_vertex_layout()
     }
 
-    pub fn get_indices_buffer(&self) -> &Buffer {
-        &self.meshes.indices_buffer
+    pub fn get_buffer(&self) -> &Buffer {
+        &self.meshes.buffer
     }
 
     pub fn get_textures(&self) -> &Vec<ModelTexture> {

@@ -121,6 +121,7 @@ pub struct ModelRenderer {
     model: Model,
     pipeline: GraphicPipeline,
     uniform: UniformObject,
+    buffers_ref_for_draw: Vec<vk::Buffer>,
     descriptor_set_layout: vk::DescriptorSetLayout,
     descriptor_sets: Vec<vk::DescriptorSet>,
 }
@@ -220,12 +221,17 @@ impl ModelRenderer {
 
     pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
                   command_buffer: vk::CommandBuffer, gltf_path: &str, vert_shader_path: &str, frag_shader_path: &str) -> ModelRenderer {
-        let vertex_input = PipelineVertexInputInfo::from(&vertex::VERTEX_BINDING_DESCS[..],
-                                                         &vertex::VERTEX_ATTRIBUTE_DESCS[..]);
-
         info!("start load model {}", gltf_path);
         let model = Model::from_gltf(context, command_buffer, gltf_path).expect("load error");
         info!("load model {} complete", gltf_path);
+
+        let vertex_layout = model.get_vertex_layout();
+        let vertex_bindings = vertex_layout.build_vk_bindings();
+        let vertex_attributes = vertex_layout.build_vk_attributes();
+        let vertex_input = PipelineVertexInputInfo::from(&vertex_bindings, &vertex_attributes);
+
+        let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();
+
         let uniform = UniformObject::create(context, UniformBufferData::create(context.window_width, context.window_height));
 
         let (descriptor_set_layout, descriptor_sets) = Self::create_model_descriptors(context, &model);
@@ -244,6 +250,7 @@ impl ModelRenderer {
             pipeline,
             model,
             uniform,
+            buffers_ref_for_draw,
             descriptor_set_layout,
             descriptor_sets,
         }
@@ -254,11 +261,19 @@ impl ModelRenderer {
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, self.pipeline.get_pipeline());
 
             let mut set_idx = 0;
-            context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.model.get_vertex_buffer().buffer], &[0]);
-            //todo index type
-            context.device.cmd_bind_index_buffer(command_buffer, self.model.get_indices_buffer().buffer, 0, vk::IndexType::UINT32);
+
             for mesh in self.model.get_meshes() {
                 for primitive in mesh.primitives() {
+                    let vertex_layout = &primitive.get_vertex_layout();
+                    context.device.cmd_bind_vertex_buffers(command_buffer,
+                                                           0,
+                                                           &self.buffers_ref_for_draw,
+                                                           &vertex_layout.buffers_ref_offsets);
+                    context.device.cmd_bind_index_buffer(command_buffer,
+                                                         self.model.get_buffer().buffer,
+                                                         vertex_layout.indices.index as _,
+                                                         vertex_layout.indices_type);
+
                     let set = self.descriptor_sets[set_idx];
                     context.device.cmd_bind_descriptor_sets(command_buffer,
                                                             vk::PipelineBindPoint::GRAPHICS,
@@ -266,7 +281,7 @@ impl ModelRenderer {
                                                             0,
                                                             &[self.uniform.descriptor_set, set], &[]);
 
-                    context.device.cmd_draw_indexed(command_buffer, primitive.indices.1 as _, 1, primitive.indices.0 as _, 0, 0);
+                    context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
                     set_idx += 1;
                 }
             }

@@ -7,8 +7,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(location = 0) in vec3 vPos;
-layout(location = 1) in vec3 vNormal;
-layout(location = 2) in vec2 tex_coord;
+layout(location = 1) in vec2 tex_coord;
 
 layout(location = 0) out vec2 fragTexCoord;
 

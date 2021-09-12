@@ -95,7 +95,7 @@ impl RenderRunner {
 
         model_renderer
     }
-    
+
 
     pub fn draw(&mut self) {
         unsafe {
@@ -162,8 +162,11 @@ impl RenderRunner {
 
             let surface_resolution = self.swapchain_mgr.surface_resolution;
 
-            self.device_mgr.device.cmd_copy_image(command_buffer, self.forward_render_pass.get_final_render_image(), vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
-                                                  self.swapchain_mgr.get_current_present_image(), vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+            self.device_mgr.device.cmd_copy_image(command_buffer,
+                                                  self.forward_render_pass.get_final_render_image(),
+                                                  vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+                                                  self.swapchain_mgr.get_current_present_image(),
+                                                  vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                                                   &[vk::ImageCopy {
                                                       src_subresource: vk::ImageSubresourceLayers {
                                                           aspect_mask: vk::ImageAspectFlags::COLOR,
@@ -199,9 +202,12 @@ impl RenderRunner {
                         }).build(),
                 ];
 
-                self.device_mgr.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
+                self.device_mgr.device.cmd_pipeline_barrier(command_buffer,
                                                             vk::PipelineStageFlags::ALL_COMMANDS,
-                                                            vk::DependencyFlags::empty(), &[], &[],
+                                                            vk::PipelineStageFlags::ALL_COMMANDS,
+                                                            vk::DependencyFlags::empty(),
+                                                            &[],
+                                                            &[],
                                                             &image_barriers);
             }
 

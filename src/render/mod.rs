@@ -18,6 +18,7 @@ mod model_meta;
 mod node;
 mod model_renderer;
 mod graphic_pipeline;
+mod vertex_layout;
 
 pub use render_plugin::RenderPlugin;
 

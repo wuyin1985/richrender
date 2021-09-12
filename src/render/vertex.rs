@@ -1,5 +1,3 @@
-
-
 use crate::render::buffer::Buffer;
 use ash::vk;
 use crate::render::render_context::RenderContext;
@@ -18,6 +16,11 @@ pub struct Vertex {
     pub tex_coord: [f32; 2],
     pub weight: [f32; 4],
     pub joint: [u32; 4],
+}
+
+pub struct BufferPart {
+    pub index: usize,
+    pub count: usize,
 }
 
 /// Vertex buffer byte offset / element count
