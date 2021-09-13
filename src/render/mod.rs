@@ -19,6 +19,9 @@ mod node;
 mod model_renderer;
 mod graphic_pipeline;
 mod vertex_layout;
+mod camera;
+mod fly_camera;
+mod uniform;
 
 pub use render_plugin::RenderPlugin;
 

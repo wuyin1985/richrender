@@ -1,4 +1,4 @@
-use crate::render::render_context::RenderContext;
+use crate::render::render_context::{RenderContext, PerFrameData};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use bevy::winit::WinitWindows;
 use crate::render::forward_render::ForwardRenderPass;
@@ -8,6 +8,7 @@ use std::time::SystemTime;
 use crate::render::model::Model;
 use crate::render::model_renderer::ModelRenderer;
 use bevy::prelude::*;
+use crate::render::uniform::UniformObject;
 
 pub struct RenderRunner {
     pub device_mgr: RenderContext,
@@ -35,12 +36,17 @@ impl RenderRunner {
         unsafe {
             info!("start up");
             let mut device = RenderContext::create(window, window_width, window_height);
+            let per_frame_data = UniformObject::<PerFrameData>::create(&mut device,
+                                                                       PerFrameData::create(),
+                                                                       vk::DescriptorType::UNIFORM_BUFFER,
+                                                                       vk::ShaderStageFlags::VERTEX);
+            device.push_resource(per_frame_data);
+
             info!("render context create complete");
             let swapchain = SwapChainMgr::create(&device, window_width, window_height);
             let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &device);
             let forward_render_pass = ForwardRenderPass::create(&mut device, &swapchain, &command_buffer_list);
             info!("forward render pass create complete");
-
             // unsafe {
             //     let p = device.instance.get_physical_device_image_format_properties(device.physical_device,
             //                                                                         vk::Format::R8G8B8_USCALED, vk::ImageType::TYPE_2D, vk::ImageTiling::OPTIMAL,
@@ -94,6 +100,11 @@ impl RenderRunner {
         context.flush_staging_buffer();
 
         model_renderer
+    }
+
+    pub fn get_per_frame_data_mut(&mut self) -> &mut PerFrameData {
+        let pf = self.device_mgr.get_resource_mut::<UniformObject::<PerFrameData>>();
+        &mut pf.data
     }
 
 

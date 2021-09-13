@@ -6,6 +6,7 @@ use crate::render::RenderPlugin;
 use bevy::log::{LogSettings, Level};
 
 mod render;
+mod game;
 
 fn startup() {
     info!("hello world!")

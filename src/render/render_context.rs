@@ -6,6 +6,10 @@ use crate::render::swapchain_mgr::SwapchainSupportDetails;
 use crate::render::buffer::Buffer;
 use std::mem;
 use bevy::prelude::*;
+use crate::render::uniform::UniformObject;
+use bevy::asset::AssetIoError::PathWatchError;
+use std::collections::HashMap;
+use std::any::{TypeId, Any};
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -14,6 +18,29 @@ pub struct RenderConfig {
     pub color_format: vk::Format,
     pub depth_format: vk::Format,
 }
+
+#[repr(C)]
+#[derive(Clone, Debug, Copy)]
+pub struct PerFrameData {
+    pub view: Mat4,
+    pub proj: Mat4,
+}
+
+impl PerFrameData {
+    pub fn create() -> PerFrameData {
+        PerFrameData {
+            view: Mat4::IDENTITY,
+            proj: Mat4::IDENTITY,
+        }
+    }
+}
+
+pub trait RenderResource: 'static + Send + Sync{
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+    fn destroy_res(&mut self, rc: &RenderContext);
+}
+
 
 pub struct RenderContext {
     pub window_width: u32,
@@ -33,8 +60,8 @@ pub struct RenderContext {
     pub graphics_queue_family_index: u32,
     pub render_config: RenderConfig,
     pub descriptor_pool: vk::DescriptorPool,
-
     staging_buffers: Vec<Buffer>,
+    resources: HashMap<TypeId, Box<dyn RenderResource>>,
 }
 
 
@@ -66,7 +93,7 @@ unsafe extern "system" fn vulkan_debug_callback(
         &message_id_number.to_string(),
         message,
     );
-    
+
     let output = output_string.as_str();
 
     match message_severity {
@@ -95,6 +122,10 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
+            let mut resources = std::mem::take(&mut self.resources);
+            for (_, res) in resources.iter_mut() {
+                (*res).destroy_res(self);
+            }
             self.device.destroy_descriptor_pool(self.descriptor_pool, None);
             self.device.destroy_device(None);
             self.surface_loader.destroy_surface(self.surface, None);
@@ -313,6 +344,7 @@ impl RenderContext {
                 .pool_sizes(&pool_size).build(), None,
         ).expect("create descriptor pool failed");
 
+
         RenderContext {
             window_width,
             window_height,
@@ -332,6 +364,7 @@ impl RenderContext {
             render_config,
             descriptor_pool,
             staging_buffers: vec![],
+            resources: HashMap::new(),
         }
     }
 
@@ -360,5 +393,27 @@ impl RenderContext {
             buffer.destroy(self)
         }
         self.staging_buffers = buffers
+    }
+
+    pub fn push_resource<T>(&mut self, resource: T) where T: RenderResource {
+        self.resources.insert(TypeId::of::<T>(), Box::new(resource));
+    }
+    
+    pub fn get_resource<T>(&self) -> &T where T: RenderResource {
+        let id = TypeId::of::<T>();
+        let box_resource = self.resources.get(&id).unwrap().as_any();
+        match box_resource.downcast_ref::<T>() {
+            Some(t) => t,
+            None => panic!("error resource"),
+        }
+    }
+
+    pub fn get_resource_mut<T>(&mut self) -> &mut T where T: RenderResource {
+        let id = TypeId::of::<T>();
+        let box_resource = self.resources.get_mut(&id).unwrap().as_any_mut();
+        match box_resource.downcast_mut::<T>() {
+            Some(t) => t,
+            None => panic!("error resource"),
+        }
     }
 }

@@ -17,3 +17,6 @@ lazy_static = "1.4"
 [dependencies.gltf]
 version = "0.16"
 features = ["KHR_lights_punctual", "KHR_materials_unlit", "KHR_materials_pbrSpecularGlossiness"]
+
+[profile.dev.package."*"]
+opt-level = 2

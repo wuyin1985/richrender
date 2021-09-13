@@ -13,6 +13,12 @@ pub unsafe fn mem_copy<T: Copy>(ptr: *mut c_void, data: &[T]) {
     align.copy_from_slice(data);
 }
 
+pub unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
+    ::std::slice::from_raw_parts(
+        (p as *const T) as *const u8,
+        ::std::mem::size_of::<T>(),
+    )
+}
 
 pub fn has_stencil_component(format: vk::Format) -> bool {
     format == vk::Format::D32_SFLOAT_S8_UINT || format == vk::Format::D24_UNORM_S8_UINT
