@@ -1,6 +1,6 @@
 use std::ffi::{CString, CStr};
 use ash::vk;
-use std::borrow::Cow;
+use std::borrow::{Cow, Borrow};
 use raw_window_handle::HasRawWindowHandle;
 use crate::render::swapchain_mgr::SwapchainSupportDetails;
 use crate::render::buffer::Buffer;
@@ -10,6 +10,8 @@ use crate::render::uniform::UniformObject;
 use bevy::asset::AssetIoError::PathWatchError;
 use std::collections::HashMap;
 use std::any::{TypeId, Any};
+use std::cell::RefCell;
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -35,7 +37,7 @@ impl PerFrameData {
     }
 }
 
-pub trait RenderResource: 'static + Send + Sync{
+pub trait RenderResource: 'static + Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn destroy_res(&mut self, rc: &RenderContext);
@@ -62,6 +64,7 @@ pub struct RenderContext {
     pub descriptor_pool: vk::DescriptorPool,
     staging_buffers: Vec<Buffer>,
     resources: HashMap<TypeId, Box<dyn RenderResource>>,
+    pub per_frame_uniform : Option<UniformObject<PerFrameData>>,
 }
 
 
@@ -122,10 +125,14 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
-            let mut resources = std::mem::take(&mut self.resources);
-            for (_, res) in resources.iter_mut() {
-                (*res).destroy_res(self);
-            }
+            // let mut resources = std::mem::take(self.resources.get_mut().unwrap());
+            // for (_, res) in resources.iter_mut() {
+            //     (*res).destroy_res(self);
+            // }
+            let mut pf = std::mem::take(&mut self.per_frame_uniform);
+            let uo = pf.as_mut().unwrap();
+            uo.destroy(self);
+            
             self.device.destroy_descriptor_pool(self.descriptor_pool, None);
             self.device.destroy_device(None);
             self.surface_loader.destroy_surface(self.surface, None);
@@ -365,6 +372,7 @@ impl RenderContext {
             descriptor_pool,
             staging_buffers: vec![],
             resources: HashMap::new(),
+            per_frame_uniform : None,
         }
     }
 
@@ -398,11 +406,11 @@ impl RenderContext {
     pub fn push_resource<T>(&mut self, resource: T) where T: RenderResource {
         self.resources.insert(TypeId::of::<T>(), Box::new(resource));
     }
-    
+
     pub fn get_resource<T>(&self) -> &T where T: RenderResource {
         let id = TypeId::of::<T>();
-        let box_resource = self.resources.get(&id).unwrap().as_any();
-        match box_resource.downcast_ref::<T>() {
+        let res = self.resources.get(&id).unwrap().as_any();
+        match res.downcast_ref::<T>() {
             Some(t) => t,
             None => panic!("error resource"),
         }
@@ -410,10 +418,11 @@ impl RenderContext {
 
     pub fn get_resource_mut<T>(&mut self) -> &mut T where T: RenderResource {
         let id = TypeId::of::<T>();
-        let box_resource = self.resources.get_mut(&id).unwrap().as_any_mut();
-        match box_resource.downcast_mut::<T>() {
+        let res = self.resources.get_mut(&id).unwrap().as_any_mut();
+        match res.downcast_mut::<T>() {
             Some(t) => t,
             None => panic!("error resource"),
         }
     }
+
 }

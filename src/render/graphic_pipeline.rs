@@ -126,7 +126,7 @@ impl GraphicPipeline {
             .rasterizer_discard_enable(false)
             .polygon_mode(vk::PolygonMode::FILL)
             .line_width(1.0)
-            .cull_mode(vk::CullModeFlags::BACK)
+            .cull_mode(vk::CullModeFlags::FRONT)
             .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
             .depth_bias_enable(false)
             .depth_bias_constant_factor(0.0)
@@ -143,17 +143,22 @@ impl GraphicPipeline {
             .alpha_to_one_enable(false)
             .build();
 
-        let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo::builder()
-            .depth_test_enable(true)
-            .depth_write_enable(true)
-            .depth_compare_op(vk::CompareOp::LESS)
-            .depth_bounds_test_enable(false)
-            .min_depth_bounds(0.0)
-            .max_depth_bounds(1.0)
-            .stencil_test_enable(false)
-            .front(Default::default())
-            .back(Default::default())
-            .build();
+        let noop_stencil_state = vk::StencilOpState {
+            fail_op: vk::StencilOp::KEEP,
+            pass_op: vk::StencilOp::KEEP,
+            depth_fail_op: vk::StencilOp::KEEP,
+            compare_op: vk::CompareOp::ALWAYS,
+            ..Default::default()
+        };
+        let depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo {
+            depth_test_enable: 1,
+            depth_write_enable: 1,
+            depth_compare_op: vk::CompareOp::LESS_OR_EQUAL,
+            front: noop_stencil_state,
+            back: noop_stencil_state,
+            max_depth_bounds: 1.0,
+            ..Default::default()
+        };
 
         let color_blend_attachment = vk::PipelineColorBlendAttachmentState::builder()
             .color_write_mask(vk::ColorComponentFlags::all())

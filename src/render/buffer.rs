@@ -4,7 +4,9 @@ use std::mem::size_of;
 use std::ffi::c_void;
 
 struct MemoryMapPointer(*mut c_void);
+
 unsafe impl Send for MemoryMapPointer {}
+
 unsafe impl Sync for MemoryMapPointer {}
 
 pub struct Buffer {
@@ -12,6 +14,17 @@ pub struct Buffer {
     pub memory: vk::DeviceMemory,
     pub size: vk::DeviceSize,
     mapped_ptr: Option<MemoryMapPointer>,
+}
+
+impl Default for Buffer {
+    fn default() -> Self {
+        Self {
+            buffer: Default::default(),
+            memory: Default::default(),
+            size: Default::default(),
+            mapped_ptr: None,
+        }
+    }
 }
 
 impl Buffer {
@@ -72,6 +85,13 @@ impl Buffer {
         }
 
         buffer
+    }
+
+    pub fn upload_data<T: Copy>(&mut self, context: &RenderContext, data: &[T]) {
+        unsafe {
+            let ptr = self.map_memory(context);
+            Self::mem_copy(ptr, data);
+        }
     }
 
     pub fn create_device_local_buffer<T: Copy>(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, usage: vk::BufferUsageFlags, data: &[T]) -> Buffer {

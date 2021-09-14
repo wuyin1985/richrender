@@ -9,6 +9,7 @@ use ash::vk;
 use crate::render::vertex;
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
+use crate::render::render_context::PerFrameData;
 
 struct RenderMgr {
     window_created_event_reader: ManualEventReader<WindowCreated>,
@@ -74,14 +75,15 @@ fn update_render_state_from_camera(mut commands: Commands,
 )
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-        let data = runner.get_per_frame_data_mut();
-        data.view = transform.compute_matrix();
-        data.proj = Mat4::perspective_rh(
-            camera.fov,
-            camera.aspect,
-            camera.z_near,
-            camera.z_far,
-        );
+        let frame_data = PerFrameData {
+            view: transform.compute_matrix(),
+            proj: Mat4::perspective_rh(
+                camera.fov,
+                camera.aspect,
+                camera.z_near,
+                camera.z_far),
+        };
+        runner.upload_per_frame_data(frame_data);
         //println!("camera {:?} {:?}", camera, transform);
     }
 }
@@ -93,10 +95,8 @@ impl Plugin for RenderPlugin {
         //init camera
         let world = app.world_mut();
         let default_pos = Vec3::new(2f32, 2f32, 2f32);
-        let default_scale = Vec3::new(1f32, 1f32, 1f32);
-        let default_rot = Quat::from_rotation_mat4(&Mat4::look_at_rh(default_pos, Vec3::ZERO, Vec3::new(0f32, 0f32, 1f32)));
-        let default_camera_transform = Mat4::from_scale_rotation_translation(
-            default_scale, default_rot, default_pos);
+        let default_camera_transform = Mat4::look_at_rh(default_pos, Vec3::ZERO, Vec3::new(0f32, 0f32, 1f32));
+     
         let ce = world.spawn().insert(Camera::default())
             .insert(FlyCamera::default())
             .insert(Transform::from_matrix(default_camera_transform)).id();

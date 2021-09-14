@@ -40,7 +40,8 @@ impl RenderRunner {
                                                                        PerFrameData::create(),
                                                                        vk::DescriptorType::UNIFORM_BUFFER,
                                                                        vk::ShaderStageFlags::VERTEX);
-            device.push_resource(per_frame_data);
+            device.per_frame_uniform = Some(per_frame_data);
+            //device.push_resource(per_frame_data);
 
             info!("render context create complete");
             let swapchain = SwapChainMgr::create(&device, window_width, window_height);
@@ -102,9 +103,12 @@ impl RenderRunner {
         model_renderer
     }
 
-    pub fn get_per_frame_data_mut(&mut self) -> &mut PerFrameData {
-        let pf = self.device_mgr.get_resource_mut::<UniformObject::<PerFrameData>>();
-        &mut pf.data
+    pub fn upload_per_frame_data(&mut self, data: PerFrameData) {
+        let context = &mut self.device_mgr;
+        let mut pf = std::mem::take(&mut context.per_frame_uniform);
+        let uo = pf.as_mut().unwrap();
+        uo.upload_data_2_device(context, data);
+        context.per_frame_uniform = pf;
     }
 
 

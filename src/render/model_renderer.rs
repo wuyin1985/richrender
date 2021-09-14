@@ -135,7 +135,7 @@ impl ModelRenderer {
 
         let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();
 
-        let frame_uniform_layout = context.get_resource::<UniformObject<PerFrameData>>().descriptor_set_layout;
+        let frame_uniform_layout = context.per_frame_uniform.as_mut().unwrap().descriptor_set_layout;
 
         let (descriptor_set_layout, descriptor_sets) = Self::create_model_descriptors(context, &model);
 
@@ -175,7 +175,7 @@ impl ModelRenderer {
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, self.pipeline.get_pipeline());
 
             let mut set_idx = 0;
-            let uniform = context.get_resource::<UniformObject<PerFrameData>>();
+            let uniform = context.per_frame_uniform.as_ref().unwrap();
 
             let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&self.model_data) };
 

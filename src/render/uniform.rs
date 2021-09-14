@@ -3,7 +3,7 @@ use ash::vk;
 use crate::render::buffer::Buffer;
 use std::any::Any;
 
-
+#[derive(Default)]
 pub struct UniformObject<T> {
     buffer: Buffer,
     pub data: T,
@@ -83,5 +83,10 @@ impl<T> UniformObject<T> where T: Copy {
             descriptor_set,
             descriptor_set_layout,
         }
+    }
+
+    pub fn upload_data_2_device(&mut self, context: &RenderContext, data: T) {
+        self.data = data;
+        self.buffer.upload_data(context, &[self.data]);
     }
 }
