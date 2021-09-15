@@ -7,6 +7,7 @@ use crate::render::render_context::RenderContext;
 use crate::render::vertex::*;
 use core::mem;
 use crate::render::vertex_layout::VertexLayout;
+use std::io::Write;
 
 
 pub struct Mesh {
@@ -160,13 +161,13 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
             let indices_accessor = &primitive.indices().expect("no indices");
             let (indices, indices_count) = read_no_sparse_buffer(indices_accessor, buffers, 1);
             all_data.extend(indices);
-            vertex_layout.set_indices(indices_offset, indices_count, indices_accessor.data_type());
 
+            vertex_layout.set_indices(indices_offset, indices_count, indices_accessor.data_type());
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Positions, buffers, 3, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Weights(0), buffers, 4, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Joints(0), buffers, 4, &mut all_data, &mut vertex_layout);
-            
+
             vertex_layout.refresh_buffer_offsets();
 
             let material = primitive.material().into();
@@ -189,6 +190,7 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
 
     let buffer =
         Buffer::create_device_local_buffer(context, upload_command_buffer, vk::BufferUsageFlags::INDEX_BUFFER | vk::BufferUsageFlags::VERTEX_BUFFER, &all_data);
+
 
     Meshes {
         meshes,

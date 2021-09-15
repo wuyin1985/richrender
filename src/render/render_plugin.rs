@@ -76,7 +76,7 @@ fn update_render_state_from_camera(mut commands: Commands,
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
         let frame_data = PerFrameData {
-            view: transform.compute_matrix(),
+            view: transform.compute_matrix().inverse(),
             proj: Mat4::perspective_rh(
                 camera.fov,
                 camera.aspect,
@@ -84,7 +84,6 @@ fn update_render_state_from_camera(mut commands: Commands,
                 camera.z_far),
         };
         runner.upload_per_frame_data(frame_data);
-        //println!("camera {:?} {:?}", camera, transform);
     }
 }
 
@@ -94,12 +93,14 @@ impl Plugin for RenderPlugin {
     fn build(&self, app: &mut AppBuilder) {
         //init camera
         let world = app.world_mut();
-        let default_pos = Vec3::new(2f32, 2f32, 2f32);
-        let default_camera_transform = Mat4::look_at_rh(default_pos, Vec3::ZERO, Vec3::new(0f32, 0f32, 1f32));
-     
+
+        let transM = Mat4::from_scale_rotation_translation(Vec3::ONE,
+                                                           Quat::from_axis_angle(Vec3::Y, 0f32.to_radians()),
+                                                           Vec3::new(0.0, 0.0, 1.0));
+
         let ce = world.spawn().insert(Camera::default())
             .insert(FlyCamera::default())
-            .insert(Transform::from_matrix(default_camera_transform)).id();
+            .insert(Transform::from_matrix(transM)).id();
         world.insert_resource(RenderCamera { camera: ce });
 
 

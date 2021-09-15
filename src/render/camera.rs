@@ -14,7 +14,7 @@ impl Default for Camera {
             fov: 45f32.to_radians(),
             aspect: 1280f32 / 720f32,
             z_near: 0.1,
-            z_far: 10.0,
+            z_far: 256.0,
         }
     }
 }

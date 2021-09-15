@@ -11,7 +11,7 @@ use crate::render::util;
 
 use ash::vk;
 use crate::render::mesh::{Meshes, Mesh};
-use crate::render::node::Nodes;
+use crate::render::node::{Nodes, Node};
 use crate::render::buffer::Buffer;
 use crate::render::vertex_layout::VertexLayout;
 
@@ -20,6 +20,7 @@ pub struct Model {
     meshes: Meshes,
     nodes: Nodes,
     textures: ModelTextures,
+    pub aabb: Aabb,
 }
 
 impl Model {
@@ -33,8 +34,22 @@ impl Model {
         let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
         let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
         let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
+
+        let aabbs = nodes
+            .nodes()
+            .iter()
+            .filter(|n| n.mesh_index().is_some())
+            .map(|n| {
+                let mesh = &meshes.meshes[n.mesh_index().unwrap()];
+                mesh.aabb() * n.transform()
+            })
+            .collect::<Vec<_>>();
+
+        let aabb = Aabb::union(&aabbs).unwrap();
+
         Ok(
             Model {
+                aabb,
                 nodes,
                 textures,
                 meshes,
@@ -47,6 +62,14 @@ impl Model {
 
     pub fn get_meshes(&self) -> &Vec<Mesh> {
         &self.meshes.meshes
+    }
+
+    pub fn get_nodes(&self) -> &[Node] {
+        self.nodes.nodes()
+    }
+
+    pub fn aabb(&self) -> Aabb {
+        self.aabb
     }
 
     pub fn get_vertex_layout(&self) -> &VertexLayout {

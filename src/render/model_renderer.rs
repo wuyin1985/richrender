@@ -10,6 +10,7 @@ use std::mem::size_of;
 use crate::render::texture::Texture;
 use bevy::prelude::*;
 use crate::render::uniform::UniformObject;
+use crate::render::aabb::Aabb;
 
 const UBO_BINDING: u32 = 0;
 const COLOR_SAMPLER_BINDING: u32 = 1;
@@ -122,6 +123,29 @@ impl ModelRenderer {
         (set_layout, sets)
     }
 
+    fn get_center_transform(model_aabb: Aabb) -> Mat4 {
+        let aabb = model_aabb * Mat4::from_rotation_x(0f32.to_radians());
+        let CAMERA_DIS: f32 = 1.0;
+        let CAMERA_FOV: f32 = 45f32.to_radians() / 2f32;
+        let target_z = (aabb.max.z - aabb.min.z) / 2f32;
+        let target_y = (aabb.max.y - aabb.min.y) / 2f32;
+
+        let offset_x = (aabb.max.x + aabb.min.x) / 2f32;
+        let offset_z = (aabb.max.z + aabb.min.z) / 2f32;
+        let offset_y = (aabb.max.y + aabb.min.y) / 2f32;
+
+        println!("aabb {:?} {:?}", model_aabb.min, model_aabb.max);
+
+        assert!(target_y > 0f32, "error model half y");
+        let to_z = -1f32;
+        let desire_y = CAMERA_FOV.tan() * (CAMERA_DIS - to_z);
+        let scale = desire_y / target_y;
+        //let scale = 1f32;
+        return Mat4::from_scale_rotation_translation(Vec3::new(scale, scale, scale),
+                                                     Quat::from_axis_angle(Vec3::X, 0f32.to_radians()),
+                                                     Vec3::new(-offset_x, 0f32, to_z));
+    }
+
     pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
                   command_buffer: vk::CommandBuffer, gltf_path: &str, vert_shader_path: &str, frag_shader_path: &str) -> ModelRenderer {
         info!("start load model {}", gltf_path);
@@ -153,12 +177,14 @@ impl ModelRenderer {
                                                &vertex_input, &pipeline_layout_ci, context.render_config.msaa,
                                                vert_shader_path, frag_shader_path);
 
+        // let pos = Vec3::new(0.00248157978, -0.0000104904175, 0.187154889);
+        // let s = 0.249999f32;
+        // let scale = Vec3::new(s, s, s);
+        // let t = Mat4::from_scale_rotation_translation(scale, Quat::from_axis_angle(Vec3::new(1.0, 0.0, 0.0), 90f32), pos);
+
+        let t = Self::get_center_transform(model.aabb());
         let model_data = ModelData {
-            transform: Mat4::from_scale_rotation_translation(
-                Vec3::new(1f32, 1f32, 1f32),
-                Quat::IDENTITY,
-                Vec3::new(0f32, 0f32, 0f32),
-            )
+            transform: t
         };
         ModelRenderer {
             pipeline,
@@ -177,32 +203,36 @@ impl ModelRenderer {
             let mut set_idx = 0;
             let uniform = context.per_frame_uniform.as_ref().unwrap();
 
-            let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&self.model_data) };
 
-            context.device.cmd_push_constants(command_buffer, self.pipeline.get_layout(),
-                                              vk::ShaderStageFlags::VERTEX, 0, model_data_bytes);
+            for node in self.model.get_nodes() {
+                if let Some(mesh_idx) = node.mesh_index() {
+                    let m_data = ModelData { transform: self.model_data.transform * node.transform() };
+                    let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
+                    context.device.cmd_push_constants(command_buffer, self.pipeline.get_layout(),
+                                                      vk::ShaderStageFlags::VERTEX, 0, model_data_bytes);
 
-            for mesh in self.model.get_meshes() {
-                for primitive in mesh.primitives() {
-                    let vertex_layout = &primitive.get_vertex_layout();
-                    context.device.cmd_bind_vertex_buffers(command_buffer,
-                                                           0,
-                                                           &self.buffers_ref_for_draw,
-                                                           &vertex_layout.buffers_ref_offsets);
-                    context.device.cmd_bind_index_buffer(command_buffer,
-                                                         self.model.get_buffer().buffer,
-                                                         vertex_layout.indices.index as _,
-                                                         vertex_layout.indices_type);
+                    let mesh = &self.model.get_meshes()[mesh_idx];
+                    for primitive in mesh.primitives() {
+                        let vertex_layout = &primitive.get_vertex_layout();
+                        context.device.cmd_bind_vertex_buffers(command_buffer,
+                                                               0,
+                                                               &self.buffers_ref_for_draw,
+                                                               &vertex_layout.buffers_ref_offsets);
+                        context.device.cmd_bind_index_buffer(command_buffer,
+                                                             self.model.get_buffer().buffer,
+                                                             vertex_layout.indices.index as _,
+                                                             vertex_layout.indices_type);
 
-                    let set = self.descriptor_sets[set_idx];
-                    context.device.cmd_bind_descriptor_sets(command_buffer,
-                                                            vk::PipelineBindPoint::GRAPHICS,
-                                                            self.pipeline.get_layout(),
-                                                            0,
-                                                            &[uniform.descriptor_set, set], &[]);
+                        let set = self.descriptor_sets[set_idx];
+                        context.device.cmd_bind_descriptor_sets(command_buffer,
+                                                                vk::PipelineBindPoint::GRAPHICS,
+                                                                self.pipeline.get_layout(),
+                                                                0,
+                                                                &[uniform.descriptor_set, set], &[]);
 
-                    context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
-                    set_idx += 1;
+                        context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
+                        set_idx += 1;
+                    }
                 }
             }
         }

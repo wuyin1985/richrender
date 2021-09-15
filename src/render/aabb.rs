@@ -40,8 +40,8 @@ pub fn partial_max<I, S>(iter: I) -> Option<S>
 /// Axis aligned bounding box.
 #[derive(Copy, Clone, Debug)]
 pub struct Aabb {
-    min: Vec3,
-    max: Vec3,
+    pub min: Vec3,
+    pub max: Vec3,
 }
 
 impl Aabb {
@@ -91,7 +91,7 @@ impl Aabb {
 
     /// Get the center of the AABB.
     pub fn get_center(&self) -> Vec3 {
-        let two = Vec3::new(2f32,2f32,2f32);
+        let two = Vec3::new(2f32, 2f32, 2f32);
         self.min + (self.max - self.min) / two
     }
 }
@@ -103,5 +103,27 @@ impl Mul<f32> for Aabb {
 
     fn mul(self, rhs: f32) -> Self::Output {
         Aabb::new(self.min.mul(rhs), self.max.mul(rhs))
+    }
+}
+
+impl Mul<Mat4> for Aabb {
+    type Output = Aabb;
+
+    fn mul(self, rhs: Mat4) -> Self::Output {
+        let min = self.min;
+        let min = rhs * Vec4::new(min.x, min.y, min.z, 1f32);
+
+        let max = self.max;
+        let max = rhs * Vec4::new(max.x, max.y, max.z, 1f32);
+
+        let min_x = min.x.min(max.x);
+        let min_y = min.y.min(max.y);
+        let min_z = min.z.min(max.z);
+
+        let max_x = min.x.max(max.x);
+        let max_y = min.y.max(max.y);
+        let max_z = min.z.max(max.z);
+
+        Aabb::new(Vec3::new(min_x, min_y, min_z), Vec3::new(max_x, max_y, max_z))
     }
 }

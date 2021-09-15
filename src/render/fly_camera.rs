@@ -15,12 +15,13 @@
 //! use bevy_fly_camera::{FlyCamera, FlyCameraPlugin};
 //!
 //! fn setup(commands: &mut Commands) {
-//!	  commands
+//!      commands
 //!     .spawn(Camera3dBundle::default())
 //!     .with(FlyCamera::default());
 //! }
 
 use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy::input::mouse::MouseButtonInput;
 
 pub fn movement_axis(
     input: &Res<Input<KeyCode>>,
@@ -67,7 +68,10 @@ pub struct FlyCamera {
     pub key_down: KeyCode,
     /// If `false`, disable keyboard control of the camera. Defaults to `true`
     pub enabled: bool,
+
+    pub mouse_pressed: bool,
 }
+
 impl Default for FlyCamera {
     fn default() -> Self {
         Self {
@@ -85,6 +89,7 @@ impl Default for FlyCamera {
             key_up: KeyCode::Space,
             key_down: KeyCode::LShift,
             enabled: true,
+            mouse_pressed : false,
         }
     }
 }
@@ -165,10 +170,12 @@ fn camera_movement_system(
 
 fn mouse_motion_system(
     time: Res<Time>,
+    mut mouse_button_input_events: EventReader<MouseButtonInput>,
     mut mouse_motion_event_reader: EventReader<MouseMotion>,
     mut query: Query<(&mut FlyCamera, &mut Transform)>,
 ) {
     let mut delta: Vec2 = Vec2::ZERO;
+
     for event in mouse_motion_event_reader.iter() {
         delta += event.delta;
     }
@@ -177,9 +184,16 @@ fn mouse_motion_system(
     }
 
     for (mut options, mut transform) in query.iter_mut() {
-        if !options.enabled {
+        for event in mouse_button_input_events.iter() {
+            if event.button == MouseButton::Left {
+                options.mouse_pressed = event.state.is_pressed();
+            }
+        }
+
+        if !options.mouse_pressed {
             continue;
         }
+        
         options.yaw -= delta.x * options.sensitivity * time.delta_seconds();
         options.pitch += delta.y * options.sensitivity * time.delta_seconds();
 
