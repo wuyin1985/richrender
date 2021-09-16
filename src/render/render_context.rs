@@ -26,6 +26,8 @@ pub struct RenderConfig {
 pub struct PerFrameData {
     pub view: Mat4,
     pub proj: Mat4,
+    pub light_dir: Vec3,
+    pub camera_pos: Vec3,
 }
 
 impl PerFrameData {
@@ -33,6 +35,8 @@ impl PerFrameData {
         PerFrameData {
             view: Mat4::IDENTITY,
             proj: Mat4::IDENTITY,
+            light_dir: Vec3::Z,
+            camera_pos: Vec3::ZERO,
         }
     }
 }
@@ -64,7 +68,7 @@ pub struct RenderContext {
     pub descriptor_pool: vk::DescriptorPool,
     staging_buffers: Vec<Buffer>,
     resources: HashMap<TypeId, Box<dyn RenderResource>>,
-    pub per_frame_uniform : Option<UniformObject<PerFrameData>>,
+    pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
 }
 
 
@@ -132,7 +136,7 @@ impl RenderContext {
             let mut pf = std::mem::take(&mut self.per_frame_uniform);
             let uo = pf.as_mut().unwrap();
             uo.destroy(self);
-            
+
             self.device.destroy_descriptor_pool(self.descriptor_pool, None);
             self.device.destroy_device(None);
             self.surface_loader.destroy_surface(self.surface, None);
@@ -372,7 +376,7 @@ impl RenderContext {
             descriptor_pool,
             staging_buffers: vec![],
             resources: HashMap::new(),
-            per_frame_uniform : None,
+            per_frame_uniform: None,
         }
     }
 
@@ -424,5 +428,4 @@ impl RenderContext {
             None => panic!("error resource"),
         }
     }
-
 }

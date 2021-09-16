@@ -165,6 +165,7 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
             vertex_layout.set_indices(indices_offset, indices_count, indices_accessor.data_type());
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Positions, buffers, 3, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Normals, buffers, 3, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Weights(0), buffers, 4, &mut all_data, &mut vertex_layout);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Joints(0), buffers, 4, &mut all_data, &mut vertex_layout);
 

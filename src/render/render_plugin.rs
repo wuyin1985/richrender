@@ -82,6 +82,8 @@ fn update_render_state_from_camera(mut commands: Commands,
                 camera.aspect,
                 camera.z_near,
                 camera.z_far),
+            light_dir: Vec3::new(1.0, -1.0, -1.0),
+            camera_pos: transform.translation,
         };
         runner.upload_per_frame_data(frame_data);
     }

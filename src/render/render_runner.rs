@@ -39,7 +39,7 @@ impl RenderRunner {
             let per_frame_data = UniformObject::<PerFrameData>::create(&mut device,
                                                                        PerFrameData::create(),
                                                                        vk::DescriptorType::UNIFORM_BUFFER,
-                                                                       vk::ShaderStageFlags::VERTEX);
+                                                                       vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT);
             device.per_frame_uniform = Some(per_frame_data);
             //device.push_resource(per_frame_data);
 
