@@ -8,6 +8,7 @@ use crate::render::vertex::*;
 use core::mem;
 use crate::render::vertex_layout::VertexLayout;
 use std::io::Write;
+use bevy::prelude::*;
 
 
 pub struct Mesh {
@@ -97,10 +98,10 @@ impl Primitive {
 
 fn get_aabb(bounds: &gltf::mesh::Bounds<[f32; 3]>) -> Aabb {
     let min = bounds.min;
-    let min = glam::Vec3::new(min[0], min[1], min[2]);
+    let min = Vec3::new(min[0], min[1], min[2]);
 
     let max = bounds.max;
-    let max = glam::Vec3::new(max[0], max[1], max[2]);
+    let max = Vec3::new(max[0], max[1], max[2]);
 
     Aabb::new(min, max)
 }

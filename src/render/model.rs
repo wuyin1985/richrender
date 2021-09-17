@@ -1,6 +1,5 @@
 use gltf;
 use gltf::Gltf;
-use glam;
 use std::error::Error;
 use crate::render::aabb::Aabb;
 use std::mem::size_of;
@@ -14,6 +13,9 @@ use crate::render::mesh::{Meshes, Mesh};
 use crate::render::node::{Nodes, Node};
 use crate::render::buffer::Buffer;
 use crate::render::vertex_layout::VertexLayout;
+use crate::render::gltf_asset_loader::GltfAsset;
+
+use bevy::prelude::*;
 
 
 pub struct Model {
@@ -29,8 +31,8 @@ impl Model {
         self.textures.destroy(context);
     }
 
-    pub fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, path: &str) -> Result<Model, Box<dyn Error>> {
-        let (document, buffers, images) = gltf::import(&path)?;
+    pub fn from_gltf(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, asset: &GltfAsset) -> Result<Model, Box<dyn Error>> {
+        let (document, buffers, images) = asset.export();
         let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
         let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
         let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());

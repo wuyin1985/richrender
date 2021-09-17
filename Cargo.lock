@@ -355,7 +355,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb36a879cdc96f554b62dd7c7c02392a9a10e94082e4bc686a8242e1d674e7cc"
 dependencies = [
  "bevy_reflect",
- "glam 0.13.1",
+ "glam",
 ]
 
 [[package]]
@@ -368,7 +368,7 @@ dependencies = [
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
- "glam 0.13.1",
+ "glam",
  "parking_lot",
  "serde",
  "smallvec",
@@ -966,12 +966,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "glam"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "525a3e490ba77b8e326fb67d4b44b4bd2f920f44d4cc73ccec50adc68e3bee34"
-
-[[package]]
 name = "gltf"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1563,11 +1557,11 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 name = "richrender"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ash",
  "ash-window",
  "assets",
  "bevy",
- "glam 0.18.0",
  "gltf",
  "lazy_static",
  "raw-window-handle",

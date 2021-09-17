@@ -1,4 +1,4 @@
-use glam::Mat4;
+use bevy::prelude::*;
 
 #[derive(Debug)]
 pub struct Camera {

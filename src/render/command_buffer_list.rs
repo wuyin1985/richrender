@@ -10,7 +10,7 @@ pub struct CommandBufferList {
 impl CommandBufferList {
     pub fn destroy(&mut self, device_mgr: &RenderContext) {
         unsafe {
-            device_mgr.device.free_command_buffers(self.command_pool,&self.commands);
+            device_mgr.device.free_command_buffers(self.command_pool, &self.commands);
             device_mgr.device.destroy_command_pool(self.command_pool, None);
         }
     }
@@ -25,7 +25,7 @@ impl CommandBufferList {
             let command_pool = device_mgr.device.create_command_pool(&pool_ci, None).unwrap();
             let command_ci = vk::CommandBufferAllocateInfo {
                 command_pool,
-                command_buffer_count: count,
+                command_buffer_count: count + 1,
                 level: vk::CommandBufferLevel::PRIMARY,
                 ..Default::default()
             };
@@ -40,5 +40,9 @@ impl CommandBufferList {
 
     pub fn get_command_buffer(&self, index: usize) -> vk::CommandBuffer {
         self.commands[index]
+    }
+
+    pub fn get_upload_command_buffer(&self) -> vk::CommandBuffer {
+        self.commands[self.commands.len() - 1]
     }
 }

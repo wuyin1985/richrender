@@ -1,7 +1,6 @@
 use std::ops::Mul;
 use std::cmp::Ordering;
-use glam::*;
-use glam::Vec3;
+use bevy::prelude::*;
 
 pub fn min<S: PartialOrd>(v1: S, v2: S) -> S {
     match v1.partial_cmp(&v2) {

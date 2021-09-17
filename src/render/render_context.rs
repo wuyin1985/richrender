@@ -12,6 +12,8 @@ use std::collections::HashMap;
 use std::any::{TypeId, Any};
 use std::cell::RefCell;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
+use crate::render::gltf_asset_loader::GltfAsset;
+use crate::render::model_renderer::ModelRenderer;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -68,6 +70,7 @@ pub struct RenderContext {
     pub descriptor_pool: vk::DescriptorPool,
     staging_buffers: Vec<Buffer>,
     resources: HashMap<TypeId, Box<dyn RenderResource>>,
+    models: HashMap<Handle<GltfAsset>, ModelRenderer>,
     pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
 }
 
@@ -129,10 +132,10 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
-            // let mut resources = std::mem::take(self.resources.get_mut().unwrap());
-            // for (_, res) in resources.iter_mut() {
-            //     (*res).destroy_res(self);
-            // }
+            let mut resources = std::mem::take(&mut self.models);
+            for (_, res) in resources.iter_mut() {
+                (*res).destroy(self);
+            }
             let mut pf = std::mem::take(&mut self.per_frame_uniform);
             let uo = pf.as_mut().unwrap();
             uo.destroy(self);
@@ -377,6 +380,7 @@ impl RenderContext {
             staging_buffers: vec![],
             resources: HashMap::new(),
             per_frame_uniform: None,
+            models: HashMap::new(),
         }
     }
 
@@ -427,5 +431,13 @@ impl RenderContext {
             Some(t) => t,
             None => panic!("error resource"),
         }
+    }
+
+    pub fn insert_model(&mut self, handle: Handle<GltfAsset>, model: ModelRenderer) {
+        self.models.insert(handle, model);
+    }
+
+    pub fn get_model(&self, handle: &Handle<GltfAsset>) -> Option<&ModelRenderer> {
+        self.models.get(&handle)
     }
 }

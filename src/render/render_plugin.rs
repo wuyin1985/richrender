@@ -10,6 +10,10 @@ use crate::render::vertex;
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
+use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
+use std::collections::HashSet;
+use crate::render::model_renderer::{ModelRenderer, ModelData};
+use std::ops::DerefMut;
 
 struct RenderMgr {
     window_created_event_reader: ManualEventReader<WindowCreated>,
@@ -45,10 +49,6 @@ impl RenderMgr {
 
     pub fn update(&mut self, world: &mut World) {
         self.handle_window_created_event(world);
-        let mut rr = world.get_resource_mut::<RenderRunner>();
-        if let Some(render_runner) = rr.as_mut() {
-            render_runner.draw();
-        }
     }
 }
 
@@ -61,6 +61,24 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
 
     move |pworld| {
         r.update(pworld)
+    }
+}
+
+
+fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Handle<GltfAsset>, &Transform)>) {
+    let runner = runner.deref_mut();
+    let mut model_data = ModelData::default();
+    if let Some((present_index, command_buffer)) = runner.begin_draw() {
+        let context = &mut runner.device_mgr;
+        for (handle, transform) in model_query.iter() {
+            let model_renderer = context.get_model(handle);
+            if let Some(mr) = model_renderer {
+                //model_data.transform = ModelRenderer::get_center_transform(mr.get_model().aabb);
+                model_data.transform = transform.compute_matrix();
+                mr.draw(context, command_buffer, &model_data);
+            }
+        }
+        runner.end_draw(present_index, command_buffer);
     }
 }
 
@@ -89,6 +107,67 @@ fn update_render_state_from_camera(mut commands: Commands,
     }
 }
 
+
+fn load_gltf_2_device_system(mut runner: ResMut<RenderRunner>, mut assets: ResMut<Assets<GltfAsset>>,
+                             mut gltf_events: EventReader<AssetEvent<GltfAsset>>) {
+    let runner: &mut RenderRunner = runner.deref_mut();
+    let context = &mut runner.device_mgr;
+    let swap_mgr = &runner.swapchain_mgr;
+
+    let mut changed_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
+
+    for event in gltf_events.iter() {
+        match event {
+            AssetEvent::Created { ref handle } => {
+                changed_gltf_set.insert(handle.clone_weak());
+            }
+            AssetEvent::Modified { ref handle } => {
+                changed_gltf_set.insert(handle.clone_weak());
+                //remove_current_mesh_resources(render_resource_context, handle);
+            }
+            AssetEvent::Removed { ref handle } => {
+                //remove_current_mesh_resources(render_resource_context, handle);
+                changed_gltf_set.remove(handle);
+            }
+        }
+    }
+
+    if changed_gltf_set.len() == 0 {
+        return;
+    }
+
+    let command_buffer = runner.command_buffer_list.get_upload_command_buffer();
+    unsafe {
+        context.device.begin_command_buffer(command_buffer,
+                                            &vk::CommandBufferBeginInfo::builder().
+                                                flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
+    }
+
+    for changed_gltf_handle in changed_gltf_set.iter() {
+        let gltf_asset = assets.get(changed_gltf_handle).expect("failed to find asset gltf");
+
+
+        let model = ModelRenderer::create(context,
+                                          swap_mgr,
+                                          runner.forward_render_pass.get_native_render_pass(),
+                                          command_buffer,
+                                          gltf_asset,
+                                          "spv/simple_draw_object_vert.spv",
+                                          "spv/simple_draw_object_frag.spv",
+        );
+
+        context.insert_model(changed_gltf_handle.clone_weak(), model);
+    }
+
+    unsafe {
+        context.device.end_command_buffer(command_buffer);
+        context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
+        context.device.device_wait_idle();
+    }
+
+    context.flush_staging_buffer();
+}
+
 pub struct RenderPlugin {}
 
 impl Plugin for RenderPlugin {
@@ -107,8 +186,12 @@ impl Plugin for RenderPlugin {
 
 
         let render_system = get_render_system(app.world_mut());
+        app.init_asset_loader::<GltfAssetLoader>();
+        app.add_asset::<GltfAsset>();
         app.add_system(render_system.exclusive_system());
         app.add_system(update_render_state_from_camera.system());
+        app.add_system(load_gltf_2_device_system.system());
+        app.add_system(draw_models_system.system());
         app.add_plugin(FlyCameraPlugin);
     }
 }

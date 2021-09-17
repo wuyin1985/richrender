@@ -1,27 +1,5 @@
-//! A simple plugin and components for 2d/3d flying cameras in Bevy.
-//!
-//! # 3D
-//!
-//! Movement system is based on Minecraft, flying along the horizontal plane no matter the mouse's vertical angle, with two extra buttons for moving vertically.
-//!
-//! Default keybinds are:
-//! - <kbd>W</kbd> / <kbd>A</kbd> / <kbd>S</kbd> / <kbd>D</kbd> - Move along the horizontal plane
-//! - Shift - Move downward
-//! - Space - Move upward
-//!
-//! ## Example
-//! ```no_compile
-//! use bevy::prelude::*;
-//! use bevy_fly_camera::{FlyCamera, FlyCameraPlugin};
-//!
-//! fn setup(commands: &mut Commands) {
-//!      commands
-//!     .spawn(Camera3dBundle::default())
-//!     .with(FlyCamera::default());
-//! }
-
 use bevy::{input::mouse::MouseMotion, prelude::*};
-use bevy::input::mouse::MouseButtonInput;
+use bevy::input::mouse::{MouseButtonInput, MouseWheel};
 
 pub fn movement_axis(
     input: &Res<Input<KeyCode>>,
@@ -89,7 +67,7 @@ impl Default for FlyCamera {
             key_up: KeyCode::Space,
             key_down: KeyCode::LShift,
             enabled: true,
-            mouse_pressed : false,
+            mouse_pressed: false,
         }
     }
 }
@@ -168,6 +146,29 @@ fn camera_movement_system(
     }
 }
 
+fn mouse_wheel_system(
+    time: Res<Time>,
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    mut query: Query<(&mut FlyCamera, &mut Transform)>,
+)
+{
+    let mut x = 0f32;
+    for event in mouse_wheel_events.iter() {
+        x -= event.y;
+    }
+    if x == 0f32
+    {
+        return;
+    }
+    
+    x = 5f32 * x * time.delta_seconds();
+
+    for (mut options, mut transform) in query.iter_mut() {
+        let f = transform.rotation.mul_vec3(Vec3::Z).normalize();
+        transform.translation += f * x;
+    }
+}
+
 fn mouse_motion_system(
     time: Res<Time>,
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
@@ -179,6 +180,7 @@ fn mouse_motion_system(
     for event in mouse_motion_event_reader.iter() {
         delta += event.delta;
     }
+
     if delta.is_nan() {
         return;
     }
@@ -193,7 +195,7 @@ fn mouse_motion_system(
         if !options.mouse_pressed {
             continue;
         }
-        
+
         options.yaw -= delta.x * options.sensitivity * time.delta_seconds();
         options.pitch += delta.y * options.sensitivity * time.delta_seconds();
 
@@ -214,6 +216,8 @@ impl Plugin for FlyCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app
             .add_system(camera_movement_system.system())
-            .add_system(mouse_motion_system.system());
+            .add_system(mouse_motion_system.system())
+            .add_system(mouse_wheel_system.system());
+            
     }
 }

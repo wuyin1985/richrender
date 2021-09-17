@@ -22,6 +22,7 @@ mod vertex_layout;
 mod camera;
 mod fly_camera;
 mod uniform;
+pub mod gltf_asset_loader;
 
 pub use render_plugin::RenderPlugin;
 
