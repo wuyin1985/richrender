@@ -18,10 +18,12 @@ layout(location = 2) out vec3 out_camera_dir;
 void main() {
     vec4 locPos = pushConsts.model * vec4(vPos, 1.0);
     locPos.y = -locPos.y;
-    gl_Position = ubo.proj * ubo.view * locPos;
-    fragTexCoord = tex_coord;
+    vec3 outWorldPos = locPos.xyz / locPos.w;
 
-    out_camera_dir = ubo.camera_pos - vec3(locPos);
+    out_camera_dir = ubo.camera_pos - outWorldPos;
     out_normal = normalize(transpose(inverse(mat3(pushConsts.model))) * in_normal);
+    
+    gl_Position = ubo.proj * ubo.view * vec4(outWorldPos, 1.0);
+    fragTexCoord = tex_coord;
 }
 

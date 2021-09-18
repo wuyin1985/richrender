@@ -30,7 +30,9 @@ pub struct PerFrameData {
     pub view: Mat4,
     pub proj: Mat4,
     pub light_dir: Vec3,
+    pub dummy1: f32,
     pub camera_pos: Vec3,
+    pub dummy2: f32,
 }
 
 impl PerFrameData {
@@ -39,7 +41,9 @@ impl PerFrameData {
             view: Mat4::IDENTITY,
             proj: Mat4::IDENTITY,
             light_dir: Vec3::Z,
+            dummy1: 0f32,
             camera_pos: Vec3::ZERO,
+            dummy2: 0f32,
         }
     }
 }
@@ -460,5 +464,4 @@ impl RenderContext {
             min_alignment * (t_size as f32 / min_alignment as f32).ceil() as u32
         }
     }
-
 }
