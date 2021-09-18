@@ -14,6 +14,7 @@ use std::cell::RefCell;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use crate::render::gltf_asset_loader::GltfAsset;
 use crate::render::model_renderer::ModelRenderer;
+use std::mem::size_of;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -72,6 +73,7 @@ pub struct RenderContext {
     resources: HashMap<TypeId, Box<dyn RenderResource>>,
     models: HashMap<Handle<GltfAsset>, ModelRenderer>,
     pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
+    pub min_uniform_buffer_offset_alignment: u32,
 }
 
 
@@ -359,6 +361,12 @@ impl RenderContext {
         ).expect("create descriptor pool failed");
 
 
+        let props = unsafe {
+            instance
+                .get_physical_device_properties(physical_device)
+        };
+        let min_uniform_buffer_offset_alignment = props.limits.min_uniform_buffer_offset_alignment as u32;
+
         RenderContext {
             window_width,
             window_height,
@@ -381,6 +389,7 @@ impl RenderContext {
             resources: HashMap::new(),
             per_frame_uniform: None,
             models: HashMap::new(),
+            min_uniform_buffer_offset_alignment,
         }
     }
 
@@ -440,4 +449,16 @@ impl RenderContext {
     pub fn get_model(&self, handle: &Handle<GltfAsset>) -> Option<&ModelRenderer> {
         self.models.get(&handle)
     }
+
+    pub fn get_ubo_alignment<T>(&self) -> u32 {
+        let min_alignment = self.min_uniform_buffer_offset_alignment;
+        let t_size = size_of::<T>() as u32;
+
+        if t_size <= min_alignment {
+            min_alignment
+        } else {
+            min_alignment * (t_size as f32 / min_alignment as f32).ceil() as u32
+        }
+    }
+
 }

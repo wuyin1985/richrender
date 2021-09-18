@@ -75,6 +75,13 @@ impl Buffer {
         align.copy_from_slice(data);
     }
 
+    pub unsafe fn mem_copy_aligned<T: Copy>(ptr: *mut c_void, alignment: vk::DeviceSize, data: &[T]) {
+        let size = data.len() as vk::DeviceSize * alignment;
+        let mut align = ash::util::Align::new(ptr, alignment, size);
+        align.copy_from_slice(data);
+    }
+
+
     pub fn create_host_visible_buffer<T: Copy>(context: &RenderContext, usage: vk::BufferUsageFlags, data: &[T]) -> Self {
         let size = (data.len() * size_of::<T>()) as vk::DeviceSize;
         let mut buffer = Buffer::create(context, size, usage,
@@ -91,6 +98,14 @@ impl Buffer {
         unsafe {
             let ptr = self.map_memory(context);
             Self::mem_copy(ptr, data);
+        }
+    }
+
+    pub fn upload_data_align<T: Copy>(&mut self, context: &RenderContext, data: &[T]) {
+        let align = context.get_ubo_alignment::<T>();
+        unsafe {
+            let ptr = self.map_memory(context);
+            Self::mem_copy_aligned(ptr, align as _, data);
         }
     }
 

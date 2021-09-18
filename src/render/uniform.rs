@@ -87,6 +87,6 @@ impl<T> UniformObject<T> where T: Copy {
 
     pub fn upload_data_2_device(&mut self, context: &RenderContext, data: T) {
         self.data = data;
-        self.buffer.upload_data(context, &[self.data]);
+        self.buffer.upload_data_align(context, &[self.data]);
     }
 }

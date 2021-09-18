@@ -16,7 +16,7 @@ mod vertex;
 mod util;
 mod model_meta;
 mod node;
-mod model_renderer;
+pub mod model_renderer;
 mod graphic_pipeline;
 mod vertex_layout;
 mod camera;
