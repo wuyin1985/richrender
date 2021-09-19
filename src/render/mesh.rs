@@ -9,6 +9,7 @@ use core::mem;
 use crate::render::vertex_layout::VertexLayout;
 use std::io::Write;
 use bevy::prelude::*;
+use crate::render::shader_const::*;
 
 
 pub struct Mesh {
@@ -137,12 +138,13 @@ fn read_no_sparse_vertex_data(primitive: &gltf::mesh::Primitive,
                               datas: &Vec<gltf::buffer::Data>,
                               element_count: u32,
                               output_data: &mut Vec<u8>,
-                              layout: &mut VertexLayout) {
+                              layout: &mut VertexLayout,
+                              location:u32) {
     if let Some(accessor) = &primitive.get(data_type) {
         let data = read_no_sparse_buffer(accessor, datas, element_count).0;
         let offset = output_data.len();
         output_data.extend(data);
-        layout.push_meta(accessor.data_type(), element_count, offset);
+        layout.push_meta(accessor.data_type(), element_count, offset, location);
     }
 }
 
@@ -164,11 +166,11 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
             all_data.extend(indices);
 
             vertex_layout.set_indices(indices_offset, indices_count, indices_accessor.data_type());
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Positions, buffers, 3, &mut all_data, &mut vertex_layout);
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout);
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Normals, buffers, 3, &mut all_data, &mut vertex_layout);
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Weights(0), buffers, 4, &mut all_data, &mut vertex_layout);
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Joints(0), buffers, 4, &mut all_data, &mut vertex_layout);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Positions, buffers, 3, &mut all_data, &mut vertex_layout, LOCATION_IN_POS);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout, LOCATION_IN_TEX_COORD);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Normals, buffers, 3, &mut all_data, &mut vertex_layout, LOCATION_IN_NORMAL);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Weights(0), buffers, 4, &mut all_data, &mut vertex_layout, LOCATION_IN_WEIGHTS);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Joints(0), buffers, 4, &mut all_data, &mut vertex_layout, LOCATION_IN_JOINTS);
 
             vertex_layout.refresh_buffer_offsets();
 

@@ -4,3 +4,5 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec3 light_dir;
     vec3 camera_pos;
 } ubo;
+
+

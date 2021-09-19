@@ -42,23 +42,9 @@ pub struct GraphicPipeline {
     pipeline_layout: vk::PipelineLayout,
 }
 
-fn load_from_assets<P: AsRef<Path>>(path: P) -> Cursor<Vec<u8>> {
-    use std::fs::File;
-    use std::io::Read;
-    let mut buf = Vec::new();
-    let fullpath = &Path::new("assets").join(&path);
-    let mut file = File::open(&fullpath).unwrap();
-    file.read_to_end(&mut buf).unwrap();
-    Cursor::new(buf)
-}
-
-
 impl GraphicPipeline {
-    fn read_shader_data_from_file(device_mgr: &RenderContext, path: &str) -> vk::ShaderModule {
-        let mut cursor = load_from_assets(path);
-        let res = ash::util::read_spv(&mut cursor).expect(format!("failed to read spv {}", path).as_str());
-        let create_info = vk::ShaderModuleCreateInfo::builder().code(res.as_slice()).build();
-        unsafe { device_mgr.device.create_shader_module(&create_info, None).unwrap() }
+    fn read_shader_data_from_file(context: &mut RenderContext, path: &str, defines: &[&str]) -> vk::ShaderModule {
+        context.shader_modules.create_shader(&context.device, path, defines)
     }
 
     pub fn destroy(&mut self, device_mgr: &RenderContext) {
@@ -68,19 +54,20 @@ impl GraphicPipeline {
         }
     }
 
-    pub fn create(device_mgr: &RenderContext,
+    pub fn create(device_mgr: &mut RenderContext,
                   swapchain_mgr: &SwapChainMgr,
                   render_pass: vk::RenderPass,
                   vertex_input: &PipelineVertexInputInfo,
                   pipeline_layout_ci: &vk::PipelineLayoutCreateInfo,
                   msaa: vk::SampleCountFlags,
                   vert_spv_path: &str,
-                  frag_spv_path: &str) -> Self {
+                  frag_spv_path: &str,
+                  defines: &[&str]) -> Self {
+
+        let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path, defines);
+        let fragment_shader_module = Self::read_shader_data_from_file(device_mgr, frag_spv_path, defines);
+
         let device = &device_mgr.device;
-
-        let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path);
-        let fragment_shader_module = Self::read_shader_data_from_file(device_mgr, frag_spv_path);
-
         let entry_point_name = CString::new("main").unwrap();
         let vertex_shader_state_info = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::VERTEX)
@@ -207,21 +194,21 @@ impl GraphicPipeline {
                 .unwrap()[0]
         };
 
-        unsafe {
-            device.destroy_shader_module(vertex_shader_module, None);
-            device.destroy_shader_module(fragment_shader_module, None);
-        };
+        // unsafe {
+        //     device.destroy_shader_module(vertex_shader_module, None);
+        //     device.destroy_shader_module(fragment_shader_module, None);
+        // };
 
         GraphicPipeline {
             pipeline,
             pipeline_layout: layout,
         }
     }
-    
+
     pub fn get_pipeline(&self) -> vk::Pipeline {
         self.pipeline
     }
-    
+
     pub fn get_layout(&self) -> vk::PipelineLayout {
         self.pipeline_layout
     }

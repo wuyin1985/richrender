@@ -155,8 +155,8 @@ fn load_gltf_2_device_system(mut runner: ResMut<RenderRunner>, mut assets: ResMu
                                           runner.forward_render_pass.get_native_render_pass(),
                                           command_buffer,
                                           gltf_asset,
-                                          "spv/simple_draw_object_vert.spv",
-                                          "spv/simple_draw_object_frag.spv",
+                                          "simple_draw_object_vert",
+                                          "simple_draw_object_frag",
         );
 
         context.insert_model(changed_gltf_handle.clone_weak(), model);

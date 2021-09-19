@@ -23,6 +23,8 @@ mod camera;
 mod fly_camera;
 mod uniform;
 pub mod gltf_asset_loader;
+mod shader_const;
+mod shader_collection;
 
 pub use render_plugin::RenderPlugin;
 

@@ -15,6 +15,7 @@ use std::sync::{Arc, RwLock, RwLockReadGuard};
 use crate::render::gltf_asset_loader::GltfAsset;
 use crate::render::model_renderer::ModelRenderer;
 use std::mem::size_of;
+use crate::render::shader_collection::ShaderCollection;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -78,6 +79,7 @@ pub struct RenderContext {
     models: HashMap<Handle<GltfAsset>, ModelRenderer>,
     pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
     pub min_uniform_buffer_offset_alignment: u32,
+    pub shader_modules: ShaderCollection,
 }
 
 
@@ -138,6 +140,9 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
+            
+            let mut sm = std::mem::take(&mut self.shader_modules);
+            sm.destroy(self);
             let mut resources = std::mem::take(&mut self.models);
             for (_, res) in resources.iter_mut() {
                 (*res).destroy(self);
@@ -371,6 +376,8 @@ impl RenderContext {
         };
         let min_uniform_buffer_offset_alignment = props.limits.min_uniform_buffer_offset_alignment as u32;
 
+        let collection = ShaderCollection::create();
+
         RenderContext {
             window_width,
             window_height,
@@ -394,6 +401,7 @@ impl RenderContext {
             per_frame_uniform: None,
             models: HashMap::new(),
             min_uniform_buffer_offset_alignment,
+            shader_modules: collection,
         }
     }
 

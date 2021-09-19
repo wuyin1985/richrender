@@ -1,10 +1,12 @@
 use ash::vk;
 use gltf::accessor::DataType;
 use crate::render::vertex::BufferPart;
+use crate::render::shader_const;
 
 pub struct VertexMeta {
     format: vk::Format,
     size: u32,
+    location: u32,
 }
 
 pub struct VertexLayout {
@@ -86,12 +88,13 @@ impl VertexLayout {
         self.indices_type = Self::gltf_data_type_vk_index(data_type);
     }
 
-    pub fn push_meta(&mut self, data_type: DataType, element_count: u32, offset_in_buffer: usize) {
+    pub fn push_meta(&mut self, data_type: DataType, element_count: u32, offset_in_buffer: usize, location: u32) {
         let format = Self::gltf_data_type_2_vk_format(data_type, element_count);
         let size = Self::vk_format_size(format);
         self.metas.push(VertexMeta {
             format,
             size,
+            location,
         });
         self.offsets.push(offset_in_buffer);
     }
@@ -114,10 +117,16 @@ impl VertexLayout {
         self.metas.iter().enumerate().map(|(index, meta)| {
             vk::VertexInputAttributeDescription::builder()
                 .binding(index as _)
-                .location(index as _)
+                .location(meta.location)
                 .offset(0)
                 .format(meta.format)
                 .build()
         }).collect()
+    }
+
+    pub fn get_shader_defines(&self) -> Vec<&str> {
+        self.metas.iter().filter_map(|meta| {
+            shader_const::get_shader_define_name(meta.location)
+        }).collect::<Vec<&str>>()
     }
 }

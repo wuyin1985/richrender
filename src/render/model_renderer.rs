@@ -164,6 +164,7 @@ impl ModelRenderer {
         let vertex_bindings = vertex_layout.build_vk_bindings();
         let vertex_attributes = vertex_layout.build_vk_attributes();
         let vertex_input = PipelineVertexInputInfo::from(&vertex_bindings, &vertex_attributes);
+        let shader_defines = vertex_layout.get_shader_defines();
 
         let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();
 
@@ -183,7 +184,7 @@ impl ModelRenderer {
                                                swapchain_mgr,
                                                render_pass,
                                                &vertex_input, &pipeline_layout_ci, context.render_config.msaa,
-                                               vert_shader_path, frag_shader_path);
+                                               vert_shader_path, frag_shader_path, &shader_defines);
 
         ModelRenderer {
             pipeline,
