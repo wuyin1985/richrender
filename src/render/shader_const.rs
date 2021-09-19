@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 pub const LOCATION_IN_POS: u32 = 0;
-pub const LOCATION_IN_TEX_COORD: u32 = 1;
-pub const LOCATION_IN_NORMAL: u32 = 2;
+pub const LOCATION_IN_NORMAL: u32 = 1;
+pub const LOCATION_IN_TEX_COORD: u32 = 2;
 pub const LOCATION_IN_JOINTS: u32 = 3;
 pub const LOCATION_IN_WEIGHTS: u32 = 4;
 

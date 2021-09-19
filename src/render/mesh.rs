@@ -20,7 +20,7 @@ pub struct Mesh {
 impl Mesh {
     fn new(primitives: Vec<Primitive>) -> Self {
         let aabbs = primitives.iter().map(|p| p.aabb()).collect::<Vec<_>>();
-        let aabb = Aabb::union(&aabbs).unwrap();
+        let aabb = Aabb::union(&aabbs).unwrap_or(Aabb::new(Vec3::ZERO, Vec3::ZERO));
         Mesh { primitives, aabb }
     }
 
@@ -139,11 +139,21 @@ fn read_no_sparse_vertex_data(primitive: &gltf::mesh::Primitive,
                               element_count: u32,
                               output_data: &mut Vec<u8>,
                               layout: &mut VertexLayout,
-                              location:u32) {
+                              location: u32) {
     if let Some(accessor) = &primitive.get(data_type) {
+        let vi = accessor.index();
         let data = read_no_sparse_buffer(accessor, datas, element_count).0;
-        let offset = output_data.len();
+        let mut offset = output_data.len();
         output_data.extend(data);
+        const MOD:usize = 4;
+        let m = output_data.len() % MOD;
+        if m != 0 {
+            let left = MOD - m;
+            let ar = vec![0; left];
+            output_data.extend(ar);
+            offset += left;
+        }
+        
         layout.push_meta(accessor.data_type(), element_count, offset, location);
     }
 }
@@ -158,6 +168,11 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
     for mesh in document.meshes() {
         let mut primitives_buffers = Vec::<Primitive>::new();
         for primitive in mesh.primitives() {
+            assert_eq!(primitive.mode(), gltf::mesh::Mode::Triangles, "error mode");
+
+            if primitive_count == 6{
+                let ff = 3;
+            }
             let mut vertex_layout = VertexLayout::create();
             let indices_offset = all_data.len();
 
@@ -165,10 +180,11 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
             let (indices, indices_count) = read_no_sparse_buffer(indices_accessor, buffers, 1);
             all_data.extend(indices);
 
+
             vertex_layout.set_indices(indices_offset, indices_count, indices_accessor.data_type());
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Positions, buffers, 3, &mut all_data, &mut vertex_layout, LOCATION_IN_POS);
-            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout, LOCATION_IN_TEX_COORD);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Normals, buffers, 3, &mut all_data, &mut vertex_layout, LOCATION_IN_NORMAL);
+            read_no_sparse_vertex_data(&primitive, &gltf::Semantic::TexCoords(0), buffers, 2, &mut all_data, &mut vertex_layout, LOCATION_IN_TEX_COORD);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Weights(0), buffers, 4, &mut all_data, &mut vertex_layout, LOCATION_IN_WEIGHTS);
             read_no_sparse_vertex_data(&primitive, &gltf::Semantic::Joints(0), buffers, 4, &mut all_data, &mut vertex_layout, LOCATION_IN_JOINTS);
 

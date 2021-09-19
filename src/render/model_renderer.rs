@@ -93,7 +93,7 @@ impl ModelRenderer {
                   command_buffer: vk::CommandBuffer, gltf_asset: &GltfAsset, vert_shader_path: &str, frag_shader_path: &str) -> ModelRenderer {
         info!("start load model");
         let model = Model::from_gltf(context, command_buffer, gltf_asset).expect("load error");
-        info!("load model complete");
+        info!("load model complete, primitive_count {}", model.primitive_count());
 
         info!("start create renders for primitives");
         let mut primitive_renders = Vec::new();
@@ -115,26 +115,27 @@ impl ModelRenderer {
     }
 
     pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData) {
-        unsafe {
-            let mut primitive_idx = 0;
-            let uniform = context.per_frame_uniform.as_ref().unwrap();
+        let mut primitive_idx = 0;
+        let uniform = context.per_frame_uniform.as_ref().unwrap();
 
+        for node in self.model.get_nodes() {
+            if let Some(mesh_idx) = node.mesh_index() {
+                let m_data = ModelData { transform: model_data.transform * node.transform() };
+                let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
 
-            for node in self.model.get_nodes() {
-                if let Some(mesh_idx) = node.mesh_index() {
-                    let m_data = ModelData { transform: model_data.transform * node.transform() };
-                    let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
-
-                    let mesh = &self.model.get_meshes()[mesh_idx];
-                    for primitive in mesh.primitives() {
-                        let render = &self.primitive_renders[primitive_idx];
-                        primitive_idx += 1;
+                let mesh = &self.model.get_meshes()[mesh_idx];
+                for primitive in mesh.primitives() {
+             
+                    let render = &self.primitive_renders[primitive_idx];
+                    let vertex_layout = &primitive.get_vertex_layout();
+                    primitive_idx += 1;
+                    let set = render.descriptor_set;
+                    unsafe {
                         context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, render.graphic_pipeline.get_pipeline());
 
                         context.device.cmd_push_constants(command_buffer, render.graphic_pipeline.get_layout(),
                                                           vk::ShaderStageFlags::VERTEX, 0, model_data_bytes);
 
-                        let vertex_layout = &primitive.get_vertex_layout();
                         context.device.cmd_bind_vertex_buffers(command_buffer,
                                                                0,
                                                                &render.buffers_ref_for_draw,
@@ -144,7 +145,6 @@ impl ModelRenderer {
                                                              vertex_layout.indices.index as _,
                                                              vertex_layout.indices_type);
 
-                        let set = render.descriptor_set;
                         context.device.cmd_bind_descriptor_sets(command_buffer,
                                                                 vk::PipelineBindPoint::GRAPHICS,
                                                                 render.graphic_pipeline.get_layout(),

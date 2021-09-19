@@ -10,13 +10,14 @@ layout(push_constant) uniform PushConsts {
 
 layout(location = 0) in vec3 in_pos;
 
-#ifdef IN_TEX_COORD
-layout(location = 1) in vec2 in_tex_coord;
+#ifdef IN_NORMAL
+layout(location = 1) in vec3 in_normal;
 #endif
 
-#ifdef IN_NORMAL
-layout(location = 2) in vec3 in_normal;
+#ifdef IN_TEX_COORD
+layout(location = 2) in vec2 in_tex_coord;
 #endif
+
 
 #ifdef IN_TEX_COORD
 layout(location = 0) out vec2 out_tex_coord;
