@@ -358,13 +358,13 @@ impl RenderContext {
             },
             vk::DescriptorPoolSize {
                 ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-                descriptor_count: 100,
+                descriptor_count: 1000,
             },
         ];
 
         let descriptor_pool = device.create_descriptor_pool(
             &vk::DescriptorPoolCreateInfo::builder()
-                .max_sets(200)
+                .max_sets(2000)
                 .flags(vk::DescriptorPoolCreateFlags::FREE_DESCRIPTOR_SET)
                 .pool_sizes(&pool_size).build(), None,
         ).expect("create descriptor pool failed");

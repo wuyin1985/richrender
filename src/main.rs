@@ -25,7 +25,7 @@ fn startup(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     // }
 
     {
-        let handle: Handle<GltfAsset> = asset_server.load("gltf/DamagedHelmet/DamagedHelmet.glb");
+        let handle: Handle<GltfAsset> = asset_server.load("gltf/2CylinderEngine/2CylinderEngine.glb");
         let t = Transform::from_scale(scale) *
             Transform::from_translation(pos - Vec3::new(-0.02f32, 0.0, 0.0));
 

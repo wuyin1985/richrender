@@ -70,20 +70,22 @@ impl ShaderCollection {
             .output().expect("failed to execute command");
 
         for out in String::from_utf8(output.stdout).iter() {
-            info!("compile info: {}", out);
+            if out.len() > 0 {
+                info!("compile info: {}", out);
+            }
         }
 
         let mut has_error = false;
-
         for out in String::from_utf8(output.stderr).iter() {
-            error!("compile info: {}", out);
-            //has_error = true;
+            if out.len() > 0 {
+                error!("compile info: {}", out);
+                has_error = true;
+            }
         }
 
-        // if has_error {
-        //     panic!("compile shader panic");
-        // }
-
+        if has_error {
+            panic!("compile shader panic");
+        }
 
         let mut cursor = load_from_file(&out_path);
         let res = ash::util::read_spv(&mut cursor).expect(format!("failed to read spv {}", source_path).as_str());
