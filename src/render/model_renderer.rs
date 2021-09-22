@@ -1,7 +1,7 @@
 use crate::render::model::{Model, ModelTexture};
 use ash::vk;
 use crate::render::buffer::Buffer;
-use crate::render::render_context::{RenderContext, PerFrameData};
+use crate::render::render_context::{RenderContext, PerFrameData, DummyResources};
 use crate::render::graphic_pipeline::{GraphicPipeline, PipelineVertexInputInfo, PipelineLayoutInfo};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use crate::render::{vertex, util};
@@ -125,7 +125,6 @@ impl ModelRenderer {
 
                 let mesh = &self.model.get_meshes()[mesh_idx];
                 for primitive in mesh.primitives() {
-             
                     let render = &self.primitive_renders[primitive_idx];
                     let vertex_layout = &primitive.get_vertex_layout();
                     primitive_idx += 1;
@@ -172,21 +171,6 @@ struct PrimitiveRender {
 }
 
 impl PrimitiveRender {
-    fn create_descriptor_image_info(
-        index: usize,
-        textures: &[ModelTexture],
-    ) -> [vk::DescriptorImageInfo; 1] {
-        let texture = &textures[index];
-        let (view, sampler) = (texture.view, texture.sampler);
-
-        [vk::DescriptorImageInfo::builder()
-            .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-            .image_view(view)
-            .sampler(sampler)
-            .build()]
-    }
-
-
     fn create_descriptors(context: &mut RenderContext, material: &Material, model: &Model) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
         let bindings = [
             vk::DescriptorSetLayoutBinding::builder()
@@ -217,24 +201,32 @@ impl PrimitiveRender {
         };
 
         let textures = model.get_textures();
-        if let Some(texture_index) = material.get_color_texture_index() {
-            let albedo_info = Self::create_descriptor_image_info(
-                texture_index,
-                textures,
-            );
+        let texture = material.get_color_texture_index().map_or_else(|| {
+            let dr = context.get_resource::<DummyResources>();
+            &dr.white_texture
+        }, |idx| &textures[idx]);
 
-            let descriptor_writes = [vk::WriteDescriptorSet::builder()
-                .dst_set(set)
-                .dst_binding(0)
-                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
-                .image_info(&albedo_info)
-                .build()];
+        let albedo_info = {
+            let (view, sampler) = (texture.view, texture.sampler);
 
-            unsafe {
-                context
-                    .device
-                    .update_descriptor_sets(&descriptor_writes, &[])
-            }
+            [vk::DescriptorImageInfo::builder()
+                .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
+                .image_view(view)
+                .sampler(sampler)
+                .build()]
+        };
+
+        let descriptor_writes = [vk::WriteDescriptorSet::builder()
+            .dst_set(set)
+            .dst_binding(0)
+            .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .image_info(&albedo_info)
+            .build()];
+
+        unsafe {
+            context
+                .device
+                .update_descriptor_sets(&descriptor_writes, &[])
         }
 
 

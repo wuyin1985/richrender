@@ -1,4 +1,4 @@
-use crate::render::render_context::{RenderContext, PerFrameData};
+use crate::render::render_context::{RenderContext, PerFrameData, DummyResources};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use bevy::winit::WinitWindows;
 use crate::render::forward_render::ForwardRenderPass;
@@ -11,7 +11,7 @@ use bevy::prelude::*;
 use crate::render::uniform::UniformObject;
 
 pub struct RenderRunner {
-    pub device_mgr: RenderContext,
+    pub context: RenderContext,
     pub swapchain_mgr: SwapChainMgr,
     pub command_buffer_list: CommandBufferList,
     pub forward_render_pass: ForwardRenderPass,
@@ -20,11 +20,11 @@ pub struct RenderRunner {
 
 impl Drop for RenderRunner {
     fn drop(&mut self) {
-        unsafe { self.device_mgr.device.device_wait_idle().unwrap(); }
-        self.command_buffer_list.destroy(&self.device_mgr);
-        self.forward_render_pass.destroy(&self.device_mgr);
-        self.swapchain_mgr.destroy(&self.device_mgr);
-        self.device_mgr.destroy();
+        unsafe { self.context.device.device_wait_idle().unwrap(); }
+        self.command_buffer_list.destroy(&self.context);
+        self.forward_render_pass.destroy(&self.context);
+        self.swapchain_mgr.destroy(&self.context);
+        self.context.destroy();
     }
 }
 
@@ -33,21 +33,41 @@ impl RenderRunner {
     pub fn create<W: raw_window_handle::HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
         unsafe {
             info!("start up");
-            let mut device = RenderContext::create(window, window_width, window_height);
-            let per_frame_data = UniformObject::<PerFrameData>::create(&mut device,
+            let mut context = RenderContext::create(window, window_width, window_height);
+            let per_frame_data = UniformObject::<PerFrameData>::create(&mut context,
                                                                        PerFrameData::create(),
                                                                        vk::DescriptorType::UNIFORM_BUFFER,
                                                                        vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT);
-            device.per_frame_uniform = Some(per_frame_data);
-            //device.push_resource(per_frame_data);
+            context.per_frame_uniform = Some(per_frame_data);
+            //context.push_resource(per_frame_data);
 
             info!("render context create complete");
-            let swapchain = SwapChainMgr::create(&device, window_width, window_height);
-            let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &device);
-            let forward_render_pass = ForwardRenderPass::create(&mut device, &swapchain, &command_buffer_list);
+            let swapchain = SwapChainMgr::create(&context, window_width, window_height);
+            let command_buffer_list = CommandBufferList::create(swapchain.get_present_image_count(), &context);
+            let forward_render_pass = ForwardRenderPass::create(&mut context, &swapchain, &command_buffer_list);
+
+            let command_buffer = command_buffer_list.get_upload_command_buffer();
+            unsafe {
+                context.device.begin_command_buffer(command_buffer,
+                                                    &vk::CommandBufferBeginInfo::builder().
+                                                        flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
+            }
+            
+            let dummy_res = DummyResources::create(&mut context,command_buffer_list.get_upload_command_buffer());
+            context.insert_resource(dummy_res);
+
+
+            unsafe {
+                context.device.end_command_buffer(command_buffer);
+                context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
+                context.device.device_wait_idle();
+            }
+
+            context.flush_staging_buffer();
+            
             info!("forward render pass create complete");
             // unsafe {
-            //     let p = device.instance.get_physical_device_image_format_properties(device.physical_device,
+            //     let p = context.instance.get_physical_context_image_format_properties(context.physical_context,
             //                                                                         vk::Format::R8G8B8_USCALED, vk::ImageType::TYPE_2D, vk::ImageTiling::OPTIMAL,
             //                                                                         vk::ImageUsageFlags::SAMPLED, vk::ImageCreateFlags::empty());
             // 
@@ -61,7 +81,7 @@ impl RenderRunner {
 
             info!("model renderer created complete");
             RenderRunner {
-                device_mgr: device,
+                context,
                 swapchain_mgr: swapchain,
                 command_buffer_list,
                 forward_render_pass,
@@ -71,7 +91,7 @@ impl RenderRunner {
     }
 
     pub fn upload_per_frame_data(&mut self, data: PerFrameData) {
-        let context = &mut self.device_mgr;
+        let context = &mut self.context;
         let mut pf = std::mem::take(&mut context.per_frame_uniform);
         let uo = pf.as_mut().unwrap();
         uo.upload_data_2_device(context, data);
@@ -81,7 +101,7 @@ impl RenderRunner {
     pub fn begin_draw(&mut self) -> Option<(usize, vk::CommandBuffer)> {
         let now = SystemTime::now();
         self.last_tick = now;
-        let (success, present_index) = self.swapchain_mgr.wait_for_swap_chain(&mut self.device_mgr);
+        let (success, present_index) = self.swapchain_mgr.wait_for_swap_chain(&mut self.context);
         if !success {
             return None;
         }
@@ -91,11 +111,11 @@ impl RenderRunner {
             let command_buffer_begin_info = vk::CommandBufferBeginInfo::builder().
                 flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build();
             unsafe {
-                self.device_mgr.device.begin_command_buffer(command_buffer, &command_buffer_begin_info);
+                self.context.device.begin_command_buffer(command_buffer, &command_buffer_begin_info);
             }
         }
 
-        self.forward_render_pass.begin_render_pass(&mut self.device_mgr, &mut self.swapchain_mgr, command_buffer);
+        self.forward_render_pass.begin_render_pass(&mut self.context, &mut self.swapchain_mgr, command_buffer);
 
         return Some((present_index, command_buffer));
     }
@@ -103,7 +123,7 @@ impl RenderRunner {
 
     pub fn end_draw(&mut self, present_index: usize, command_buffer: vk::CommandBuffer) {
 
-        self.forward_render_pass.end_pass(&mut self.device_mgr, command_buffer);
+        self.forward_render_pass.end_pass(&mut self.context, command_buffer);
 
         let mut present_image_available_semaphore: vk::Semaphore = vk::Semaphore::null();
         let mut render_finish_semaphore: vk::Semaphore = vk::Semaphore::null();
@@ -140,7 +160,7 @@ impl RenderRunner {
             ];
 
             unsafe {
-                self.device_mgr.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
+                self.context.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
                                                             vk::PipelineStageFlags::ALL_COMMANDS,
                                                             vk::DependencyFlags::empty(), &[], &[],
                                                             &image_barriers);
@@ -151,7 +171,7 @@ impl RenderRunner {
         let surface_resolution = self.swapchain_mgr.surface_resolution;
 
         unsafe {
-            self.device_mgr.device.cmd_copy_image(command_buffer,
+            self.context.device.cmd_copy_image(command_buffer,
                                                   self.forward_render_pass.get_final_render_image(),
                                                   vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
                                                   self.swapchain_mgr.get_current_present_image(),
@@ -193,7 +213,7 @@ impl RenderRunner {
             ];
 
             unsafe {
-                self.device_mgr.device.cmd_pipeline_barrier(command_buffer,
+                self.context.device.cmd_pipeline_barrier(command_buffer,
                                                             vk::PipelineStageFlags::ALL_COMMANDS,
                                                             vk::PipelineStageFlags::ALL_COMMANDS,
                                                             vk::DependencyFlags::empty(),
@@ -204,7 +224,7 @@ impl RenderRunner {
         }
 
         unsafe {
-            self.device_mgr.device.end_command_buffer(command_buffer);
+            self.context.device.end_command_buffer(command_buffer);
         }
 
         let submit_info = vk::SubmitInfo::builder()
@@ -212,10 +232,10 @@ impl RenderRunner {
             .command_buffers(&[command_buffer]).signal_semaphores(&[render_finish_semaphore]).build();
 
         unsafe {
-            self.device_mgr.device.queue_submit(self.device_mgr.graphics_queue, &[submit_info], cmd_buf_execute_fence);
+            self.context.device.queue_submit(self.context.graphics_queue, &[submit_info], cmd_buf_execute_fence);
         }
 
-        self.swapchain_mgr.present(&self.device_mgr);
+        self.swapchain_mgr.present(&self.context);
     }
 
     fn on_window_size_changed(&mut self, window_width: u32, window_height: u32) {

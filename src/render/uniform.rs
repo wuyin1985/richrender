@@ -20,7 +20,7 @@ impl<T: 'static + Send + Sync + Copy> RenderResource for UniformObject<T> {
         self
     }
 
-    fn destroy_res(&mut self, rc: &RenderContext) {
+    fn destroy_res(&mut self, rc: &mut RenderContext) {
         self.destroy(rc);
     }
 }

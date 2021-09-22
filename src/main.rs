@@ -15,7 +15,7 @@ fn startup(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     let s = 0.919468641f32;
     let scale = Vec3::new(s, s, s);
     let pos = Vec3::new(0.00248157978f32, 0f32, -1f32);
-    // 
+    
     // {
     //     let handle: Handle<GltfAsset> = asset_server.load("gltf/DamagedHelmet/DamagedHelmet.glb");
     //     let t = Transform::from_scale(scale) *
@@ -25,10 +25,10 @@ fn startup(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     // }
 
     {
-        let handle: Handle<GltfAsset> = asset_server.load("gltf/2CylinderEngine/2CylinderEngine.glb");
+        let handle: Handle<GltfAsset> = asset_server.load("gltf/untitled.glb");
         let t = Transform::from_scale(scale) *
-            Transform::from_translation(pos - Vec3::new(-0.02f32, 0.0, 0.0));
-
+            Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
+    
         commmands.spawn().insert(handle).insert(t);
     }
 }

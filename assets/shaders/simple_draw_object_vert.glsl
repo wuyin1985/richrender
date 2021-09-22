@@ -31,7 +31,6 @@ layout(location = 2) out vec3 out_normal;
 
 void main() {
     vec4 loc_pos = push_constants.model * vec4(in_pos, 1.0);
-    loc_pos.y = -loc_pos.y;
     vec3 world_pos = loc_pos.xyz / loc_pos.w;
 
     out_camera_dir = ubo.camera_pos - world_pos;

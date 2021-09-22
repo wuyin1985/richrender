@@ -4,6 +4,7 @@ use crate::render::swapchain_mgr::SwapChainMgr;
 use std::ffi::CString;
 use std::path::Path;
 use std::io::Cursor;
+use ash::vk::DeviceSize;
 
 pub struct PipelineVertexInputInfo {
     ci: vk::PipelineVertexInputStateCreateInfo,
@@ -91,9 +92,9 @@ impl GraphicPipeline {
 
         let viewport = vk::Viewport {
             x: 0.0,
-            y: 0.0,
+            y: surface_resolution.height as _,
             width: surface_resolution.width as _,
-            height: surface_resolution.height as _,
+            height: -(surface_resolution.height as f32),
             min_depth: 0.0,
             max_depth: 1.0,
         };

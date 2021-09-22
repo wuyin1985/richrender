@@ -102,6 +102,40 @@ impl ModelTexture {
         }
         self.texture.destroy(context);
     }
+
+    pub fn from(context: &RenderContext, texture: Texture) -> Self
+    {
+        let view = texture.create_color_view(context);
+
+        let sampler = {
+            let sampler_info = vk::SamplerCreateInfo::builder()
+                .mag_filter(vk::Filter::LINEAR)
+                .min_filter(vk::Filter::LINEAR)
+                .address_mode_u(vk::SamplerAddressMode::REPEAT)
+                .address_mode_v(vk::SamplerAddressMode::REPEAT)
+                .address_mode_w(vk::SamplerAddressMode::REPEAT)
+                .anisotropy_enable(false)
+                .max_anisotropy(16.0)
+                .border_color(vk::BorderColor::INT_OPAQUE_BLACK)
+                .unnormalized_coordinates(false)
+                .compare_enable(false)
+                .compare_op(vk::CompareOp::ALWAYS)
+                .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
+                .mip_lod_bias(0.0)
+                .min_lod(0.0)
+                .max_lod(0.25);
+
+            unsafe {
+                context
+                    .device
+                    .create_sampler(&sampler_info, None)
+                    .expect("Failed to create sampler")
+            }
+        };
+
+
+        Self { texture, view, sampler }
+    }
 }
 
 
@@ -186,6 +220,7 @@ impl ModelTextures {
             t.destroy(context);
         }
     }
+
     pub fn from_gltf(context: &mut RenderContext, command_buffer: vk::CommandBuffer,
                      gltf_textures: gltf::iter::Textures, gltf_image_datas: &[gltf::image::Data]) -> ModelTextures {
         let model_textures = gltf_textures.map(|t| {

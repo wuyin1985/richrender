@@ -16,6 +16,8 @@ use crate::render::gltf_asset_loader::GltfAsset;
 use crate::render::model_renderer::ModelRenderer;
 use std::mem::size_of;
 use crate::render::shader_collection::ShaderCollection;
+use crate::render::texture::Texture;
+use crate::render::model::ModelTexture;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -52,9 +54,39 @@ impl PerFrameData {
 pub trait RenderResource: 'static + Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
-    fn destroy_res(&mut self, rc: &RenderContext);
+    fn destroy_res(&mut self, rc: &mut RenderContext);
 }
 
+pub struct DummyResources {
+    pub white_texture: ModelTexture,
+}
+
+impl RenderResource for DummyResources {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn destroy_res(&mut self, rc: &mut RenderContext) {
+        self.destroy(rc);
+    }
+}
+
+impl DummyResources {
+    pub fn destroy(&mut self, context: &mut RenderContext) {
+        self.white_texture.destroy(context);
+    }
+
+    pub fn create(context: &mut RenderContext, command_buffer: vk::CommandBuffer) -> Self {
+        let t = Texture::create_from_rgba(context, command_buffer, 1, 1, &[std::u8::MAX; 4]);
+        DummyResources {
+            white_texture: ModelTexture::from(context, t)
+        }
+    }
+}
 
 pub struct RenderContext {
     pub window_width: u32,
@@ -140,11 +172,16 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
-            
             let mut sm = std::mem::take(&mut self.shader_modules);
             sm.destroy(self);
-            let mut resources = std::mem::take(&mut self.models);
-            for (_, res) in resources.iter_mut() {
+
+            let mut res = std::mem::take(&mut self.resources);
+            for (_, r) in res.iter_mut() {
+                (*r).destroy_res(self);
+            }
+
+            let mut models = std::mem::take(&mut self.models);
+            for (_, res) in models.iter_mut() {
                 (*res).destroy(self);
             }
             let mut pf = std::mem::take(&mut self.per_frame_uniform);
@@ -180,8 +217,8 @@ impl RenderContext {
             && features.sampler_anisotropy == vk::TRUE
     }
 
-    fn get_required_device_extensions() -> [&'static CStr; 1] {
-        [vk::KhrSwapchainFn::name()]
+    fn get_required_device_extensions() -> [&'static CStr; 2] {
+        [vk::KhrSwapchainFn::name(), ash::extensions::khr::Maintenance1::name()]
     }
 
     fn check_device_extension_support(instance: &ash::Instance, device: vk::PhysicalDevice) -> bool {
@@ -256,6 +293,7 @@ impl RenderContext {
             .map(|ext| ext.as_ptr())
             .collect::<Vec<_>>();
         extension_names_raw.push(ash::extensions::ext::DebugUtils::name().as_ptr());
+        //extension_names_raw.push(ash::extensions::khr::Maintenance1::name().as_ptr());
 
         let appinfo = vk::ApplicationInfo::builder()
             .application_name(&app_name)
@@ -305,7 +343,8 @@ impl RenderContext {
         let graphics_index = graphics_index_o.unwrap();
         let present_index = present_index_o.unwrap();
 
-        let device_extension_names_raw = [ash::extensions::khr::Swapchain::name().as_ptr()];
+        let device_extension_names_raw = [ash::extensions::khr::Swapchain::name().as_ptr(),
+            ash::extensions::khr::Maintenance1::name().as_ptr()];
         let features = vk::PhysicalDeviceFeatures {
             shader_clip_distance: 1,
             ..Default::default()
@@ -425,14 +464,13 @@ impl RenderContext {
     }
 
     pub fn flush_staging_buffer(&mut self) {
-        let mut buffers = mem::replace(&mut self.staging_buffers, Vec::new());
+        let mut buffers = mem::take(&mut self.staging_buffers);
         for buffer in buffers.iter_mut() {
             buffer.destroy(self)
         }
-        self.staging_buffers = buffers
     }
 
-    pub fn push_resource<T>(&mut self, resource: T) where T: RenderResource {
+    pub fn insert_resource<T>(&mut self, resource: T) where T: RenderResource {
         self.resources.insert(TypeId::of::<T>(), Box::new(resource));
     }
 

@@ -69,7 +69,7 @@ fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Han
     let runner = runner.deref_mut();
     let mut model_data = ModelData::default();
     if let Some((present_index, command_buffer)) = runner.begin_draw() {
-        let context = &mut runner.device_mgr;
+        let context = &mut runner.context;
         for (handle, transform) in model_query.iter() {
             let model_renderer = context.get_model(handle);
             if let Some(mr) = model_renderer {
@@ -114,7 +114,7 @@ fn update_render_state_from_camera(mut commands: Commands,
 fn load_gltf_2_device_system(mut runner: ResMut<RenderRunner>, mut assets: ResMut<Assets<GltfAsset>>,
                              mut gltf_events: EventReader<AssetEvent<GltfAsset>>) {
     let runner: &mut RenderRunner = runner.deref_mut();
-    let context = &mut runner.device_mgr;
+    let context = &mut runner.context;
     let swap_mgr = &runner.swapchain_mgr;
 
     let mut changed_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
@@ -179,6 +179,7 @@ impl Plugin for RenderPlugin {
         let world = app.world_mut();
 
         let trans = Mat4::from_scale_rotation_translation(Vec3::ONE,
+                                                          //Quat::from_axis_angle(Vec3::X, 180f32.to_radians()),
                                                           Quat::IDENTITY,
                                                           Vec3::new(0.0, 0.0, 1.0));
 
