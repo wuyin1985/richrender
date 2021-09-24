@@ -17,15 +17,15 @@ fn startup(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     let pos = Vec3::new(0.00248157978f32, 0f32, -1f32);
     
     // {
-    //     let handle: Handle<GltfAsset> = asset_server.load("gltf/DamagedHelmet/DamagedHelmet.glb");
+    //     let handle: Handle<GltfAsset> = asset_server.load("gltf/vulkanscene_shadow.gltf");
     //     let t = Transform::from_scale(scale) *
     //         Transform::from_translation(pos);
     // 
     //     commmands.spawn().insert(handle).insert(t);
     // }
-
+    
     {
-        let handle: Handle<GltfAsset> = asset_server.load("gltf/untitled.glb");
+        let handle: Handle<GltfAsset> = asset_server.load("gltf/samplescene.gltf");
         let t = Transform::from_scale(scale) *
             Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
     

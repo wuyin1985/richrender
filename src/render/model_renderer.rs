@@ -14,9 +14,17 @@ use crate::render::gltf_asset_loader::GltfAsset;
 use crate::render::material::Material;
 use crate::render::vertex_layout::VertexLayout;
 use crate::render::mesh::Primitive;
+use crate::render::forward_render::ForwardRenderPass;
 
 const UBO_BINDING: u32 = 0;
 const COLOR_SAMPLER_BINDING: u32 = 1;
+
+pub struct ShadeNames {
+    pub vertex: &'static str,
+    pub frag: &'static str,
+    pub shadow_vertex: &'static str,
+    pub shadow_frag: &'static str,
+}
 
 
 #[repr(C)]
@@ -89,8 +97,8 @@ impl ModelRenderer {
         return Mat4::from_scale_rotation_translation(scale, rot, pos);
     }
 
-    pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
-                  command_buffer: vk::CommandBuffer, gltf_asset: &GltfAsset, vert_shader_path: &str, frag_shader_path: &str) -> ModelRenderer {
+    pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: &ForwardRenderPass,
+                  command_buffer: vk::CommandBuffer, gltf_asset: &GltfAsset, shader_names: &ShadeNames) -> ModelRenderer {
         info!("start load model");
         let model = Model::from_gltf(context, command_buffer, gltf_asset).expect("load error");
         info!("load model complete, primitive_count {}", model.primitive_count());
@@ -101,7 +109,7 @@ impl ModelRenderer {
             if let Some(mesh_idx) = node.mesh_index() {
                 let mesh = &model.get_meshes()[mesh_idx];
                 for primitive in mesh.primitives() {
-                    let r = PrimitiveRender::create(context, swapchain_mgr, render_pass, primitive, &model, vert_shader_path, frag_shader_path);
+                    let r = PrimitiveRender::create(context, swapchain_mgr, render_pass, primitive, &model, shader_names);
                     primitive_renders.push(r);
                 }
             }
@@ -111,6 +119,48 @@ impl ModelRenderer {
         ModelRenderer {
             primitive_renders,
             model,
+        }
+    }
+
+    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData) {
+        let mut primitive_idx = 0;
+        let uniform = context.per_frame_uniform.as_ref().unwrap();
+        for node in self.model.get_nodes() {
+            if let Some(mesh_idx) = node.mesh_index() {
+                let m_data = ModelData { transform: model_data.transform * node.transform() };
+                let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
+
+                let mesh = &self.model.get_meshes()[mesh_idx];
+                for primitive in mesh.primitives() {
+                    let render = &self.primitive_renders[primitive_idx];
+                    let vertex_layout = &primitive.get_vertex_layout();
+                    primitive_idx += 1;
+                    let set = render.descriptor_set;
+                    unsafe {
+                        context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, render.shadow_pipeline.get_pipeline());
+
+                        context.device.cmd_push_constants(command_buffer, render.shadow_pipeline.get_layout(),
+                                                          vk::ShaderStageFlags::VERTEX, 0, model_data_bytes);
+
+                        context.device.cmd_bind_vertex_buffers(command_buffer,
+                                                               0,
+                                                               &render.buffers_ref_for_draw,
+                                                               &vertex_layout.buffers_ref_offsets);
+                        context.device.cmd_bind_index_buffer(command_buffer,
+                                                             self.model.get_buffer().buffer,
+                                                             vertex_layout.indices.index as _,
+                                                             vertex_layout.indices_type);
+
+                        context.device.cmd_bind_descriptor_sets(command_buffer,
+                                                                vk::PipelineBindPoint::GRAPHICS,
+                                                                render.graphic_pipeline.get_layout(),
+                                                                0,
+                                                                &[uniform.descriptor_set], &[]);
+
+                        context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
+                    }
+                }
+            }
         }
     }
 
@@ -167,6 +217,7 @@ struct PrimitiveRender {
     pub descriptor_set_layout: vk::DescriptorSetLayout,
     pub descriptor_set: vk::DescriptorSet,
     pub graphic_pipeline: GraphicPipeline,
+    pub shadow_pipeline: GraphicPipeline,
     pub buffers_ref_for_draw: Vec<vk::Buffer>,
 }
 
@@ -236,6 +287,7 @@ impl PrimitiveRender {
     pub fn destroy(self: &mut Self, context: &mut RenderContext)
     {
         self.graphic_pipeline.destroy(context);
+        self.shadow_pipeline.destroy(context);
         unsafe {
             context.device.free_descriptor_sets(context.descriptor_pool, &[self.descriptor_set]);
             context.device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
@@ -244,11 +296,10 @@ impl PrimitiveRender {
 
     pub fn create(context: &mut RenderContext,
                   swapchain_mgr: &SwapChainMgr,
-                  render_pass: vk::RenderPass,
+                  render_pass: &ForwardRenderPass,
                   primitive: &Primitive,
                   model: &Model,
-                  vert_shader_name: &str,
-                  frag_shader_name: &str,
+                  shader_names: &ShadeNames,
     ) -> Self {
         let vertex_layout = primitive.get_vertex_layout();
         let material = primitive.get_material();
@@ -272,12 +323,27 @@ impl PrimitiveRender {
 
         let graphic_pipeline = GraphicPipeline::create(context,
                                                        swapchain_mgr,
-                                                       render_pass,
+                                                       render_pass.get_native_render_pass(),
                                                        &vertex_input, &pipeline_layout_ci, context.render_config.msaa,
-                                                       vert_shader_name, frag_shader_name, &shader_defines);
+                                                       shader_names.vertex, shader_names.frag, &shader_defines);
+
+        let shadow_layout = [frame_uniform_layout];
+        let shadow_layout_ci = vk::PipelineLayoutCreateInfo::builder()
+            .set_layouts(&shadow_layout)
+            .push_constant_ranges(&constant_ranges)
+            .build();
+        let shadow_pipeline = GraphicPipeline::create_vert_only(context,
+                                                                swapchain_mgr,
+                                                                render_pass.get_shadow_render_pass(),
+                                                                &vertex_input,
+                                                                &shadow_layout_ci,
+                                                                context.render_config.msaa,
+                                                                shader_names.shadow_vertex,
+                                                                &shader_defines);
 
         Self {
             graphic_pipeline,
+            shadow_pipeline,
             descriptor_set_layout,
             descriptor_set,
             buffers_ref_for_draw,

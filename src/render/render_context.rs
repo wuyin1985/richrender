@@ -32,6 +32,7 @@ pub struct RenderConfig {
 pub struct PerFrameData {
     pub view: Mat4,
     pub proj: Mat4,
+    pub light_matrix: Mat4,
     pub light_dir: Vec3,
     pub dummy1: f32,
     pub camera_pos: Vec3,
@@ -43,6 +44,7 @@ impl PerFrameData {
         PerFrameData {
             view: Mat4::IDENTITY,
             proj: Mat4::IDENTITY,
+            light_matrix: Mat4::IDENTITY,
             light_dir: Vec3::Z,
             dummy1: 0f32,
             camera_pos: Vec3::ZERO,

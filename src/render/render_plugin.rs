@@ -12,7 +12,7 @@ use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
 use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
-use crate::render::model_renderer::{ModelRenderer, ModelData};
+use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
 
 struct RenderMgr {
@@ -70,14 +70,31 @@ fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Han
     let mut model_data = ModelData::default();
     if let Some((present_index, command_buffer)) = runner.begin_draw() {
         let context = &mut runner.context;
+        let forward_render_pass = &runner.forward_render_pass;
+
+        //shadow
+        forward_render_pass.begin_shadow_pass(context, command_buffer);
         for (handle, transform) in model_query.iter() {
             let model_renderer = context.get_model(handle);
             if let Some(mr) = model_renderer {
-                //model_data.transform = ModelRenderer::get_center_transform(mr.get_model().aabb);
+                model_data.transform = transform.compute_matrix();
+                mr.draw_shadow(context, command_buffer, &model_data);
+            }
+        }
+        forward_render_pass.end_shadow_pass(context, command_buffer);
+
+
+        //draw
+        forward_render_pass.begin_render_pass(context, command_buffer);
+        for (handle, transform) in model_query.iter() {
+            let model_renderer = context.get_model(handle);
+            if let Some(mr) = model_renderer {
                 model_data.transform = transform.compute_matrix();
                 mr.draw(context, command_buffer, &model_data);
             }
         }
+        forward_render_pass.end_render_pass(context, command_buffer);
+
         runner.end_draw(present_index, command_buffer);
     }
 }
@@ -93,6 +110,14 @@ fn update_render_state_from_camera(mut commands: Commands,
 )
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
+        let light_pos = Vec3::new(-1.0, 1.0, 0.0);
+        let light_look_at = Vec3::ZERO;
+        let light_dir = light_look_at - light_pos;
+
+        let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
+        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, 0.1, 10.0);
+        let light_matrix = light_project * light_view;
+
         let pos = transform.translation;
         let frame_data = PerFrameData {
             view: transform.compute_matrix().inverse(),
@@ -101,7 +126,8 @@ fn update_render_state_from_camera(mut commands: Commands,
                 camera.aspect,
                 camera.z_near,
                 camera.z_far),
-            light_dir: Vec3::new(1.0, -1.0, -1.0),
+            light_dir,
+            light_matrix,
             camera_pos: pos,
             dummy1: 0f32,
             dummy2: 0f32,
@@ -152,12 +178,15 @@ fn load_gltf_2_device_system(mut runner: ResMut<RenderRunner>, mut assets: ResMu
 
         let model = ModelRenderer::create(context,
                                           swap_mgr,
-                                          runner.forward_render_pass.get_native_render_pass(),
+                                          &runner.forward_render_pass,
                                           command_buffer,
                                           gltf_asset,
-                                          "simple_draw_object_vert",
-                                          "simple_draw_object_frag",
-        );
+                                          &ShadeNames {
+                                              vertex: "pbr_vert",
+                                              frag: "pbr_frag",
+                                              shadow_vertex: "pbr_shadow_vert",
+                                              shadow_frag: "pbr_shadow_frag",
+                                          });
 
         context.insert_model(changed_gltf_handle.clone_weak(), model);
     }
@@ -181,7 +210,7 @@ impl Plugin for RenderPlugin {
         let trans = Mat4::from_scale_rotation_translation(Vec3::ONE,
                                                           //Quat::from_axis_angle(Vec3::X, 180f32.to_radians()),
                                                           Quat::IDENTITY,
-                                                          Vec3::new(0.0, 0.0, 1.0));
+                                                          Vec3::new(0.0, 3.0, 1.0));
 
         let ce = world.spawn().insert(Camera::default())
             .insert(FlyCamera::default())

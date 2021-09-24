@@ -23,15 +23,15 @@ pub struct Texture {
 
 
 impl Texture {
-    pub fn destroy(&mut self, device_mgr: &RenderContext) {
+    pub fn destroy(&mut self, context: &RenderContext) {
         unsafe {
-            device_mgr.device.destroy_image(self.image, None);
-            device_mgr.device.free_memory(self.device_memory, None);
+            context.device.destroy_image(self.image, None);
+            context.device.free_memory(self.device_memory, None);
         }
     }
 
 
-    pub fn create(device_mgr: &RenderContext, image_info: &vk::ImageCreateInfo, name: &str) -> Self {
+    pub fn create(context: &RenderContext, image_info: &vk::ImageCreateInfo, name: &str) -> Self {
         let head = TextureHead {
             format: image_info.format,
             width: image_info.extent.width,
@@ -42,17 +42,17 @@ impl Texture {
         };
 
         unsafe {
-            let image = device_mgr.device.create_image(&image_info, None).unwrap();
-            let mem_req = device_mgr.device.get_image_memory_requirements(image);
-            let texture_memory_index = device_mgr.find_memory_type_index(&mem_req, vk::MemoryPropertyFlags::DEVICE_LOCAL).
+            let image = context.device.create_image(&image_info, None).unwrap();
+            let mem_req = context.device.get_image_memory_requirements(image);
+            let texture_memory_index = context.find_memory_type_index(&mem_req, vk::MemoryPropertyFlags::DEVICE_LOCAL).
                 expect("failed to find mem index for texture");
             let texture_allocate_info = vk::MemoryAllocateInfo {
                 allocation_size: mem_req.size,
                 memory_type_index: texture_memory_index,
                 ..Default::default()
             };
-            let device_memory = device_mgr.device.allocate_memory(&texture_allocate_info, None).unwrap();
-            device_mgr.device.bind_image_memory(image, device_memory, 0).expect("unable to bind texture memory");
+            let device_memory = context.device.allocate_memory(&texture_allocate_info, None).unwrap();
+            context.device.bind_image_memory(image, device_memory, 0).expect("unable to bind texture memory");
 
             Self {
                 image,
@@ -111,7 +111,7 @@ impl Texture {
         Self::create_from_data(context, upload_command_buffer, &image_ci, data)
     }
 
-    pub fn create_as_render_target(device_mgr: &RenderContext, width: u32, height: u32, format: vk::Format,
+    pub fn create_as_render_target(context: &RenderContext, width: u32, height: u32, format: vk::Format,
                                    msaa: vk::SampleCountFlags, usage: vk::ImageUsageFlags,
                                    name: &str, flags: vk::ImageCreateFlags) -> Self {
         let image_info = vk::ImageCreateInfo {
@@ -136,10 +136,10 @@ impl Texture {
             ..Default::default()
         };
 
-        Texture::create(device_mgr, &image_info, name)
+        Texture::create(context, &image_info, name)
     }
 
-    pub fn create_as_depth_stencil(device_mgr: &RenderContext, width: u32, height: u32,
+    pub fn create_as_depth_stencil(context: &RenderContext, width: u32, height: u32,
                                    format: vk::Format, msaa: vk::SampleCountFlags, name: &str) -> Texture {
         let image_info = vk::ImageCreateInfo {
             format: format,
@@ -161,7 +161,7 @@ impl Texture {
             ..Default::default()
         };
 
-        Texture::create(device_mgr, &image_info, name)
+        Texture::create(context, &image_info, name)
     }
 
 
@@ -169,7 +169,7 @@ impl Texture {
         self.head.format
     }
 
-    pub fn create_color_view(&self, device_mgr: &RenderContext) -> vk::ImageView {
+    pub fn create_color_view(&self, context: &RenderContext) -> vk::ImageView {
         let view_ci = vk::ImageViewCreateInfo::builder().image(self.image).
             format(self.head.format).subresource_range(vk::ImageSubresourceRange {
             aspect_mask: vk::ImageAspectFlags::COLOR,
@@ -180,7 +180,7 @@ impl Texture {
         }).view_type(vk::ImageViewType::TYPE_2D).build();
 
         unsafe {
-            device_mgr.device.create_image_view(&view_ci, None).unwrap()
+            context.device.create_image_view(&view_ci, None).unwrap()
         }
     }
 
@@ -213,7 +213,7 @@ impl Texture {
         sampler
     }
 
-    pub fn create_depth_view(&self, device_mgr: &RenderContext) -> vk::ImageView {
+    pub fn create_depth_view(&self, context: &RenderContext) -> vk::ImageView {
         let view_ci = vk::ImageViewCreateInfo::builder().image(self.image).
             format(self.head.format).subresource_range(vk::ImageSubresourceRange {
             aspect_mask: vk::ImageAspectFlags::DEPTH,
@@ -224,7 +224,7 @@ impl Texture {
         }).view_type(vk::ImageViewType::TYPE_2D).build();
 
         unsafe {
-            device_mgr.device.create_image_view(&view_ci, None).unwrap()
+            context.device.create_image_view(&view_ci, None).unwrap()
         }
     }
 

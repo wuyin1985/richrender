@@ -2,7 +2,7 @@
 use ash::vk;
 use crate::render::render_context::{RenderContext, RenderConfig};
 use crate::render::swapchain_mgr::SwapChainMgr;
-use ash::vk::ImageLayout;
+use ash::vk::{ImageLayout, ImageView};
 use crate::render::model_renderer::ModelRenderer;
 use crate::render::command_buffer_list::CommandBufferList;
 
@@ -15,48 +15,75 @@ pub struct ForwardRenderPass {
     resolve_view: Option<vk::ImageView>,
     render_pass: vk::RenderPass,
     frame_buffer: vk::Framebuffer,
+    shadow: ShadowPass,
+}
+
+pub struct ShadowPass {
+    shadow_texture: Texture,
+    shadow_view: ImageView,
+    shadow_pass: vk::RenderPass,
+    shadow_buffer: vk::Framebuffer,
+}
+
+impl ShadowPass {
+    pub fn destroy(&mut self, context: &RenderContext) {
+        self.shadow_texture.destroy(context);
+        let device = &context.device;
+        unsafe {
+            device.destroy_image_view(self.shadow_view, None);
+            device.destroy_framebuffer(self.shadow_buffer, None);
+            device.destroy_render_pass(self.shadow_pass, None);
+        }
+    }
 }
 
 impl ForwardRenderPass {
-    pub fn destroy(&mut self, device_mgr: &RenderContext) {
-        unsafe {
-            if let Some(rt) = self.resolve_texture.as_mut() {
-                rt.destroy(device_mgr);
-                device_mgr.device.destroy_image_view(self.resolve_view.unwrap(), None);
+    pub fn destroy(&mut self, context: &RenderContext) {
+        let device = &context.device;
+        if let Some(rt) = self.resolve_texture.as_mut() {
+            rt.destroy(context);
+            unsafe {
+                device.destroy_image_view(self.resolve_view.unwrap(), None);
             }
-
-            self.color_texture.destroy(device_mgr);
-            device_mgr.device.destroy_image_view(self.color_view, None);
-
-            self.depth_texture.destroy(device_mgr);
-            device_mgr.device.destroy_image_view(self.depth_view, None);
-
-            device_mgr.device.destroy_framebuffer(self.frame_buffer, None);
-            device_mgr.device.destroy_render_pass(self.render_pass, None);
         }
+
+        self.color_texture.destroy(context);
+        unsafe {
+            device.destroy_image_view(self.color_view, None);
+        }
+
+        self.depth_texture.destroy(context);
+
+        unsafe {
+            device.destroy_image_view(self.depth_view, None);
+            device.destroy_framebuffer(self.frame_buffer, None);
+            device.destroy_render_pass(self.render_pass, None);
+        }
+
+        self.shadow.destroy(context);
     }
 
-    pub fn create(device_mgr: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, command_list: &CommandBufferList) -> Self {
+    pub fn create(context: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, command_list: &CommandBufferList) -> Self {
         unsafe {
-            let render_config = &device_mgr.render_config;
+            let render_config = &context.render_config;
             let msaa_on = render_config.msaa != vk::SampleCountFlags::TYPE_1;
             let msaa = render_config.msaa;
 
             let color_texture =
-                Texture::create_as_render_target(device_mgr, device_mgr.window_width,
-                                                 device_mgr.window_height, render_config.color_format,
+                Texture::create_as_render_target(context, context.window_width,
+                                                 context.window_height, render_config.color_format,
                                                  msaa,
                                                  vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
                                                  "color_render_texture", vk::ImageCreateFlags::empty());
 
-            let color_view = color_texture.create_color_view(device_mgr);
+            let color_view = color_texture.create_color_view(context);
 
             let depth_texture =
-                Texture::create_as_depth_stencil(device_mgr, device_mgr.window_width,
-                                                 device_mgr.window_height, render_config.depth_format,
+                Texture::create_as_depth_stencil(context, context.window_width,
+                                                 context.window_height, render_config.depth_format,
                                                  vk::SampleCountFlags::TYPE_1,
                                                  "color_render_texture");
-            let depth_view = depth_texture.create_depth_view(device_mgr);
+            let depth_view = depth_texture.create_depth_view(context);
 
             let mut renderpass_attachment = vec![
                 // render target
@@ -138,7 +165,7 @@ impl ForwardRenderPass {
 
             let renderpass_create_info = vk::RenderPassCreateInfo::builder()
                 .attachments(&renderpass_attachment).subpasses(&subpasses).dependencies(&dependencies).build();
-            let render_pass = device_mgr.device.create_render_pass(&renderpass_create_info, None).unwrap();
+            let render_pass = context.device.create_render_pass(&renderpass_create_info, None).unwrap();
 
             let mut frame_buffer_views = vec![
                 color_view,
@@ -151,14 +178,14 @@ impl ForwardRenderPass {
 
             if msaa_on {
                 let l_resolve_texture =
-                    Texture::create_as_render_target(device_mgr, device_mgr.window_width,
-                                                     device_mgr.window_height, render_config.color_format,
+                    Texture::create_as_render_target(context, context.window_width,
+                                                     context.window_height, render_config.color_format,
                                                      vk::SampleCountFlags::TYPE_1,
                                                      vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE,
                                                      "resolve_texture", vk::ImageCreateFlags::empty());
 
 
-                let l_resolve_view = l_resolve_texture.create_color_view(device_mgr);
+                let l_resolve_view = l_resolve_texture.create_color_view(context);
                 frame_buffer_views.push(l_resolve_view);
 
                 resolve_texture = Some(l_resolve_texture);
@@ -166,13 +193,12 @@ impl ForwardRenderPass {
             }
 
             let frame_buffer_ci = vk::FramebufferCreateInfo::builder().render_pass(render_pass).layers(1).
-                width(device_mgr.window_width).height(device_mgr.window_height).attachments(&frame_buffer_views).build();
+                width(context.window_width).height(context.window_height).attachments(&frame_buffer_views).build();
 
-            let frame_buffer = device_mgr.device.create_framebuffer(&frame_buffer_ci, None).unwrap();
+            let frame_buffer = context.device.create_framebuffer(&frame_buffer_ci, None).unwrap();
 
-            let command_buffer = command_list.get_command_buffer(0);
+            let shadow = Self::create_shadow(context, msaa);
 
-         
             ForwardRenderPass {
                 depth_texture,
                 depth_view,
@@ -182,7 +208,70 @@ impl ForwardRenderPass {
                 frame_buffer,
                 resolve_texture,
                 resolve_view,
+                shadow,
             }
+        }
+    }
+
+    fn create_shadow(context: &RenderContext, msaa: vk::SampleCountFlags) -> ShadowPass {
+        let shadow_format = vk::Format::D32_SFLOAT;
+        let shadow_texture = Texture::create_as_depth_stencil(context,
+                                                              context.window_width, context.window_height,
+                                                              shadow_format, msaa, "shadow map");
+
+        let shadow_view = shadow_texture.create_depth_view(context);
+
+        let shadow_attachments = [
+            vk::AttachmentDescription {
+                format: shadow_format,
+                samples: msaa,
+                initial_layout: vk::ImageLayout::UNDEFINED,
+                final_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                load_op: vk::AttachmentLoadOp::CLEAR,
+                store_op: vk::AttachmentStoreOp::STORE,
+                ..Default::default()
+            },
+        ];
+
+        let depth_ref = vk::AttachmentReference {
+            attachment: 0,
+            layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        };
+
+        let dependence = [vk::SubpassDependency::builder()
+            .src_subpass(vk::SUBPASS_EXTERNAL)
+            .src_stage_mask(vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
+            .src_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE)
+            .dst_subpass(0)
+            .dst_stage_mask(vk::PipelineStageFlags::FRAGMENT_SHADER | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
+            .dst_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE).build()
+        ];
+
+        let subpasses = [vk::SubpassDescription::builder().depth_stencil_attachment(&depth_ref).build()];
+
+        let render_pass_ci = vk::RenderPassCreateInfo::builder().attachments(&shadow_attachments)
+            .subpasses(&subpasses).dependencies(&dependence).build();
+
+        let shadow_pass = unsafe { context.device.create_render_pass(&render_pass_ci, None).expect("failed to create shadow render pass") };
+
+        let views = [shadow_view];
+        let frame_buffer_ci = vk::FramebufferCreateInfo::builder()
+            .attachments(&views)
+            .width(context.window_width)
+            .render_pass(shadow_pass)
+            .layers(1)
+            .height(context.window_height).build();
+
+        let shadow_buffer = unsafe {
+            context.device.create_framebuffer(&frame_buffer_ci, None).expect("failed to create shadow frame buffer")
+        };
+
+
+        ShadowPass {
+            shadow_texture,
+            shadow_view,
+            shadow_buffer,
+            shadow_pass,
         }
     }
 
@@ -190,7 +279,54 @@ impl ForwardRenderPass {
         self.render_pass
     }
 
-    pub fn begin_render_pass(&self, device_mgr: &RenderContext, swapchain_mgr: &SwapChainMgr, command_buffer: vk::CommandBuffer) {
+    pub fn get_shadow_render_pass(&self) -> vk::RenderPass {
+        self.shadow.shadow_pass
+    }
+
+    pub fn begin_shadow_pass(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
+        let clear_values = [
+            vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.0, 0.0, 0.0, 1.0],
+                },
+            },
+            vk::ClearValue {
+                depth_stencil: vk::ClearDepthStencilValue {
+                    depth: 1.0,
+                    stencil: 0,
+                },
+            },
+        ];
+
+        let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
+            .render_pass(self.shadow.shadow_pass)
+            .framebuffer(self.shadow.shadow_buffer)
+            .render_area(vk::Rect2D {
+                offset: vk::Offset2D { x: 0, y: 0 },
+                extent: vk::Extent2D {
+                    width: context.window_width,
+                    height: context.window_height,
+                },
+            })
+            .clear_values(&clear_values)
+            .build();
+
+        unsafe {
+            context.device.cmd_begin_render_pass(
+                command_buffer,
+                &render_pass_begin_info,
+                vk::SubpassContents::INLINE,
+            )
+        };
+    }
+
+    pub fn end_shadow_pass(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
+        unsafe {
+            context.device.cmd_end_render_pass(command_buffer);
+        }
+    }
+
+    pub fn begin_render_pass(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
         let clear_values = [
             vk::ClearValue {
                 color: vk::ClearColorValue {
@@ -211,15 +347,15 @@ impl ForwardRenderPass {
             .render_area(vk::Rect2D {
                 offset: vk::Offset2D { x: 0, y: 0 },
                 extent: vk::Extent2D {
-                    width: device_mgr.window_width,
-                    height: device_mgr.window_height,
+                    width: context.window_width,
+                    height: context.window_height,
                 },
             })
             .clear_values(&clear_values)
             .build();
 
         unsafe {
-            device_mgr.device.cmd_begin_render_pass(
+            context.device.cmd_begin_render_pass(
                 command_buffer,
                 &render_pass_begin_info,
                 vk::SubpassContents::INLINE,
@@ -227,9 +363,9 @@ impl ForwardRenderPass {
         };
     }
 
-    pub fn end_pass(&self, device_mgr: &RenderContext, command_buffer: vk::CommandBuffer) {
+    pub fn end_render_pass(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
         unsafe {
-            device_mgr.device.cmd_end_render_pass(command_buffer);
+            context.device.cmd_end_render_pass(command_buffer);
         }
     }
 

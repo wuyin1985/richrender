@@ -52,8 +52,8 @@ impl RenderRunner {
                                                     &vk::CommandBufferBeginInfo::builder().
                                                         flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
             }
-            
-            let dummy_res = DummyResources::create(&mut context,command_buffer_list.get_upload_command_buffer());
+
+            let dummy_res = DummyResources::create(&mut context, command_buffer_list.get_upload_command_buffer());
             context.insert_resource(dummy_res);
 
 
@@ -64,7 +64,7 @@ impl RenderRunner {
             }
 
             context.flush_staging_buffer();
-            
+
             info!("forward render pass create complete");
             // unsafe {
             //     let p = context.instance.get_physical_context_image_format_properties(context.physical_context,
@@ -115,16 +115,10 @@ impl RenderRunner {
             }
         }
 
-        self.forward_render_pass.begin_render_pass(&mut self.context, &mut self.swapchain_mgr, command_buffer);
-
         return Some((present_index, command_buffer));
     }
 
-
     pub fn end_draw(&mut self, present_index: usize, command_buffer: vk::CommandBuffer) {
-
-        self.forward_render_pass.end_pass(&mut self.context, command_buffer);
-
         let mut present_image_available_semaphore: vk::Semaphore = vk::Semaphore::null();
         let mut render_finish_semaphore: vk::Semaphore = vk::Semaphore::null();
         let mut cmd_buf_execute_fence: vk::Fence = vk::Fence::null();
@@ -161,9 +155,9 @@ impl RenderRunner {
 
             unsafe {
                 self.context.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
-                                                            vk::PipelineStageFlags::ALL_COMMANDS,
-                                                            vk::DependencyFlags::empty(), &[], &[],
-                                                            &image_barriers);
+                                                         vk::PipelineStageFlags::ALL_COMMANDS,
+                                                         vk::DependencyFlags::empty(), &[], &[],
+                                                         &image_barriers);
             }
         }
 
@@ -172,29 +166,29 @@ impl RenderRunner {
 
         unsafe {
             self.context.device.cmd_copy_image(command_buffer,
-                                                  self.forward_render_pass.get_final_render_image(),
-                                                  vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
-                                                  self.swapchain_mgr.get_current_present_image(),
-                                                  vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                                                  &[vk::ImageCopy {
-                                                      src_subresource: vk::ImageSubresourceLayers {
-                                                          aspect_mask: vk::ImageAspectFlags::COLOR,
-                                                          layer_count: 1,
-                                                          ..Default::default()
-                                                      },
-                                                      dst_subresource: vk::ImageSubresourceLayers {
-                                                          aspect_mask: vk::ImageAspectFlags::COLOR,
-                                                          layer_count: 1,
-                                                          ..Default::default()
-                                                      },
-                                                      src_offset: Default::default(),
-                                                      dst_offset: Default::default(),
-                                                      extent: vk::Extent3D {
-                                                          width: surface_resolution.width,
-                                                          height: surface_resolution.height,
-                                                          depth: 1,
-                                                      },
-                                                  }]);
+                                               self.forward_render_pass.get_final_render_image(),
+                                               vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+                                               self.swapchain_mgr.get_current_present_image(),
+                                               vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+                                               &[vk::ImageCopy {
+                                                   src_subresource: vk::ImageSubresourceLayers {
+                                                       aspect_mask: vk::ImageAspectFlags::COLOR,
+                                                       layer_count: 1,
+                                                       ..Default::default()
+                                                   },
+                                                   dst_subresource: vk::ImageSubresourceLayers {
+                                                       aspect_mask: vk::ImageAspectFlags::COLOR,
+                                                       layer_count: 1,
+                                                       ..Default::default()
+                                                   },
+                                                   src_offset: Default::default(),
+                                                   dst_offset: Default::default(),
+                                                   extent: vk::Extent3D {
+                                                       width: surface_resolution.width,
+                                                       height: surface_resolution.height,
+                                                       depth: 1,
+                                                   },
+                                               }]);
         }
 
         {
@@ -214,12 +208,12 @@ impl RenderRunner {
 
             unsafe {
                 self.context.device.cmd_pipeline_barrier(command_buffer,
-                                                            vk::PipelineStageFlags::ALL_COMMANDS,
-                                                            vk::PipelineStageFlags::ALL_COMMANDS,
-                                                            vk::DependencyFlags::empty(),
-                                                            &[],
-                                                            &[],
-                                                            &image_barriers);
+                                                         vk::PipelineStageFlags::ALL_COMMANDS,
+                                                         vk::PipelineStageFlags::ALL_COMMANDS,
+                                                         vk::DependencyFlags::empty(),
+                                                         &[],
+                                                         &[],
+                                                         &image_barriers);
             }
         }
 
