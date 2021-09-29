@@ -19,10 +19,11 @@ pub struct ForwardRenderPass {
 }
 
 pub struct ShadowPass {
-    shadow_texture: Texture,
-    shadow_view: ImageView,
-    shadow_pass: vk::RenderPass,
-    shadow_buffer: vk::Framebuffer,
+    pub shadow_texture: Texture,
+    pub shadow_view: ImageView,
+    pub shadow_pass: vk::RenderPass,
+    pub shadow_buffer: vk::Framebuffer,
+    pub sampler: vk::Sampler,
 }
 
 impl ShadowPass {
@@ -30,6 +31,7 @@ impl ShadowPass {
         self.shadow_texture.destroy(context);
         let device = &context.device;
         unsafe {
+            device.destroy_sampler(self.sampler, None);
             device.destroy_image_view(self.shadow_view, None);
             device.destroy_framebuffer(self.shadow_buffer, None);
             device.destroy_render_pass(self.shadow_pass, None);
@@ -221,12 +223,39 @@ impl ForwardRenderPass {
 
         let shadow_view = shadow_texture.create_depth_view(context);
 
+        let sampler = {
+            let sampler_info = vk::SamplerCreateInfo::builder()
+                .mag_filter(vk::Filter::LINEAR)
+                .min_filter(vk::Filter::LINEAR)
+                .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_BORDER)
+                .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_BORDER)
+                .address_mode_w(vk::SamplerAddressMode::REPEAT)
+                .anisotropy_enable(false)
+                .max_anisotropy(16.0)
+                .border_color(vk::BorderColor::FLOAT_OPAQUE_WHITE)
+                .unnormalized_coordinates(false)
+                .compare_enable(false)
+                .compare_op(vk::CompareOp::ALWAYS)
+                .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
+                .mip_lod_bias(0.0)
+                .min_lod(0.0)
+                .max_lod(1.0);
+
+            unsafe {
+                context
+                    .device
+                    .create_sampler(&sampler_info, None)
+                    .expect("Failed to create sampler")
+            }
+        };
+
+
         let shadow_attachments = [
             vk::AttachmentDescription {
                 format: shadow_format,
                 samples: msaa,
                 initial_layout: vk::ImageLayout::UNDEFINED,
-                final_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                final_layout: vk::ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
                 load_op: vk::AttachmentLoadOp::CLEAR,
                 store_op: vk::AttachmentStoreOp::STORE,
                 ..Default::default()
@@ -238,13 +267,14 @@ impl ForwardRenderPass {
             layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         };
 
-        let dependence = [vk::SubpassDependency::builder()
-            .src_subpass(vk::SUBPASS_EXTERNAL)
-            .src_stage_mask(vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
-            .src_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE)
-            .dst_subpass(0)
-            .dst_stage_mask(vk::PipelineStageFlags::FRAGMENT_SHADER | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
-            .dst_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE).build()
+        let dependence = [
+            vk::SubpassDependency::builder()
+                .src_subpass(vk::SUBPASS_EXTERNAL)
+                .src_stage_mask(vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
+                .src_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE)
+                .dst_subpass(0)
+                .dst_stage_mask(vk::PipelineStageFlags::FRAGMENT_SHADER | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS)
+                .dst_access_mask(vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE).build(),
         ];
 
         let subpasses = [vk::SubpassDescription::builder().depth_stencil_attachment(&depth_ref).build()];
@@ -272,6 +302,7 @@ impl ForwardRenderPass {
             shadow_view,
             shadow_buffer,
             shadow_pass,
+            sampler,
         }
     }
 
@@ -283,13 +314,12 @@ impl ForwardRenderPass {
         self.shadow.shadow_pass
     }
 
+    pub fn get_shadow(&self) -> &ShadowPass {
+        &self.shadow
+    }
+
     pub fn begin_shadow_pass(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
         let clear_values = [
-            vk::ClearValue {
-                color: vk::ClearColorValue {
-                    float32: [0.0, 0.0, 0.0, 1.0],
-                },
-            },
             vk::ClearValue {
                 depth_stencil: vk::ClearDepthStencilValue {
                     depth: 1.0,

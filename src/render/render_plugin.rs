@@ -83,7 +83,6 @@ fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Han
         }
         forward_render_pass.end_shadow_pass(context, command_buffer);
 
-
         //draw
         forward_render_pass.begin_render_pass(context, command_buffer);
         for (handle, transform) in model_query.iter() {
@@ -110,12 +109,13 @@ fn update_render_state_from_camera(mut commands: Commands,
 )
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-        let light_pos = Vec3::new(-1.0, 1.0, 0.0);
+        let light_pos = Vec3::new(-3.0, 0.5, 0.0);
         let light_look_at = Vec3::ZERO;
         let light_dir = light_look_at - light_pos;
 
         let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, 0.1, 10.0);
+        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, -10.0, 20.0);
+       
         let light_matrix = light_project * light_view;
 
         let pos = transform.translation;

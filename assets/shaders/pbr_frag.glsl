@@ -7,16 +7,37 @@ layout (set = 1, binding = 0) uniform sampler2D tex_sample;
 layout(location = 0) in vec2 in_tex_coord;
 #endif
 
-layout(location = 0) out vec4 out_color;
+layout (set = 1, binding = 1) uniform sampler2D shadow_map;
 
-layout(location = 1) in vec3 in_camera_dir;
+layout(location = 1) in vec4 in_shadow_coord;
+
+layout(location = 2) in vec3 in_camera_dir;
 
 #ifdef IN_NORMAL
-layout(location = 2) in vec3 in_normal;
+layout(location = 3) in vec3 in_normal;
 #endif
 
+layout(location = 0) out vec4 out_color;
 
 layout (constant_id = 0) const float ambient_strength = 0.3;
+
+#define ambient_shadow 0.1
+
+float textureProj(vec4 shadowCoord, vec2 off)
+{
+    float shadow = 1.0;
+    if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 )
+    {
+        float dist = texture( shadow_map, shadowCoord.st + off ).r;
+        if ( shadowCoord.w > 0.0 && dist < shadowCoord.z )
+        {
+            shadow = ambient_strength;
+        }
+    }
+    return shadow;
+    //return texture( shadow_map, shadowCoord.st + off ).r;
+}
+
 
 #ifdef IN_TEX_COORD
 vec3 draw_light() {
@@ -41,10 +62,13 @@ vec3 draw_light() {
 #endif
 
 void main() {
+    vec3 oc;
 #ifdef IN_TEX_COORD
-    vec3 c = draw_light();
-    out_color = vec4(c, 1.0);
+    oc = draw_light();
 #else
-    out_color = vec4(1.0, 1.0, 1.0, 1.0);
+    oc = vec3(1.0, 1.0, 1.0);
 #endif
+    //oc = vec3(1.0, 1.0, 1.0);
+    float shadow = textureProj(in_shadow_coord / in_shadow_coord.w, vec2(0.0));
+    out_color = vec4(oc * shadow, 1.0);
 }

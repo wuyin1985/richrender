@@ -12,8 +12,6 @@ layout(location = 0) in vec3 in_pos;
 
 
 void main() {
-    vec4 loc_pos = push_constants.model * vec4(in_pos, 1.0);
-    vec3 world_pos = loc_pos.xyz / loc_pos.w;
-    gl_Position = ubo.light_matrix * vec4(world_pos, 1.0);
+    gl_Position = ubo.light_matrix * push_constants.model * vec4(in_pos, 1.0);
 }
 

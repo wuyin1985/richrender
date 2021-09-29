@@ -222,14 +222,23 @@ struct PrimitiveRender {
 }
 
 impl PrimitiveRender {
-    fn create_descriptors(context: &mut RenderContext, material: &Material, model: &Model) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
+    fn create_descriptors(context: &mut RenderContext,
+                          render_pass: &ForwardRenderPass,
+                          material: &Material, model: &Model) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
         let bindings = [
             vk::DescriptorSetLayoutBinding::builder()
                 .binding(0)
                 .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                 .descriptor_count(1)
                 .stage_flags(vk::ShaderStageFlags::FRAGMENT)
-                .build()];
+                .build(),
+            vk::DescriptorSetLayoutBinding::builder()
+                .binding(1)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .descriptor_count(1)
+                .stage_flags(vk::ShaderStageFlags::FRAGMENT)
+                .build(),
+        ];
 
         let layout_info = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings).build();
 
@@ -267,12 +276,31 @@ impl PrimitiveRender {
                 .build()]
         };
 
-        let descriptor_writes = [vk::WriteDescriptorSet::builder()
-            .dst_set(set)
-            .dst_binding(0)
-            .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .image_info(&albedo_info)
-            .build()];
+        let shadow_info = {
+            let shadow = render_pass.get_shadow();
+            let (view, sampler) = (shadow.shadow_view, shadow.sampler);
+
+            [vk::DescriptorImageInfo::builder()
+                .image_layout(vk::ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL)
+                .image_view(view)
+                .sampler(sampler)
+                .build()]
+        };
+
+        let descriptor_writes = [
+            vk::WriteDescriptorSet::builder()
+                .dst_set(set)
+                .dst_binding(0)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .image_info(&albedo_info)
+                .build(),
+            vk::WriteDescriptorSet::builder()
+                .dst_set(set)
+                .dst_binding(1)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .image_info(&shadow_info)
+                .build(),
+        ];
 
         unsafe {
             context
@@ -310,7 +338,7 @@ impl PrimitiveRender {
         let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();
         let frame_uniform_layout = context.per_frame_uniform.as_mut().unwrap().descriptor_set_layout;
 
-        let (descriptor_set_layout, descriptor_set) = Self::create_descriptors(context, &material, model);
+        let (descriptor_set_layout, descriptor_set) = Self::create_descriptors(context, render_pass, &material, model);
 
         let all_layout = [frame_uniform_layout, descriptor_set_layout];
 
