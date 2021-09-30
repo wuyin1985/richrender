@@ -23,26 +23,50 @@ layout (constant_id = 0) const float ambient_strength = 0.3;
 
 #define ambient_shadow 0.1
 
+
+
 float textureProj(vec4 shadowCoord, vec2 off)
 {
-    float shadow = 1.0;
-    if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 )
+    float shadow = 0.0;
+    float dist = texture(shadow_map, shadowCoord.xy + off).r;
+    if (shadowCoord.w > 0 && dist < shadowCoord.z)
     {
-        float dist = texture( shadow_map, shadowCoord.st + off ).r;
-        if ( shadowCoord.w > 0.0 && dist < shadowCoord.z )
-        {
-            shadow = ambient_strength;
-        }
+        shadow = 1.0;
     }
     return shadow;
-    //return texture( shadow_map, shadowCoord.st + off ).r;
+    //    shadowCoord.y = -shadowCoord.y;
+    //    vec2 uv = shadowCoord.st * 0.5 + 0.5;
+    //    return texture(shadow_map, uv).r;
+}
+
+float filterPCF(vec4 sc)
+{
+    ivec2 texDim = textureSize(shadow_map, 0);
+    float scale = 1.5;
+    float dx = scale * 1.0 / float(texDim.x);
+    float dy = scale * 1.0 / float(texDim.y);
+
+    float shadowFactor = 0.0;
+    int count = 0;
+    int range = 1;
+
+    for (int x = -range; x <= range; x++)
+    {
+        for (int y = -range; y <= range; y++)
+        {
+            shadowFactor += textureProj(sc, vec2(dx*x, dy*y));
+            count++;
+        }
+
+    }
+    return shadowFactor / count;
 }
 
 
-#ifdef IN_TEX_COORD
+    #ifdef IN_TEX_COORD
 vec3 draw_light() {
     vec3 obj_color = vec3(texture(tex_sample, in_tex_coord));
-#ifdef IN_NORMAL
+    #ifdef IN_NORMAL
     vec3 ambient = ambient_strength * obj_color;
     vec3 light_dir = -ubo.light_dir;
     vec3 normal = normalize(in_normal);
@@ -53,22 +77,22 @@ vec3 draw_light() {
     vec3 halfway_dir = normalize(light_dir + camera_dir);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), 32.0);
     vec3 specular = spec * vec3(0.3);
-    vec3 result = diffuse + specular + ambient;
+
+    float shadow = filterPCF(in_shadow_coord / in_shadow_coord.w);
+    vec3 result = ambient + (1.0 - shadow) * (specular + diffuse);
     return result;
-#else
+    #else
     return obj_color;
-#endif
+    #endif
 }
-#endif
+    #endif
 
 void main() {
     vec3 oc;
-#ifdef IN_TEX_COORD
+    #ifdef IN_TEX_COORD
     oc = draw_light();
-#else
+    #else
     oc = vec3(1.0, 1.0, 1.0);
-#endif
-    //oc = vec3(1.0, 1.0, 1.0);
-    float shadow = textureProj(in_shadow_coord / in_shadow_coord.w, vec2(0.0));
-    out_color = vec4(oc * shadow, 1.0);
+    #endif
+    out_color = vec4(oc, 1.0);
 }

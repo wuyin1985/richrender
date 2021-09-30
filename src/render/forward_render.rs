@@ -216,9 +216,10 @@ impl ForwardRenderPass {
     }
 
     fn create_shadow(context: &RenderContext, msaa: vk::SampleCountFlags) -> ShadowPass {
-        let shadow_format = vk::Format::D32_SFLOAT;
+        let shadow_format = context.render_config.depth_format;
+        let sd = context.render_config.shadow_map_dim;
         let shadow_texture = Texture::create_as_depth_stencil(context,
-                                                              context.window_width, context.window_height,
+                                                              sd as _, sd as _,
                                                               shadow_format, msaa, "shadow map");
 
         let shadow_view = shadow_texture.create_depth_view(context);
@@ -227,11 +228,11 @@ impl ForwardRenderPass {
             let sampler_info = vk::SamplerCreateInfo::builder()
                 .mag_filter(vk::Filter::LINEAR)
                 .min_filter(vk::Filter::LINEAR)
-                .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_BORDER)
-                .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_BORDER)
-                .address_mode_w(vk::SamplerAddressMode::REPEAT)
+                .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_EDGE)
+                .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_EDGE)
+                .address_mode_w(vk::SamplerAddressMode::CLAMP_TO_EDGE)
                 .anisotropy_enable(false)
-                .max_anisotropy(16.0)
+                .max_anisotropy(1.0)
                 .border_color(vk::BorderColor::FLOAT_OPAQUE_WHITE)
                 .unnormalized_coordinates(false)
                 .compare_enable(false)
@@ -255,7 +256,7 @@ impl ForwardRenderPass {
                 format: shadow_format,
                 samples: msaa,
                 initial_layout: vk::ImageLayout::UNDEFINED,
-                final_layout: vk::ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
+                final_layout: vk::ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                 load_op: vk::AttachmentLoadOp::CLEAR,
                 store_op: vk::AttachmentStoreOp::STORE,
                 ..Default::default()
@@ -287,10 +288,10 @@ impl ForwardRenderPass {
         let views = [shadow_view];
         let frame_buffer_ci = vk::FramebufferCreateInfo::builder()
             .attachments(&views)
-            .width(context.window_width)
+            .width(sd as _)
             .render_pass(shadow_pass)
             .layers(1)
-            .height(context.window_height).build();
+            .height(sd as _).build();
 
         let shadow_buffer = unsafe {
             context.device.create_framebuffer(&frame_buffer_ci, None).expect("failed to create shadow frame buffer")
@@ -304,6 +305,14 @@ impl ForwardRenderPass {
             shadow_pass,
             sampler,
         }
+    }
+
+    pub fn get_color_view(&self) -> vk::ImageView {
+        self.color_view
+    }
+
+    pub fn get_depth_view(&self) -> vk::ImageView {
+        self.depth_view
     }
 
     pub fn get_native_render_pass(&self) -> vk::RenderPass {
@@ -327,6 +336,8 @@ impl ForwardRenderPass {
                 },
             },
         ];
+        
+        let sd = context.render_config.shadow_map_dim;
 
         let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
             .render_pass(self.shadow.shadow_pass)
@@ -334,8 +345,8 @@ impl ForwardRenderPass {
             .render_area(vk::Rect2D {
                 offset: vk::Offset2D { x: 0, y: 0 },
                 extent: vk::Extent2D {
-                    width: context.window_width,
-                    height: context.window_height,
+                    width: sd as _,
+                    height: sd as _,
                 },
             })
             .clear_values(&clear_values)

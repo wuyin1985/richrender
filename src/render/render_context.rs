@@ -25,6 +25,7 @@ pub struct RenderConfig {
     pub apply_shadow: bool,
     pub color_format: vk::Format,
     pub depth_format: vk::Format,
+    pub shadow_map_dim: f32,
 }
 
 #[repr(C)]
@@ -389,6 +390,7 @@ impl RenderContext {
             apply_shadow: false,
             color_format: vk::Format::B8G8R8A8_UNORM,
             depth_format: vk::Format::D32_SFLOAT,
+            shadow_map_dim: 2048f32,
         };
 
         //todo description size

@@ -36,16 +36,18 @@ void main() {
     vec4 loc_pos = push_constants.model * vec4(in_pos, 1.0);
     vec3 world_pos = loc_pos.xyz / loc_pos.w;
     out_camera_dir = ubo.camera_pos - world_pos;
-#ifdef IN_NORMAL
+    #ifdef IN_NORMAL
     out_normal = normalize(transpose(inverse(mat3(push_constants.model))) * in_normal);
-#endif
+    #endif
 
     gl_Position = ubo.proj * ubo.view * vec4(world_pos, 1.0);
-    
-#ifdef IN_TEX_COORD
+
+    #ifdef IN_TEX_COORD
     out_tex_coord = in_tex_coord;
-#endif
-    
+    #endif
+
     out_shadow_coord = ubo.light_matrix * vec4(world_pos, 1.0);
+    out_shadow_coord.y = -out_shadow_coord.y;
+    out_shadow_coord.xy = out_shadow_coord.xy * 0.5 + 0.5;
 }
 

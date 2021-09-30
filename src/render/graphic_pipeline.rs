@@ -7,18 +7,24 @@ use std::io::Cursor;
 use ash::vk::DeviceSize;
 
 pub struct PipelineVertexInputInfo {
-    ci: vk::PipelineVertexInputStateCreateInfo,
+    ci: Option<vk::PipelineVertexInputStateCreateInfo>,
 }
 
 impl PipelineVertexInputInfo {
     pub fn from(binding: &[vk::VertexInputBindingDescription], attributes: &[vk::VertexInputAttributeDescription]) -> Self {
         PipelineVertexInputInfo {
-            ci: vk::PipelineVertexInputStateCreateInfo::builder().
-                vertex_binding_descriptions(binding).vertex_attribute_descriptions(attributes).build()
+            ci: Some(vk::PipelineVertexInputStateCreateInfo::builder().
+                vertex_binding_descriptions(binding).vertex_attribute_descriptions(attributes).build())
         }
     }
 
-    pub fn get_ci(&self) -> &vk::PipelineVertexInputStateCreateInfo {
+    pub fn none() -> Self {
+        PipelineVertexInputInfo {
+            ci: None
+        }
+    }
+
+    pub fn get_ci(&self) -> &Option<vk::PipelineVertexInputStateCreateInfo> {
         &self.ci
     }
 }
@@ -64,7 +70,6 @@ impl GraphicPipeline {
                   vert_spv_path: &str,
                   frag_spv_path: &str,
                   defines: &[&str]) -> Self {
-
         let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path, defines);
         let fragment_shader_module = Self::read_shader_data_from_file(device_mgr, frag_spv_path, defines);
 
@@ -171,22 +176,27 @@ impl GraphicPipeline {
             unsafe { device.create_pipeline_layout(pipeline_layout_ci, None).unwrap() }
         };
 
-        let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
-            .stages(&shader_states_infos)
-            .vertex_input_state(vertex_input.get_ci())
-            .input_assembly_state(&input_assembly_info)
-            .viewport_state(&viewport_info)
-            .rasterization_state(&rasterizer_info)
-            .multisample_state(&multisampling_info)
-            .depth_stencil_state(&depth_stencil_info)
-            .color_blend_state(&color_blending_info)
-            // .dynamic_state() null since don't have any dynamic states
-            .layout(layout)
-            .render_pass(render_pass)
-            .subpass(0)
+        let pipeline_info = {
+            let mut ci = vk::GraphicsPipelineCreateInfo::builder()
+                .stages(&shader_states_infos)
+                .input_assembly_state(&input_assembly_info)
+                .viewport_state(&viewport_info)
+                .rasterization_state(&rasterizer_info)
+                .multisample_state(&multisampling_info)
+                .depth_stencil_state(&depth_stencil_info)
+                .color_blend_state(&color_blending_info)
+                // .dynamic_state() null since don't have any dynamic states
+                .layout(layout)
+                .render_pass(render_pass)
+                .subpass(0);
+
+            if let Some(info) = vertex_input.get_ci().as_ref() {
+                ci = ci.vertex_input_state(info);
+            }
             // .base_pipeline_handle() null since it is not derived from another
             // .base_pipeline_index(-1) same
-            .build();
+            ci.build()
+        };
         let pipeline_infos = [pipeline_info];
 
         let pipeline = unsafe {
@@ -207,14 +217,13 @@ impl GraphicPipeline {
     }
 
     pub fn create_vert_only(device_mgr: &mut RenderContext,
-                  swapchain_mgr: &SwapChainMgr,
-                  render_pass: vk::RenderPass,
-                  vertex_input: &PipelineVertexInputInfo,
-                  pipeline_layout_ci: &vk::PipelineLayoutCreateInfo,
-                  msaa: vk::SampleCountFlags,
-                  vert_spv_path: &str,
-                  defines: &[&str]) -> Self {
-
+                            swapchain_mgr: &SwapChainMgr,
+                            render_pass: vk::RenderPass,
+                            vertex_input: &PipelineVertexInputInfo,
+                            pipeline_layout_ci: &vk::PipelineLayoutCreateInfo,
+                            msaa: vk::SampleCountFlags,
+                            vert_spv_path: &str,
+                            defines: &[&str]) -> Self {
         let vertex_shader_module = Self::read_shader_data_from_file(device_mgr, vert_spv_path, defines);
 
         let device = &device_mgr.device;
@@ -224,7 +233,7 @@ impl GraphicPipeline {
             .module(vertex_shader_module)
             .name(&entry_point_name)
             .build();
-            
+
         let shader_states_infos = [vertex_shader_state_info];
 
         let input_assembly_info = vk::PipelineInputAssemblyStateCreateInfo::builder()
@@ -232,20 +241,24 @@ impl GraphicPipeline {
             .primitive_restart_enable(false)
             .build();
 
-        let surface_resolution = swapchain_mgr.surface_resolution;
+        
+        let sd = device_mgr.render_config.shadow_map_dim;
 
+        let mut surface_resolution = swapchain_mgr.surface_resolution;
+        surface_resolution.width = sd as _;
+        surface_resolution.height = sd as _;
         let viewport = vk::Viewport {
             x: 0.0,
-            y: surface_resolution.height as _,
-            width: surface_resolution.width as _,
-            height: -(surface_resolution.height as f32),
+            y: sd,
+            width: sd,
+            height: -sd,
             min_depth: 0.0,
             max_depth: 1.0,
         };
         let viewports = [viewport];
         let scissor = vk::Rect2D {
             offset: vk::Offset2D { x: 0, y: 0 },
-            extent: surface_resolution,
+            extent: surface_resolution
         };
         let scissors = [scissor];
         let viewport_info = vk::PipelineViewportStateCreateInfo::builder()
@@ -260,10 +273,10 @@ impl GraphicPipeline {
             .line_width(1.0)
             .cull_mode(vk::CullModeFlags::BACK)
             .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
-            .depth_bias_enable(false)
-            .depth_bias_constant_factor(0.0)
+            .depth_bias_enable(true)
+            .depth_bias_constant_factor(1.25)
             .depth_bias_clamp(0.0)
-            .depth_bias_slope_factor(0.0)
+            .depth_bias_slope_factor(1.75)
             .build();
 
         let multisampling_info = vk::PipelineMultisampleStateCreateInfo::builder()
@@ -296,18 +309,24 @@ impl GraphicPipeline {
             unsafe { device.create_pipeline_layout(pipeline_layout_ci, None).unwrap() }
         };
 
-        let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
-            .stages(&shader_states_infos)
-            .vertex_input_state(vertex_input.get_ci())
-            .input_assembly_state(&input_assembly_info)
-            .viewport_state(&viewport_info)
-            .rasterization_state(&rasterizer_info)
-            .multisample_state(&multisampling_info)
-            .depth_stencil_state(&depth_stencil_info)
-            .layout(layout)
-            .render_pass(render_pass)
-            .subpass(0)
-            .build();
+        let pipeline_info = {
+            let mut ci = vk::GraphicsPipelineCreateInfo::builder()
+                .stages(&shader_states_infos)
+                .input_assembly_state(&input_assembly_info)
+                .viewport_state(&viewport_info)
+                .rasterization_state(&rasterizer_info)
+                .multisample_state(&multisampling_info)
+                .depth_stencil_state(&depth_stencil_info)
+                .layout(layout)
+                .render_pass(render_pass)
+                .subpass(0);
+
+            if let Some(info) = vertex_input.get_ci().as_ref() {
+                ci = ci.vertex_input_state(info);
+            }
+            
+            ci.build()
+        };
         let pipeline_infos = [pipeline_info];
 
         let pipeline = unsafe {

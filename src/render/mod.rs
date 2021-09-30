@@ -25,6 +25,7 @@ mod uniform;
 pub mod gltf_asset_loader;
 mod shader_const;
 mod shader_collection;
+mod debug;
 
 pub use render_plugin::RenderPlugin;
 

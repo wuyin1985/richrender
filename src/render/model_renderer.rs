@@ -281,7 +281,7 @@ impl PrimitiveRender {
             let (view, sampler) = (shadow.shadow_view, shadow.sampler);
 
             [vk::DescriptorImageInfo::builder()
-                .image_layout(vk::ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL)
+                .image_layout(vk::ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL)
                 .image_view(view)
                 .sampler(sampler)
                 .build()]

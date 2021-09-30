@@ -14,6 +14,7 @@ use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
 use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
+use bevy::math::Vec4Swizzles;
 
 struct RenderMgr {
     window_created_event_reader: ManualEventReader<WindowCreated>,
@@ -74,23 +75,25 @@ fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Han
 
         //shadow
         forward_render_pass.begin_shadow_pass(context, command_buffer);
+
+        let mut list = Vec::new();
         for (handle, transform) in model_query.iter() {
             let model_renderer = context.get_model(handle);
             if let Some(mr) = model_renderer {
                 model_data.transform = transform.compute_matrix();
                 mr.draw_shadow(context, command_buffer, &model_data);
+                list.push((handle, transform));
             }
         }
         forward_render_pass.end_shadow_pass(context, command_buffer);
 
         //draw
         forward_render_pass.begin_render_pass(context, command_buffer);
-        for (handle, transform) in model_query.iter() {
-            let model_renderer = context.get_model(handle);
-            if let Some(mr) = model_renderer {
-                model_data.transform = transform.compute_matrix();
-                mr.draw(context, command_buffer, &model_data);
-            }
+
+        for (handle, transform) in list {
+            let mr = context.get_model(handle).unwrap();
+            model_data.transform = transform.compute_matrix();
+            mr.draw(context, command_buffer, &model_data);
         }
         forward_render_pass.end_render_pass(context, command_buffer);
 
@@ -109,24 +112,31 @@ fn update_render_state_from_camera(mut commands: Commands,
 )
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-        let light_pos = Vec3::new(-3.0, 0.5, 0.0);
+        let light_pos = Vec3::new(-5.0, 2.5, 0.0);
         let light_look_at = Vec3::ZERO;
         let light_dir = light_look_at - light_pos;
-
+        
         let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, -10.0, 20.0);
-       
+        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, -5.0, 30.0);
+        
         let light_matrix = light_project * light_view;
 
         let pos = transform.translation;
+
+        let proj = Mat4::perspective_rh(
+            camera.fov,
+            camera.aspect,
+            camera.z_near,
+            camera.z_far);
+
+        let view = transform.compute_matrix().inverse();
+        // let light_matrix = proj * view;
+        // let light_dir = light_matrix.mul_vec4(Vec4::Z);
+
         let frame_data = PerFrameData {
-            view: transform.compute_matrix().inverse(),
-            proj: Mat4::perspective_rh(
-                camera.fov,
-                camera.aspect,
-                camera.z_near,
-                camera.z_far),
-            light_dir,
+            view: view,
+            proj: proj,
+            light_dir: light_dir,
             light_matrix,
             camera_pos: pos,
             dummy1: 0f32,
