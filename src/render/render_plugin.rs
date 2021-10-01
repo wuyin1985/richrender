@@ -112,12 +112,16 @@ fn update_render_state_from_camera(mut commands: Commands,
 )
 {
     if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-        let light_pos = Vec3::new(-5.0, 2.5, 0.0);
+        let light_pos = Vec3::new(-12.0, 3.5, -2.0);
         let light_look_at = Vec3::ZERO;
         let light_dir = light_look_at - light_pos;
         
         let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-        let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, -5.0, 30.0);
+        let light_project =  Mat4::perspective_rh(
+            camera.fov,
+            1f32,
+            1f32,
+            96f32);
         
         let light_matrix = light_project * light_view;
 
@@ -136,10 +140,10 @@ fn update_render_state_from_camera(mut commands: Commands,
         let frame_data = PerFrameData {
             view: view,
             proj: proj,
-            light_dir: light_dir,
             light_matrix,
-            camera_pos: pos,
+            light_dir: light_dir,
             dummy1: 0f32,
+            camera_pos: pos,
             dummy2: 0f32,
         };
         runner.upload_per_frame_data(frame_data);

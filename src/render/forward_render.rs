@@ -228,19 +228,19 @@ impl ForwardRenderPass {
             let sampler_info = vk::SamplerCreateInfo::builder()
                 .mag_filter(vk::Filter::LINEAR)
                 .min_filter(vk::Filter::LINEAR)
-                .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_EDGE)
-                .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_EDGE)
-                .address_mode_w(vk::SamplerAddressMode::CLAMP_TO_EDGE)
+                .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_BORDER)
+                .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_BORDER)
+                .address_mode_w(vk::SamplerAddressMode::CLAMP_TO_BORDER)
                 .anisotropy_enable(false)
                 .max_anisotropy(1.0)
                 .border_color(vk::BorderColor::FLOAT_OPAQUE_WHITE)
                 .unnormalized_coordinates(false)
                 .compare_enable(false)
-                .compare_op(vk::CompareOp::ALWAYS)
+                .compare_op(vk::CompareOp::NEVER)
                 .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
                 .mip_lod_bias(0.0)
                 .min_lod(0.0)
-                .max_lod(1.0);
+                .max_lod(0.0);
 
             unsafe {
                 context
