@@ -47,7 +47,7 @@ pub struct FlyCamera {
     /// If `false`, disable keyboard control of the camera. Defaults to `true`
     pub enabled: bool,
 
-    pub mouse_pressed: bool,
+    pub mouse_pressed: Option<MouseButton>,
 }
 
 impl Default for FlyCamera {
@@ -67,7 +67,7 @@ impl Default for FlyCamera {
             key_up: KeyCode::Space,
             key_down: KeyCode::LShift,
             enabled: true,
-            mouse_pressed: false,
+            mouse_pressed: None,
         }
     }
 }
@@ -160,7 +160,7 @@ fn mouse_wheel_system(
     {
         return;
     }
-    
+
     x = 5f32 * x * time.delta_seconds();
 
     for (mut options, mut transform) in query.iter_mut() {
@@ -187,26 +187,40 @@ fn mouse_motion_system(
 
     for (mut options, mut transform) in query.iter_mut() {
         for event in mouse_button_input_events.iter() {
-            if event.button == MouseButton::Left {
-                options.mouse_pressed = event.state.is_pressed();
+            if event.state.is_pressed() {
+                options.mouse_pressed = Some(event.button);
+            } else {
+                if let Some(mp) = options.mouse_pressed {
+                    if mp == event.button {
+                        options.mouse_pressed = None;
+                    }
+                }
             }
         }
 
-        if !options.mouse_pressed {
-            continue;
+
+        if let Some(button) = options.mouse_pressed {
+            match button {
+                MouseButton::Left => {
+                    options.yaw -= delta.x * options.sensitivity * time.delta_seconds();
+                    options.pitch += delta.y * options.sensitivity * time.delta_seconds();
+
+                    options.pitch = options.pitch.clamp(-89.0, 89.9);
+                    // println!("pitch: {}, yaw: {}", options.pitch, options.yaw);
+
+                    let yaw_radians = options.yaw.to_radians();
+                    let pitch_radians = options.pitch.to_radians();
+
+                    transform.rotation = Quat::from_axis_angle(Vec3::Y, yaw_radians)
+                        * Quat::from_axis_angle(-Vec3::X, pitch_radians);
+                }
+                MouseButton::Middle => {
+                    let d = delta * options.sensitivity * time.delta_seconds();
+                    transform.translation = transform.translation + Vec3::new(-d.x, d.y, 0.0);
+                }
+                _ => {}
+            }
         }
-
-        options.yaw -= delta.x * options.sensitivity * time.delta_seconds();
-        options.pitch += delta.y * options.sensitivity * time.delta_seconds();
-
-        options.pitch = options.pitch.clamp(-89.0, 89.9);
-        // println!("pitch: {}, yaw: {}", options.pitch, options.yaw);
-
-        let yaw_radians = options.yaw.to_radians();
-        let pitch_radians = options.pitch.to_radians();
-
-        transform.rotation = Quat::from_axis_angle(Vec3::Y, yaw_radians)
-            * Quat::from_axis_angle(-Vec3::X, pitch_radians);
     }
 }
 
@@ -218,6 +232,5 @@ impl Plugin for FlyCameraPlugin {
             .add_system(camera_movement_system.system())
             .add_system(mouse_motion_system.system())
             .add_system(mouse_wheel_system.system());
-            
     }
 }
