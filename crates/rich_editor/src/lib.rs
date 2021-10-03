@@ -12,15 +12,36 @@ impl Plugin for EditorPlugin {
         app.add_plugin(EguiPlugin);
 
         app.add_system(
-            process.system()
+            process.system().config(|config| {
+                config.0 = Some(EditorState {
+                    name: "hello".to_string(),
+                    age: 2,
+                    
+                })
+            })
         );
     }
 }
 
-pub fn process(egui_context: Option<Res<EguiContext>>) {
+#[derive(Debug, Default)]
+struct EditorState {
+    name: String,
+    age:i32,
+}
+
+fn process(mut state: Local<EditorState>, egui_context: Option<Res<EguiContext>>) {
     if let Some(ctx) = &egui_context {
         egui::Window::new("Hello").show(ctx.ctx(), |ui| {
-            ui.label("world");
+            ui.heading("My egui Application");
+            ui.horizontal(|ui| {
+                ui.label("Your name: ");
+                ui.text_edit_singleline(&mut state.name);
+            });
+            ui.add(egui::Slider::new(&mut state.age, 0..=120).text("age"));
+            if ui.button("Click each year").clicked() {
+                state.age += 1;
+            }
+            ui.label(format!("Hello '{}', age {}", state.name, state.age));
         });
     }
 }
