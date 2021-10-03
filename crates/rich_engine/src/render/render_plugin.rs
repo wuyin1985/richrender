@@ -48,9 +48,9 @@ impl RenderMgr {
         if let Some((window, winit_window)) = ww {
             let render_runner = RenderRunner::create(winit_window, window.physical_width(), window.physical_height());
             world.insert_resource(render_runner);
-            
+
             let mut fire = world.get_resource_mut::<Events<RenderInitEvent>>().unwrap();
-            fire.send(RenderInitEvent{});
+            fire.send(RenderInitEvent {});
         };
     }
 
@@ -72,44 +72,48 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
 }
 
 
-fn draw_models_system(mut runner: ResMut<RenderRunner>, model_query: Query<(&Handle<GltfAsset>, &Transform)>) {
-    let runner = runner.deref_mut();
-    let mut model_data = ModelData::default();
-    if let Some((present_index, command_buffer)) = runner.begin_draw() {
-        let context = &mut runner.context;
-        let forward_render_pass = &runner.forward_render_pass;
+fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Query<(&Handle<GltfAsset>, &Transform)>) {
+    if let Some(runner) = &mut runner {
+        let runner = runner.deref_mut();
+        let mut model_data = ModelData::default();
+        if let Some((present_index, command_buffer)) = runner.begin_draw() {
+            let context = &mut runner.context;
+            let forward_render_pass = &runner.forward_render_pass;
 
-        //shadow
-        forward_render_pass.begin_shadow_pass(context, command_buffer);
+            //shadow
+            forward_render_pass.begin_shadow_pass(context, command_buffer);
 
-        let mut list = Vec::new();
-        for (handle, transform) in model_query.iter() {
-            let model_renderer = context.get_model(handle);
-            if let Some(mr) = model_renderer {
-                model_data.transform = transform.compute_matrix();
-                mr.draw_shadow(context, command_buffer, &model_data);
-                list.push((handle, transform));
+            let mut list = Vec::new();
+            for (handle, transform) in model_query.iter() {
+                let model_renderer = context.get_model(handle);
+                if let Some(mr) = model_renderer {
+                    model_data.transform = transform.compute_matrix();
+                    mr.draw_shadow(context, command_buffer, &model_data);
+                    list.push((handle, transform));
+                }
             }
-        }
-        forward_render_pass.end_shadow_pass(context, command_buffer);
+            forward_render_pass.end_shadow_pass(context, command_buffer);
 
-        //draw
-        forward_render_pass.begin_render_pass(context, command_buffer);
+            //draw
+            forward_render_pass.begin_render_pass(context, command_buffer);
 
-        for (handle, transform) in list {
-            let mr = context.get_model(handle).unwrap();
-            model_data.transform = transform.compute_matrix();
-            mr.draw(context, command_buffer, &model_data);
+            for (handle, transform) in list {
+                let mr = context.get_model(handle).unwrap();
+                model_data.transform = transform.compute_matrix();
+                mr.draw(context, command_buffer, &model_data);
+            }
+            forward_render_pass.end_render_pass(context, command_buffer);
+        } else {
+            runner.current_present_index = -1;
         }
-        forward_render_pass.end_render_pass(context, command_buffer);
-    } else {
-        runner.current_present_index = -1;
     }
 }
 
-fn end_draw_system(mut runner: ResMut<RenderRunner>) {
-    if let Some(cb) = runner.get_current_command_buffer() {
-        runner.end_draw(cb);
+fn end_draw_system(mut runner: Option<ResMut<RenderRunner>>) {
+    if let Some(runner) = &mut runner {
+        if let Some(cb) = runner.get_current_command_buffer() {
+            runner.end_draw(cb);
+        }
     }
 }
 
@@ -119,122 +123,129 @@ struct RenderCamera {
 
 fn update_render_state_from_camera(mut commands: Commands,
                                    render_camera: Res<RenderCamera>,
-                                   mut runner: ResMut<RenderRunner>,
+                                   mut runner: Option<ResMut<RenderRunner>>,
                                    camera_query: Query<(&Camera, &Transform)>,
 )
 {
-    if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-        let light_pos = Vec3::new(-12.0, 3.5, -2.0);
-        let light_look_at = Vec3::ZERO;
-        let light_dir = light_look_at - light_pos;
+    if let Some(runner) = &mut runner {
+        if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
+            let light_pos = Vec3::new(-12.0, 3.5, -2.0);
+            let light_look_at = Vec3::ZERO;
+            let light_dir = light_look_at - light_pos;
 
-        let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-        let light_project = Mat4::perspective_rh(
-            camera.fov,
-            1f32,
-            1f32,
-            96f32);
+            let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
+            let light_project = Mat4::perspective_rh(
+                camera.fov,
+                1f32,
+                1f32,
+                96f32);
 
-        let light_matrix = light_project * light_view;
+            let light_matrix = light_project * light_view;
 
-        let pos = transform.translation;
+            let pos = transform.translation;
 
-        let proj = Mat4::perspective_rh(
-            camera.fov,
-            camera.aspect,
-            camera.z_near,
-            camera.z_far);
+            let proj = Mat4::perspective_rh(
+                camera.fov,
+                camera.aspect,
+                camera.z_near,
+                camera.z_far);
 
-        let view = transform.compute_matrix().inverse();
-        // let light_matrix = proj * view;
-        // let light_dir = light_matrix.mul_vec4(Vec4::Z);
+            let view = transform.compute_matrix().inverse();
+            // let light_matrix = proj * view;
+            // let light_dir = light_matrix.mul_vec4(Vec4::Z);
 
-        let frame_data = PerFrameData {
-            view: view,
-            proj: proj,
-            light_matrix,
-            light_dir: light_dir,
-            dummy1: 0f32,
-            camera_pos: pos,
-            dummy2: 0f32,
-        };
-        runner.upload_per_frame_data(frame_data);
-    }
-}
-
-fn begin_upload(mut runner: ResMut<RenderRunner>) {
-    let runner: &mut RenderRunner = runner.deref_mut();
-    let command_buffer = runner.get_upload_command_buffer();
-    let context = &mut runner.context;
-    unsafe {
-        context.device.begin_command_buffer(command_buffer,
-                                            &vk::CommandBufferBeginInfo::builder().
-                                                flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
-    }
-}
-
-fn end_upload(mut runner: ResMut<RenderRunner>) {
-    let runner: &mut RenderRunner = runner.deref_mut();
-    let command_buffer = runner.get_upload_command_buffer();
-    let context = &mut runner.context;
-    unsafe {
-        context.device.end_command_buffer(command_buffer);
-        context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
-        context.device.device_wait_idle();
-    }
-
-    context.flush_staging_buffer();
-}
-
-fn load_gltf_2_device_system(mut runner: ResMut<RenderRunner>, mut assets: ResMut<Assets<GltfAsset>>,
-                             mut gltf_events: EventReader<AssetEvent<GltfAsset>>) {
-    let runner: &mut RenderRunner = runner.deref_mut();
-    let command_buffer = runner.get_upload_command_buffer();
-    let context = &mut runner.context;
-    let swap_mgr = &runner.swapchain_mgr;
-
-    let mut changed_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
-
-    for event in gltf_events.iter() {
-        match event {
-            AssetEvent::Created { ref handle } => {
-                changed_gltf_set.insert(handle.clone_weak());
-            }
-            AssetEvent::Modified { ref handle } => {
-                changed_gltf_set.insert(handle.clone_weak());
-                //remove_current_mesh_resources(render_resource_context, handle);
-            }
-            AssetEvent::Removed { ref handle } => {
-                //remove_current_mesh_resources(render_resource_context, handle);
-                changed_gltf_set.remove(handle);
-            }
+            let frame_data = PerFrameData {
+                view: view,
+                proj: proj,
+                light_matrix,
+                light_dir: light_dir,
+                dummy1: 0f32,
+                camera_pos: pos,
+                dummy2: 0f32,
+            };
+            runner.upload_per_frame_data(frame_data);
         }
     }
+}
 
-    if changed_gltf_set.len() == 0 {
-        return;
+fn begin_upload(mut runner: Option<ResMut<RenderRunner>>) {
+    if let Some(runner) = &mut runner {
+        let runner: &mut RenderRunner = runner.deref_mut();
+        let command_buffer = runner.get_upload_command_buffer();
+        let context = &mut runner.context;
+        unsafe {
+            context.device.begin_command_buffer(command_buffer,
+                                                &vk::CommandBufferBeginInfo::builder().
+                                                    flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
+        }
     }
-    
+}
 
-    for changed_gltf_handle in changed_gltf_set.iter() {
-        let gltf_asset = assets.get(changed_gltf_handle).expect("failed to find asset gltf");
+fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
+    if let Some(runner) = &mut runner {
+        let runner: &mut RenderRunner = runner.deref_mut();
+        let command_buffer = runner.get_upload_command_buffer();
+        let context = &mut runner.context;
+        unsafe {
+            context.device.end_command_buffer(command_buffer);
+            context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
+            context.device.device_wait_idle();
+        }
 
-
-        let model = ModelRenderer::create(context,
-                                          swap_mgr,
-                                          &runner.forward_render_pass,
-                                          command_buffer,
-                                          gltf_asset,
-                                          &ShadeNames {
-                                              vertex: "pbr_vert",
-                                              frag: "pbr_frag",
-                                              shadow_vertex: "pbr_shadow_vert",
-                                              shadow_frag: "pbr_shadow_frag",
-                                          });
-
-        context.insert_model(changed_gltf_handle.clone_weak(), model);
+        context.flush_staging_buffer();
     }
+}
 
+fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>, mut assets: ResMut<Assets<GltfAsset>>,
+                             mut gltf_events: EventReader<AssetEvent<GltfAsset>>) {
+    if let Some(runner) = &mut runner {
+        let runner: &mut RenderRunner = runner.deref_mut();
+        let command_buffer = runner.get_upload_command_buffer();
+        let context = &mut runner.context;
+        let swap_mgr = &runner.swapchain_mgr;
+
+        let mut changed_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
+
+        for event in gltf_events.iter() {
+            match event {
+                AssetEvent::Created { ref handle } => {
+                    changed_gltf_set.insert(handle.clone_weak());
+                }
+                AssetEvent::Modified { ref handle } => {
+                    changed_gltf_set.insert(handle.clone_weak());
+                    //remove_current_mesh_resources(render_resource_context, handle);
+                }
+                AssetEvent::Removed { ref handle } => {
+                    //remove_current_mesh_resources(render_resource_context, handle);
+                    changed_gltf_set.remove(handle);
+                }
+            }
+        }
+
+        if changed_gltf_set.len() == 0 {
+            return;
+        }
+
+
+        for changed_gltf_handle in changed_gltf_set.iter() {
+            let gltf_asset = assets.get(changed_gltf_handle).expect("failed to find asset gltf");
+
+
+            let model = ModelRenderer::create(context,
+                                              swap_mgr,
+                                              &runner.forward_render_pass,
+                                              command_buffer,
+                                              gltf_asset,
+                                              &ShadeNames {
+                                                  vertex: "pbr_vert",
+                                                  frag: "pbr_frag",
+                                                  shadow_vertex: "pbr_shadow_vert",
+                                                  shadow_frag: "pbr_shadow_frag",
+                                              });
+
+            context.insert_model(changed_gltf_handle.clone_weak(), model);
+        }
+    }
 }
 
 pub struct RenderPlugin {}
@@ -262,11 +273,11 @@ impl Plugin for RenderPlugin {
         app.add_event::<RenderInitEvent>();
 
         app.add_stage_after(CoreStage::PostUpdate, RenderStage::Prepare, SystemStage::parallel());
-        
+
         app.add_stage_after(CoreStage::PreUpdate, RenderStage::BeginUpload, SystemStage::parallel());
         app.add_stage_after(RenderStage::BeginUpload, RenderStage::Upload, SystemStage::parallel());
         app.add_stage_after(RenderStage::Upload, RenderStage::EndUpload, SystemStage::parallel());
-        
+
         app.add_stage_after(RenderStage::Prepare, RenderStage::BeginDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::BeginDraw, RenderStage::Draw, SystemStage::parallel());
         app.add_stage_after(RenderStage::Draw, RenderStage::EndDraw, SystemStage::parallel());

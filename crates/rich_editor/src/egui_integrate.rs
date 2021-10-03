@@ -216,6 +216,10 @@ impl Plugin for EguiPlugin {
                 .after(EguiSystem::ProcessInput),
         );
         app.add_system_to_stage(
+            RenderStage::Prepare,
+            init_egui_ctx.system(),
+        );
+        app.add_system_to_stage(
             RenderStage::Upload,
             upload_egui_data_2_render.system(),
         );
@@ -263,9 +267,20 @@ pub struct WindowResources<'a> {
     window_sizes: ResMut<'a, HashMap<WindowId, WindowSize>>,
 }
 
-fn init_egui_ctx(mut ctx: ResMut<EguiContext>, mut runner: ResMut<RenderRunner>, mut init_events: EventReader<RenderInitEvent>) {
-    println!("hello");
+fn init_egui_ctx(mut ctx: ResMut<EguiContext>, mut runner: Option<ResMut<RenderRunner>>, mut init_events: EventReader<RenderInitEvent>) {
+    if ctx.render.is_some() {
+        return;
+    }
+    if let Some(runner) = &mut runner {
+        let runner = runner.deref_mut();
+        let context = &mut runner.context;
+        let render = EguiRender::new(context.window_width, context.window_height, 1.0,
+                                     ctx.ctx().clone(), context.render_config.color_format, context, &runner.forward_render_pass);
+        
+        ctx.render = Some(render);
+    }
 }
+
 
 pub fn process_input(
     mut egui_context: ResMut<EguiContext>,
@@ -493,42 +508,44 @@ pub fn begin_frame(
 
 pub fn process_output(
     mut egui_context: ResMut<EguiContext>,
-    mut runner: ResMut<RenderRunner>,
+    mut runner: Option<ResMut<RenderRunner>>,
     #[cfg(feature = "manage_clipboard")] mut egui_clipboard: ResMut<EguiClipboard>,
     winit_windows: Res<WinitWindows>,
 ) {
-    let egui_context = egui_context.deref_mut();
-    for id in egui_context.ctx.keys().copied() {
-        let (output, shapes) = egui_context.ctx_for_window(id).end_frame();
+    if let Some(runner) = &mut runner {
+        let egui_context = egui_context.deref_mut();
+        for id in egui_context.ctx.keys().copied() {
+            let (output, shapes) = egui_context.ctx_for_window(id).end_frame();
 
-        #[cfg(feature = "manage_clipboard")]
-        if !output.copied_text.is_empty() {
-            egui_clipboard.set_contents(&output.copied_text);
-        }
+            #[cfg(feature = "manage_clipboard")]
+            if !output.copied_text.is_empty() {
+                egui_clipboard.set_contents(&output.copied_text);
+            }
 
-        if let Some(winit_window) = winit_windows.get_window(id) {
-            winit_window.set_cursor_icon(
-                egui_to_winit_cursor_icon(output.cursor_icon)
-                    .unwrap_or(rich_engine::CursorIcon::Default),
-            );
-        }
+            if let Some(winit_window) = winit_windows.get_window(id) {
+                winit_window.set_cursor_icon(
+                    egui_to_winit_cursor_icon(output.cursor_icon)
+                        .unwrap_or(rich_engine::CursorIcon::Default),
+                );
+            }
 
-        let clipped_meshes = egui_context.ctx().tessellate(shapes);
-        if let Some(rt) = &mut egui_context.render {
-            let cd = runner.get_current_command_buffer().unwrap();
-            let context = &mut runner.context;
-            rt.paint(context, cd, clipped_meshes);
-        }
+            let clipped_meshes = egui_context.ctx().tessellate(shapes);
+            if let Some(rt) = &mut egui_context.render {
+                let cd = runner.get_current_command_buffer().unwrap();
+                let context = &mut runner.context;
+                rt.paint(context, cd, clipped_meshes);
+            }
 
-        // TODO: see if we can support `new_tab`.
-        #[cfg(feature = "open_url")]
-        if let Some(egui::output::OpenUrl {
-                        url,
-                        new_tab: _new_tab,
-                    }) = output.open_url
-        {
-            if let Err(err) = webbrowser::open(&url) {
-                error!("Failed to open '{}': {:?}", url, err);
+            // TODO: see if we can support `new_tab`.
+            #[cfg(feature = "open_url")]
+            if let Some(egui::output::OpenUrl {
+                            url,
+                            new_tab: _new_tab,
+                        }) = output.open_url
+            {
+                if let Err(err) = webbrowser::open(&url) {
+                    error!("Failed to open '{}': {:?}", url, err);
+                }
             }
         }
     }
@@ -651,11 +668,13 @@ fn process_mouse_button_event(
     });
 }
 
-fn upload_egui_data_2_render(mut egui_context: ResMut<EguiContext>, mut runner: ResMut<RenderRunner>) {
-    if let Some(rt) = &mut egui_context.render {
-        let runner: &mut RenderRunner = runner.deref_mut();
-        let command_buffer = runner.get_upload_command_buffer();
-        rt.prepare(&mut runner.context, command_buffer);
+fn upload_egui_data_2_render(mut egui_context: ResMut<EguiContext>, mut runner: Option<ResMut<RenderRunner>>) {
+    if let Some(runner) = &mut runner {
+        if let Some(rt) = &mut egui_context.render {
+            let runner: &mut RenderRunner = runner.deref_mut();
+            let command_buffer = runner.get_upload_command_buffer();
+            rt.prepare(&mut runner.context, command_buffer);
+        }
     }
 }
 
