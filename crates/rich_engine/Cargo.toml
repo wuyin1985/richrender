@@ -1,0 +1,23 @@
+[package]
+name = "rich_engine"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+bevy = { version = "0.5.0", features = ["bevy_winit"], default-features = false }
+ash = "0.33"
+ash-window = "0.7"
+raw-window-handle = "0.3"
+lazy_static = "1.4"
+anyhow = "1.0"
+winit = { version = "0.24.0", features = ["web-sys"], default-features = false }
+
+[dependencies.gltf]
+version = "0.16"
+features = ["KHR_lights_punctual", "KHR_materials_unlit", "KHR_materials_pbrSpecularGlossiness"]
+
+[profile.dev.package."*"]
+opt-level = 2

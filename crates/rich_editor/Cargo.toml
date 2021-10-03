@@ -1,0 +1,19 @@
+[package]
+name = "rich_editor"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rich_engine = { path = "../rich_engine" }
+egui = "0.14"
+clipboard = { version = "0.5.0", optional = true }
+thread_local = { version = "1.1.0", optional = true }
+webbrowser = { version = "0.5.5", optional = true }
+bytemuck = "1.5.0"
+
+[features]
+default = ["manage_clipboard", "open_url"]
+manage_clipboard = ["clipboard", "thread_local"]
+open_url = ["webbrowser"]
