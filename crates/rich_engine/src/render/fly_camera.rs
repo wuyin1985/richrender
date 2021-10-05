@@ -164,6 +164,9 @@ fn mouse_wheel_system(
     x = 5f32 * x * time.delta_seconds();
 
     for (mut options, mut transform) in query.iter_mut() {
+        if !options.enabled {
+            continue;
+        }
         let f = transform.rotation.mul_vec3(Vec3::Z).normalize();
         transform.translation += f * x;
     }
@@ -197,7 +200,10 @@ fn mouse_motion_system(
                 }
             }
         }
-
+        
+        if !options.enabled {
+            continue;
+        }
 
         if let Some(button) = options.mouse_pressed {
             match button {

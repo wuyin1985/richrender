@@ -32,6 +32,7 @@ pub use crate::render::ForwardRenderPass;
 pub use crate::render::Buffer;
 pub use crate::render::RenderRunner;
 pub use crate::render::RenderInitEvent;
+pub use crate::render::FlyCamera;
 
 fn init(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     let s = 0.919468641f32;

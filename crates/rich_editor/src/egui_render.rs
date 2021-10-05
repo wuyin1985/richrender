@@ -10,7 +10,7 @@ use egui::{
     paint::ClippedShape,
     CtxRef, Key,
 };
-use rich_engine::{Buffer, ForwardRenderPass, RenderContext, Texture};
+use rich_engine::{Buffer, ForwardRenderPass, RenderContext, Texture, prelude::*};
 
 pub struct FontRes {
     image: Texture,
@@ -376,7 +376,9 @@ impl EguiRender {
         command_buffer: vk::CommandBuffer,
         clipped_meshes: Vec<egui::ClippedMesh>,
     ) {
-
+        if self.font_image_version == 0 {
+            return;
+        }
         // map buffers
         let mut vertex_buffer_ptr = self.vertex_buffer.map_memory(context);
         let vertex_buffer_ptr_end =

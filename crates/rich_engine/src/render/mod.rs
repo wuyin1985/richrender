@@ -35,6 +35,7 @@ pub use forward_render::ForwardRenderPass;
 pub use buffer::Buffer;
 pub use render_runner::RenderRunner;
 pub use render_plugin::RenderInitEvent;
+pub use fly_camera::FlyCamera;
 
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
