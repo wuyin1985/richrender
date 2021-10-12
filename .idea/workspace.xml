@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_frag.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_tesc.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_vert.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/copy_asset.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/map/map.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/map/mod.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/compute.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/richrender.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/richrender.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/rich.cginc" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/rich.cginc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/game/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_collection.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_collection.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/util.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/util.rs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+        <option value="GLSL Shader" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/game/map/mod.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="xm8ud3l5" />
+  </component>
+  <component name="ProjectId" id="1z9vBPOWN2Np5O5saVouRASqifW" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.first.check.clang-format" value="false" />
+    <property name="cidr.known.project.marker" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/assets/shaders" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+    <property name="settings.editor.selected.configurable" value="Console" />
+  </component>
+  <component name="ReaderModeSettings">
+    <option name="enabled" value="false" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\learn\richrender\assets\shaders" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package richrender --bin richrender" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo.Run richrender" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+    <option name="version" value="2" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="" />
+      <created>1633572981977</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1633572981977</updated>
+      <workItem from="1633572983635" duration="152000" />
+      <workItem from="1633573149021" duration="58000" />
+      <workItem from="1633573240486" duration="293000" />
+      <workItem from="1633573548084" duration="448000" />
+      <workItem from="1633574028544" duration="4755000" />
+      <workItem from="1633596926972" duration="2380000" />
+      <workItem from="1633660129247" duration="88836000" />
+      <workItem from="1634005125157" duration="13032000" />
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

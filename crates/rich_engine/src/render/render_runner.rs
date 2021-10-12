@@ -8,6 +8,7 @@ use std::time::SystemTime;
 use crate::render::model::Model;
 use crate::render::model_renderer::ModelRenderer;
 use bevy::prelude::*;
+use crate::render::grass::GrassMgr;
 use crate::render::uniform::UniformObject;
 
 pub struct RenderRunner {
@@ -15,6 +16,7 @@ pub struct RenderRunner {
     pub swapchain_mgr: SwapChainMgr,
     pub command_buffer_list: CommandBufferList,
     pub forward_render_pass: ForwardRenderPass,
+    pub grass: GrassMgr,
     last_tick: SystemTime,
     pub current_present_index: i32,
 }
@@ -22,6 +24,7 @@ pub struct RenderRunner {
 impl Drop for RenderRunner {
     fn drop(&mut self) {
         unsafe { self.context.device.device_wait_idle().unwrap(); }
+        self.grass.destroy(&self.context);
         self.command_buffer_list.destroy(&self.context);
         self.forward_render_pass.destroy(&self.context);
         self.swapchain_mgr.destroy(&self.context);
@@ -38,7 +41,10 @@ impl RenderRunner {
             let per_frame_data = UniformObject::<PerFrameData>::create(&mut context,
                                                                        PerFrameData::create(),
                                                                        vk::DescriptorType::UNIFORM_BUFFER,
-                                                                       vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT);
+                                                                       vk::ShaderStageFlags::VERTEX |
+                                                                           vk::ShaderStageFlags::FRAGMENT |
+                                                                           vk::ShaderStageFlags::TESSELLATION_EVALUATION|
+                                                                           vk::ShaderStageFlags::COMPUTE);
             context.per_frame_uniform = Some(per_frame_data);
             //context.push_resource(per_frame_data);
 
@@ -81,6 +87,9 @@ impl RenderRunner {
             // }
 
             info!("model renderer created complete");
+            let grass = GrassMgr::create(&mut context, &swapchain, forward_render_pass.get_native_render_pass(), command_buffer_list
+                .get_upload_command_buffer());
+
             RenderRunner {
                 context,
                 swapchain_mgr: swapchain,
@@ -88,6 +97,7 @@ impl RenderRunner {
                 forward_render_pass,
                 last_tick: SystemTime::now(),
                 current_present_index: -1,
+                grass,
             }
         }
     }
@@ -125,10 +135,10 @@ impl RenderRunner {
         if self.current_present_index >= 0 {
             return Some(self.command_buffer_list.get_command_buffer(self.current_present_index as _));
         }
-        
+
         return None;
     }
-    
+
     pub fn get_upload_command_buffer(&self) -> vk::CommandBuffer {
         self.command_buffer_list.get_upload_command_buffer()
     }

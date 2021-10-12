@@ -1,6 +1,7 @@
 use bevy::utils::HashMap;
 use ash::vk;
 use std::collections::hash_map::DefaultHasher;
+use std::ffi::CString;
 use std::hash::{Hash, Hasher};
 use crate::render::render_context::RenderContext;
 use std::path::Path;
@@ -10,6 +11,7 @@ use bevy::reflect::List;
 
 pub struct ShaderCollection {
     modules: HashMap<u64, vk::ShaderModule>,
+    default_entry_name: CString,
 }
 
 impl Default for ShaderCollection {
@@ -31,7 +33,11 @@ fn load_from_file(path: &str) -> Cursor<Vec<u8>> {
 
 impl ShaderCollection {
     pub fn create() -> Self {
-        ShaderCollection { modules: HashMap::default() }
+        let entry_point_name = CString::new("main").unwrap();
+        ShaderCollection {
+            modules: HashMap::default(),
+            default_entry_name: entry_point_name,
+        }
     }
 
     pub fn destroy(&mut self, context: &mut RenderContext) {
@@ -41,6 +47,12 @@ impl ShaderCollection {
                 context.device.destroy_shader_module(shader, None);
             }
         }
+    }
+
+    pub fn create_shader_stage(&mut self, device: &ash::Device, name: &str,
+                               defines: &[&str], stage_flags: vk::ShaderStageFlags) -> vk::PipelineShaderStageCreateInfo {
+        let sm = self.create_shader(device, name, defines);
+        vk::PipelineShaderStageCreateInfo::builder().stage(stage_flags).module(sm).name(&self.default_entry_name).build()
     }
 
     pub fn create_shader(&mut self, device: &ash::Device, name: &str, defines: &[&str]) -> vk::ShaderModule {

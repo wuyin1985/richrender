@@ -26,6 +26,8 @@ pub mod gltf_asset_loader;
 mod shader_const;
 mod shader_collection;
 mod debug;
+mod grass;
+mod compute;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;

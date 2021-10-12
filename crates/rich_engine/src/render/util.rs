@@ -66,7 +66,6 @@ fn map_wrap_mode(wrap_mode: gltf::texture::WrappingMode) -> vk::SamplerAddressMo
     }
 }
 
-
 pub struct Gltf2VkConvertor {}
 
 impl Gltf2VkConvertor {
@@ -119,4 +118,17 @@ impl Gltf2VkConvertor {
                 .expect("Failed to create sampler")
         }
     }
+}
+
+pub fn create_descriptor_set(context:&RenderContext, layout:vk::DescriptorSetLayout) -> vk::DescriptorSet {
+
+    let descriptor_set = {
+        let ai = vk::DescriptorSetAllocateInfo::builder().descriptor_pool(context.descriptor_pool).set_layouts(&[layout])
+            .build();
+        unsafe {
+            context.device.allocate_descriptor_sets(&ai).expect("failed to create descriptor sets")[0]
+        }
+    };
+
+    descriptor_set
 }
