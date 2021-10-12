@@ -10,28 +10,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_frag.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_tesc.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/shaders/grass_vert.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/copy_asset.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/map/map.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/map/mod.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/compute.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/richrender.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/richrender.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/rich.cginc" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/rich.cginc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/game/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/game/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_collection.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_collection.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/util.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/util.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +127,7 @@
       <workItem from="1633574028544" duration="4755000" />
       <workItem from="1633596926972" duration="2380000" />
       <workItem from="1633660129247" duration="88836000" />
-      <workItem from="1634005125157" duration="13032000" />
+      <workItem from="1634005125157" duration="20830000" />
     </task>
     <servers />
   </component>

@@ -81,6 +81,8 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
             let forward_render_pass = &runner.forward_render_pass;
 
             runner.grass.compute_grass_data(context);
+
+            runner.grass.cmd_barrier(context, command_buffer);
             //shadow
             // forward_render_pass.begin_shadow_pass(context, command_buffer);
             //

@@ -166,7 +166,8 @@ unsafe extern "system" fn vulkan_debug_callback(
         }
 
         vk::DebugUtilsMessageSeverityFlagsEXT::ERROR => {
-            error!(output)
+            error!(output);
+            panic!("graphic error")
         }
 
         _ => {

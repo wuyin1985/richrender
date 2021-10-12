@@ -131,9 +131,10 @@ impl GrassGenerateCompute {
             context.device.cmd_dispatch(command_buffer, grid.grid_count[0], grid.grid_count[1], 1);
             context.device.end_command_buffer(command_buffer);
 
-            let ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer])
+            let mut ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer])
                 .signal_semaphores(&[self.working_semaphore])
                 .wait_dst_stage_mask(&[PipelineStageFlags::TOP_OF_PIPE])
+                .wait_semaphores(&[])
                 .build();
             context.device.queue_submit(context.compute_queue, &[ci], vk::Fence::null());
         }
@@ -171,10 +172,12 @@ impl GrassUpdateCompute {
     }
 
     pub fn create(context: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, grass_blade_buffer: &Buffer, visible_grass: &Buffer) -> Self {
-        let num_blades = NumBlades { first_vertex: 0, first_instance: 0, instance_count: 0, vertex_count: 0 };
+        let num_blades = NumBlades { first_vertex: 0, first_instance: 0, instance_count: 1, vertex_count: 0 };
         let num_blades_buffer = Buffer::create_host_visible_buffer(context,
                                                                    vk::BufferUsageFlags::UNIFORM_BUFFER |
-                                                                       vk::BufferUsageFlags::VERTEX_BUFFER | vk::BufferUsageFlags::STORAGE_BUFFER,
+                                                                       vk::BufferUsageFlags::VERTEX_BUFFER |
+                                                                       vk::BufferUsageFlags::STORAGE_BUFFER |
+                                                                       vk::BufferUsageFlags::INDIRECT_BUFFER,
                                                                    &[num_blades]);
 
         let descriptor_layout = {
@@ -230,11 +233,13 @@ impl GrassUpdateCompute {
                     .build(),
                 vk::WriteDescriptorSet::builder()
                     .dst_set(descriptor_set)
-                    .descriptor_type(vk::DescriptorType::STORAGE_BUFFER).dst_binding(1).buffer_info(&visible_grass_info)
+                    .descriptor_type(vk::DescriptorType::STORAGE_BUFFER)
+                    .dst_binding(1).buffer_info(&visible_grass_info)
                     .build(),
                 vk::WriteDescriptorSet::builder()
                     .dst_set(descriptor_set)
-                    .descriptor_type(vk::DescriptorType::STORAGE_BUFFER).dst_binding(2).buffer_info(&num_blades_info)
+                    .descriptor_type(vk::DescriptorType::STORAGE_BUFFER)
+                    .dst_binding(2).buffer_info(&num_blades_info)
                     .build(),
             ];
             unsafe {
@@ -285,14 +290,17 @@ impl GrassUpdateCompute {
         }
     }
 
-    pub fn compute(&mut self, context: &RenderContext, command_buffer: vk::CommandBuffer, grid: &GrassGridData, wait_semaphore: &[vk::Semaphore]) {
+    pub fn compute(&mut self, context: &RenderContext, command_buffer: vk::CommandBuffer, grid: &GrassGridData,
+                   wait_semaphore: &[vk::Semaphore]) {
         unsafe {
             context.device.begin_command_buffer(command_buffer,
                                                 &vk::CommandBufferBeginInfo::builder().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
 
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::COMPUTE, self.pipeline);
-            context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::COMPUTE, self.pipeline_layout, 0, &[self
-                .descriptor_set], &[]);
+
+            let uni = context.per_frame_uniform.as_ref().unwrap();
+            context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::COMPUTE, self.pipeline_layout,
+                                                    0, &[uni.descriptor_set, self.descriptor_set], &[]);
 
             let grid_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&grid) };
             context.device.cmd_push_constants(command_buffer, self.pipeline_layout, vk::ShaderStageFlags::COMPUTE, 0, grid_data_bytes);
@@ -300,8 +308,10 @@ impl GrassUpdateCompute {
             context.device.cmd_dispatch(command_buffer, grid.grid_count[0], grid.grid_count[1], 1);
             context.device.end_command_buffer(command_buffer);
 
-            let ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer]).signal_semaphores(&[self.working_semaphore])
-                .wait_semaphores(wait_semaphore).wait_dst_stage_mask(&[vk::PipelineStageFlags::TOP_OF_PIPE]).build();
+            let ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer])
+                .wait_dst_stage_mask(&[vk::PipelineStageFlags::TOP_OF_PIPE])
+                .wait_semaphores(wait_semaphore)
+                .build();
             context.device.queue_submit(context.compute_queue, &[ci], vk::Fence::null());
         }
     }
@@ -326,7 +336,8 @@ pub struct GrassMgr {
     visible_grass_blade_buffer: Buffer,
     pipeline: GraphicPipeline,
     compute_command_pool: vk::CommandPool,
-    compute_command_buffer: vk::CommandBuffer,
+    generate_command_buffer: vk::CommandBuffer,
+    update_command_buffer: vk::CommandBuffer,
     has_gen_grass: bool,
     gen_compute: GrassGenerateCompute,
     update_compute: GrassUpdateCompute,
@@ -341,7 +352,7 @@ impl GrassMgr {
         self.gen_compute.destroy(context);
         self.update_compute.destroy(context);
         unsafe {
-            context.device.free_command_buffers(self.compute_command_pool, &[self.compute_command_buffer]);
+            context.device.free_command_buffers(self.compute_command_pool, &[self.generate_command_buffer, self.update_command_buffer]);
             context.device.destroy_command_pool(self.compute_command_pool, None);
         }
     }
@@ -411,16 +422,16 @@ impl GrassMgr {
             }
         };
 
-        let compute_command_buffer = {
+        let (generate_command_buffer, update_command_buffer) = {
             let command_ci = vk::CommandBufferAllocateInfo {
                 command_pool: compute_command_pool,
-                command_buffer_count: 1,
+                command_buffer_count: 2,
                 level: vk::CommandBufferLevel::PRIMARY,
                 ..Default::default()
             };
             unsafe {
                 let commands = context.device.allocate_command_buffers(&command_ci).unwrap();
-                commands[0]
+                (commands[0], commands[1])
             }
         };
 
@@ -442,6 +453,7 @@ impl GrassMgr {
                                                                                       vk::BufferUsageFlags::VERTEX_BUFFER |
                                                                                       vk::BufferUsageFlags::STORAGE_BUFFER,
                                                                                   all_blade_size);
+
         let visible_grass_blade_buffer = Buffer::create_host_visible_buffer_with_size(context,
                                                                                       vk::BufferUsageFlags::UNIFORM_BUFFER |
                                                                                           vk::BufferUsageFlags::VERTEX_BUFFER |
@@ -452,8 +464,9 @@ impl GrassMgr {
         let update_compute = GrassUpdateCompute::create(context, swap_mgr, &all_grass_blade_buffer, &visible_grass_blade_buffer);
 
         Self {
-            compute_command_buffer,
             compute_command_pool,
+            generate_command_buffer,
+            update_command_buffer,
             pipeline,
             all_grass_blade_buffer,
             visible_grass_blade_buffer,
@@ -466,51 +479,55 @@ impl GrassMgr {
 
     pub fn compute_grass_data(&mut self, context: &RenderContext) {
         if !self.has_gen_grass {
-            self.gen_compute.compute(context, self.compute_command_buffer, &self.grid);
+            self.gen_compute.compute(context, self.generate_command_buffer, &self.grid);
+            self.update_compute.compute(context, self.update_command_buffer, &self.grid, &[self.gen_compute.working_semaphore]);
             self.has_gen_grass = true;
+        } else {
+            self.update_compute.compute(context, self.update_command_buffer, &self.grid, &[]);
         }
+    }
 
-        let ws = [self.gen_compute.working_semaphore];
-        self.update_compute.compute(context, self.compute_command_buffer, &self.grid, &ws);
+    pub fn cmd_barrier(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
+        //barrier
+        let barriers = [
+            vk::BufferMemoryBarrier::builder()
+                .buffer(self.visible_grass_blade_buffer.buffer)
+                .offset(0)
+                .size(self.visible_grass_blade_buffer.size as _)
+                .src_access_mask(vk::AccessFlags::SHADER_WRITE)
+                .dst_access_mask(vk::AccessFlags::INDIRECT_COMMAND_READ)
+                .src_queue_family_index(context.compute_queue_family_index)
+                .dst_queue_family_index(context.graphics_queue_family_index)
+                .build(),
+            // vk::BufferMemoryBarrier::builder()
+            //     .buffer(self.update_compute.num_blades_buffer.buffer)
+            //     .offset(0)
+            //     .size(self.update_compute.num_blades_buffer.size as _)
+            //     .src_access_mask(vk::AccessFlags::SHADER_WRITE)
+            //     .dst_access_mask(vk::AccessFlags::INDIRECT_COMMAND_READ)
+            //     .src_queue_family_index(context.compute_queue_family_index)
+            //     .dst_queue_family_index(context.graphics_queue_family_index)
+            //     .build(),
+        ];
+
+        unsafe {
+            context.device.cmd_pipeline_barrier(command_buffer,
+                                                vk::PipelineStageFlags::COMPUTE_SHADER,
+                                                vk::PipelineStageFlags::DRAW_INDIRECT,
+                                                vk::DependencyFlags::empty(), &[], &barriers, &[]);
+        }
     }
 
     pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
         let uni = context.per_frame_uniform.as_ref().unwrap();
         let pipe = self.pipeline.get_pipeline();
         unsafe {
-            //barrier
-            let barriers = [
-                vk::BufferMemoryBarrier::builder()
-                    .buffer(self.visible_grass_blade_buffer.buffer)
-                    .offset(0)
-                    .size(self.visible_grass_blade_buffer.size as _)
-                    .src_access_mask(vk::AccessFlags::SHADER_WRITE)
-                    .dst_access_mask(vk::AccessFlags::SHADER_READ)
-                    .src_queue_family_index(context.compute_queue_family_index)
-                    .dst_queue_family_index(context.graphics_queue_family_index)
-                    .build(),
-                vk::BufferMemoryBarrier::builder()
-                    .buffer(self.update_compute.num_blades_buffer.buffer)
-                    .offset(0)
-                    .size(self.update_compute.num_blades_buffer.size as _)
-                    .src_access_mask(vk::AccessFlags::SHADER_WRITE)
-                    .dst_access_mask(vk::AccessFlags::INDIRECT_COMMAND_READ)
-                    .src_queue_family_index(context.compute_queue_family_index)
-                    .dst_queue_family_index(context.graphics_queue_family_index)
-                    .build(),
-            ];
-
-            context.device.cmd_pipeline_barrier(command_buffer,
-                                                vk::PipelineStageFlags::COMPUTE_SHADER,
-                                                vk::PipelineStageFlags::DRAW_INDIRECT,
-                                                vk::DependencyFlags::empty(), &[], &barriers, &[]);
-
-
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, pipe);
             context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.all_grass_blade_buffer.buffer], &[0]);
             context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::GRAPHICS,
                                                     self.pipeline.get_layout(), 0, &[uni.descriptor_set], &[]);
-            context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
+            //context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
+            context.device.cmd_draw(command_buffer, 1, 1, 0, 0);
         }
     }
 }

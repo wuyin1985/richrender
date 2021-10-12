@@ -141,15 +141,17 @@ impl ForwardRenderPass {
                 layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             };
 
-            let dependencies = [vk::SubpassDependency {
-                src_subpass: vk::SUBPASS_EXTERNAL,
-                dst_subpass: 0,
-                src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-                src_access_mask: vk::AccessFlags::empty(),
-                dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-                dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-                dependency_flags: vk::DependencyFlags::empty(),
-            }];
+            let dependencies = [
+                vk::SubpassDependency {
+                    src_subpass: vk::SUBPASS_EXTERNAL,
+                    dst_subpass: 0,
+                    src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                    src_access_mask: vk::AccessFlags::empty(),
+                    dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                    dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+                    dependency_flags: vk::DependencyFlags::empty(),
+                },
+            ];
 
             let mut subpass_builder = vk::SubpassDescription::builder()
                 .color_attachments(&color_attachment_refs)
@@ -336,7 +338,7 @@ impl ForwardRenderPass {
                 },
             },
         ];
-        
+
         let sd = context.render_config.shadow_map_dim;
 
         let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
@@ -409,7 +411,7 @@ impl ForwardRenderPass {
             context.device.cmd_end_render_pass(command_buffer);
         }
     }
-    
+
     pub fn get_final_render_image_view(&self) -> vk::ImageView {
         match &self.resolve_texture {
             Some(rt) => {

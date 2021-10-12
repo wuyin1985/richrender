@@ -41,7 +41,7 @@ void main() {
 
         spos += grid_pos;
 
-        vec4 pos = vec4(spos.x, push_constants.grass_y, spos.y, 1.0);
+        vec4 pos = vec4(spos.x, push_constants.grass_y, spos.y, 0.0);
         blades[idx].v0 = pos;
         blades[idx].v1 = vec4(0.0, 3.0, 0.0, 5.0);
         blades[idx].v2 = vec4(1.4, 4.0, 0.0, 2.0);
