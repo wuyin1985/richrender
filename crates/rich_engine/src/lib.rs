@@ -7,6 +7,7 @@ use bevy::log::{LogSettings, Level};
 use std::ops::{Deref, DerefMut};
 use crate::render::gltf_asset_loader::GltfAsset;
 use crate::render::model_renderer::ModelData;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 mod render;
 mod game;
@@ -66,7 +67,10 @@ pub fn startup(info: ExternalStartupInfo) {
     //     filter: "".to_string(),
     //     level: Level::INFO
     // })
-    app.add_plugins(DefaultPlugins).add_plugin(RenderPlugin {});
+    app.add_plugins(DefaultPlugins)
+        .add_plugin(RenderPlugin {});
+        // .add_plugin(LogDiagnosticsPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default());
 
     for p in info.external_plugins {
         p.build(&mut app);

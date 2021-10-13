@@ -27,8 +27,9 @@ layout(std140, binding = 0) buffer GrassBladeBuffer {
 void main() {
 
     uint slot_count_u = push_constants.slot_count.x * push_constants.slot_count.y;
-    uint draw_count = uint(floor(slot_count_u/LOCAL_WORK_GROUP_SIZE));
+    uint draw_count = uint(ceil(float(slot_count_u)/LOCAL_WORK_GROUP_SIZE));
     uint start_idx = (gl_WorkGroupID.x * gl_WorkGroupID.y) * slot_count_u;
+
 
     vec2 grid_pos = gl_WorkGroupID.xy * push_constants.grid_size;
     for (int i = 0; i < draw_count;i++) {
@@ -43,8 +44,15 @@ void main() {
 
         vec4 pos = vec4(spos.x, push_constants.grass_y, spos.y, 0.0);
         blades[idx].v0 = pos;
-        blades[idx].v1 = vec4(0.0, 3.0, 0.0, 5.0);
-        blades[idx].v2 = vec4(1.4, 4.0, 0.0, 2.0);
-        blades[idx].up = vec4(0.0, 1.0, 0.0, 1.0);
+        float height = 2.0;
+        vec3 bladeUp = vec3(0.0, 3.0, 0.0);
+        //bezier control point and height
+        blades[idx].v1 = vec4(pos.xyz + bladeUp * height, height);
+        //physical model guide and width
+        float width = 0.12;
+        blades[idx].v2 = vec4(pos.xyz + bladeUp * height, width);
+        //update vector and stiffness
+        float stiffness = 8.0;
+        blades[idx].up = vec4(bladeUp, stiffness);
     }
 }

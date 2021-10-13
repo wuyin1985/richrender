@@ -68,7 +68,7 @@ vec3 draw_light() {
     vec3 obj_color = vec3(texture(tex_sample, in_tex_coord));
     #ifdef IN_NORMAL
     vec3 ambient = ambient_strength * obj_color;
-    vec3 light_dir = -ubo.light_dir;
+    vec3 light_dir = -ubo.light_dir.xyz;
     vec3 normal = normalize(in_normal);
     float diff = max(dot(normal, light_dir), 0.0);
     vec3 diffuse = diff * obj_color;

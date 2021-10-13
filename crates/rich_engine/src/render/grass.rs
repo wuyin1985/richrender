@@ -302,7 +302,7 @@ impl GrassUpdateCompute {
             context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::COMPUTE, self.pipeline_layout,
                                                     0, &[uni.descriptor_set, self.descriptor_set], &[]);
 
-            let grid_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&grid) };
+            let grid_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(grid) };
             context.device.cmd_push_constants(command_buffer, self.pipeline_layout, vk::ShaderStageFlags::COMPUTE, 0, grid_data_bytes);
 
             context.device.cmd_dispatch(command_buffer, grid.grid_count[0], grid.grid_count[1], 1);
@@ -436,9 +436,9 @@ impl GrassMgr {
         };
 
         let mut grid_data = GrassGridData {
-            grid_size: Vec2::new(10.0, 10.0),
-            grid_count: [3u32, 3u32],
-            slot_size: Vec2::new(0.1, 0.1),
+            grid_size: Vec2::new(1.0, 1.0),
+            grid_count: [1u32, 1u32],
+            slot_size: Vec2::new(0.25, 0.25),
             grass_y: 0.0,
             slot_count: [0u32, 0u32],
         };
@@ -523,11 +523,11 @@ impl GrassMgr {
         let pipe = self.pipeline.get_pipeline();
         unsafe {
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, pipe);
-            context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.all_grass_blade_buffer.buffer], &[0]);
+            context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.visible_grass_blade_buffer.buffer], &[0]);
             context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::GRAPHICS,
                                                     self.pipeline.get_layout(), 0, &[uni.descriptor_set], &[]);
             //context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
-            context.device.cmd_draw(command_buffer, 1, 1, 0, 0);
+            context.device.cmd_draw(command_buffer, 10, 1, 0, 0);
         }
     }
 }

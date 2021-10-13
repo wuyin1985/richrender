@@ -40,7 +40,7 @@ const mat4 biasMat = mat4(
 void main() {
     vec4 loc_pos = push_constants.model * vec4(in_pos, 1.0);
     vec3 world_pos = loc_pos.xyz;
-    out_camera_dir = ubo.camera_pos - world_pos;
+    out_camera_dir = ubo.camera_pos.xyz - world_pos;
     #ifdef IN_NORMAL
     out_normal = normalize(transpose(inverse(mat3(push_constants.model))) * in_normal);
     #endif

@@ -1,10 +1,11 @@
 #version 450
 #pragma shader_stage(compute)
+#include "rich.cginc"
+
 
 #define GRAVITY 9.8
 #define LOCAL_WORK_GROUP_SIZE 256
 layout(local_size_x = LOCAL_WORK_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
-#include "rich.cginc"
 
 layout(push_constant) uniform PushConsts {
     vec2 grid_size;
@@ -48,9 +49,7 @@ float rand(vec2 co) {
 }
 
 void update_blade(uint index) {
-
     Blade blade = inputBlades[index];
-
     // blade parameters
     vec3 v0 = blade.v0.xyz;
     vec3 v1 = blade.v1.xyz;
@@ -74,12 +73,12 @@ void update_blade(uint index) {
     // Gravity Force
     vec3 gE = vec3(0.0, -GRAVITY, 0.0);//Environmental Gravity
     vec3 gF = 0.25 * GRAVITY * front_direction;//Front Gravity
-    vec3 gravity = gE+gF;//Total Gravitational Force
+    vec3 gravity = gE + gF;//Total Gravitational Force
 
     // Wind Force
     vec3 windDirection = normalize(vec3(1, 1, 1));// straight wave
 
-    float windStrength = 10.0* rand(v0.xz) * cos(ubo.totalTime);
+    float windStrength = 10.0 * rand(v0.xz) * cos(ubo.totalTime);
 
     float fd = 1.0 - abs(dot(windDirection, normalize(v2 - v0)));
     float fr = dot(v2 - v0, up) / height;
@@ -121,13 +120,11 @@ void update_blade(uint index) {
     vec3 eye_worldSpace = (inverseViewMat * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     vec3 viewDirection = eye_worldSpace - v0;
     bool culled_Due_To_Orientaion = dot(viewDirection, front_direction) > 0.8;
-    culled_Due_To_Orientaion = false;
 
     // 2. View-frustum culling
     float tolerance = 3.0f;
-    bool culled_Due_To_Frustum = false;
 
-//    vec4 v0_NDC = ubo.proj * ubo.view * vec4(v0, 1.0);
+    vec4 v0_NDC = ubo.proj * ubo.view * vec4(v0, 1.0);
 //    culled_Due_To_Frustum = (!inBounds(v0_NDC.x, v0_NDC.w + tolerance) ||!inBounds(v0_NDC.y, v0_NDC.w + tolerance));
 //
 //    if (culled_Due_To_Frustum)
@@ -149,22 +146,20 @@ void update_blade(uint index) {
     float numBuckets = 10.0;
     bool culled_Due_To_Distance = mod(index, numBuckets) > floor(numBuckets * (1.0 - projected_distance/dmax));
 
-    culled_Due_To_Distance = false;
-
     // Atomic operation to read and update numBlades.vertexCount is required because the compute shader is
     // parallezied over the number of grass blades, ie two threads could try to update the numBlades.vertexCount
     // at the same time.
     // You want to write the visible blades to the buffer without write conflicts between threads
 
-    if (!culled_Due_To_Distance && !culled_Due_To_Frustum && !culled_Due_To_Orientaion)//
+    //if (!culled_Due_To_Distance && !culled_Due_To_Frustum && !culled_Due_To_Orientaion)//
     {
-        culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[index];
+        //culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[index];
+        culledBlades[index] = inputBlades[index];
     }
 }
 
 void main()
 {
-    atomicAdd(numBlades.vertexCount, 1);
     // Reset the number of blades to 0
     if (gl_GlobalInvocationID.x == 0)
     {
@@ -174,9 +169,9 @@ void main()
 
     uint slot_count_u = push_constants.slot_count.x * push_constants.slot_count.y;
     uint start_idx = (gl_WorkGroupID.x * gl_WorkGroupID.y) * slot_count_u;
-    uint draw_count = uint(floor(slot_count_u/LOCAL_WORK_GROUP_SIZE));
+    uint draw_count = uint(ceil(float(slot_count_u)/LOCAL_WORK_GROUP_SIZE));
 
-    for (uint i = 0; i < draw_count;i++) {
+    for (uint i = 0; i < draw_count; i++) {
         uint idx = gl_LocalInvocationIndex + i + start_idx;
         update_blade(idx);
     }
