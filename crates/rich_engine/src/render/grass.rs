@@ -12,10 +12,11 @@ use crate::render::util;
 #[derive(Clone, Debug, Copy)]
 pub struct GrassGridData {
     grid_size: Vec2,
-    grid_count: [u32; 2],
     slot_size: Vec2,
-    slot_count: [u32; 2],
+    slot_count: UVec2,
     grass_y: f32,
+    grass_count: u32,
+    dispatch_size: u32,
 }
 
 pub struct GrassGenerateCompute {
@@ -128,7 +129,7 @@ impl GrassGenerateCompute {
                 .descriptor_set], &[]);
             let grid_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(grid) };
             context.device.cmd_push_constants(command_buffer, self.pipeline_layout, vk::ShaderStageFlags::COMPUTE, 0, grid_data_bytes);
-            context.device.cmd_dispatch(command_buffer, grid.grid_count[0], grid.grid_count[1], 1);
+            context.device.cmd_dispatch(command_buffer, grid.dispatch_size, 1, 1);
             context.device.end_command_buffer(command_buffer);
 
             let mut ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer])
@@ -171,9 +172,11 @@ impl GrassUpdateCompute {
         }
     }
 
-    pub fn create(context: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, grass_blade_buffer: &Buffer, visible_grass: &Buffer) -> Self {
+    pub fn create(context: &mut RenderContext, swap_chain_mgr: &SwapChainMgr, upload_command_buffer: vk::CommandBuffer
+                  , grass_blade_buffer: &Buffer,
+                  visible_grass: &Buffer) -> Self {
         let num_blades = NumBlades { first_vertex: 0, first_instance: 0, instance_count: 1, vertex_count: 0 };
-        let num_blades_buffer = Buffer::create_host_visible_buffer(context,
+        let num_blades_buffer = Buffer::create_device_local_buffer(context, upload_command_buffer,
                                                                    vk::BufferUsageFlags::UNIFORM_BUFFER |
                                                                        vk::BufferUsageFlags::VERTEX_BUFFER |
                                                                        vk::BufferUsageFlags::STORAGE_BUFFER |
@@ -305,7 +308,7 @@ impl GrassUpdateCompute {
             let grid_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(grid) };
             context.device.cmd_push_constants(command_buffer, self.pipeline_layout, vk::ShaderStageFlags::COMPUTE, 0, grid_data_bytes);
 
-            context.device.cmd_dispatch(command_buffer, grid.grid_count[0], grid.grid_count[1], 1);
+            context.device.cmd_dispatch(command_buffer, grid.dispatch_size, 1, 1);
             context.device.end_command_buffer(command_buffer);
 
             let ci = vk::SubmitInfo::builder().command_buffers(&[command_buffer])
@@ -437,31 +440,38 @@ impl GrassMgr {
 
         let mut grid_data = GrassGridData {
             grid_size: Vec2::new(1.0, 1.0),
-            grid_count: [1u32, 1u32],
             slot_size: Vec2::new(0.25, 0.25),
+            slot_count: UVec2::default(),
             grass_y: 0.0,
-            slot_count: [0u32, 0u32],
+            grass_count: 0,
+            dispatch_size: 0,
         };
 
         let slot_count: UVec2 = (grid_data.grid_size / grid_data.slot_size).floor().as_u32();
-        grid_data.slot_count = [slot_count.x, slot_count.y];
+        grid_data.slot_count = slot_count;
+        let blade_count = slot_count.x * slot_count.y;
+        grid_data.grass_count = blade_count;
+        const COMPUTE_GROUP_LOCAL_SIZE: u32 = 32;
+        grid_data.dispatch_size = (blade_count + COMPUTE_GROUP_LOCAL_SIZE - 1) / COMPUTE_GROUP_LOCAL_SIZE;
 
-        let blade_count = (grid_data.grid_count[0] * grid_data.grid_count[1]) * (slot_count.x * slot_count.y);
         let all_blade_size = blade_count * (size_of::<GrassBlade>() as u32);
-        let all_grass_blade_buffer = Buffer::create_host_visible_buffer_with_size(context,
+        let all_grass_blade_buffer = Buffer::create_device_local_buffer_with_size(context,
+                                                                                  upload_command_buffer,
                                                                                   vk::BufferUsageFlags::UNIFORM_BUFFER |
                                                                                       vk::BufferUsageFlags::VERTEX_BUFFER |
                                                                                       vk::BufferUsageFlags::STORAGE_BUFFER,
                                                                                   all_blade_size);
 
-        let visible_grass_blade_buffer = Buffer::create_host_visible_buffer_with_size(context,
+        let visible_grass_blade_buffer = Buffer::create_device_local_buffer_with_size(context,
+                                                                                      upload_command_buffer,
                                                                                       vk::BufferUsageFlags::UNIFORM_BUFFER |
                                                                                           vk::BufferUsageFlags::VERTEX_BUFFER |
                                                                                           vk::BufferUsageFlags::STORAGE_BUFFER,
                                                                                       all_blade_size);
 
         let gen_compute = GrassGenerateCompute::create(context, swap_mgr, &all_grass_blade_buffer, &grid_data);
-        let update_compute = GrassUpdateCompute::create(context, swap_mgr, &all_grass_blade_buffer, &visible_grass_blade_buffer);
+        let update_compute = GrassUpdateCompute::create(context, swap_mgr,
+                                                        upload_command_buffer, &all_grass_blade_buffer, &visible_grass_blade_buffer);
 
         Self {
             compute_command_pool,

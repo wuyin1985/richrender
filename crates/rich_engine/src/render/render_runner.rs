@@ -60,9 +60,10 @@ impl RenderRunner {
                                                         flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
             }
 
-            let dummy_res = DummyResources::create(&mut context, command_buffer_list.get_upload_command_buffer());
-            context.insert_resource(dummy_res);
+            let grass = GrassMgr::create(&mut context, &swapchain, forward_render_pass.get_native_render_pass(), command_buffer);
 
+            let dummy_res = DummyResources::create(&mut context, command_buffer);
+            context.insert_resource(dummy_res);
 
             unsafe {
                 context.device.end_command_buffer(command_buffer);
@@ -87,8 +88,6 @@ impl RenderRunner {
             // }
 
             info!("model renderer created complete");
-            let grass = GrassMgr::create(&mut context, &swapchain, forward_render_pass.get_native_render_pass(), command_buffer_list
-                .get_upload_command_buffer());
 
             RenderRunner {
                 context,

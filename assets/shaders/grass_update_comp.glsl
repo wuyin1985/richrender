@@ -4,15 +4,16 @@
 
 
 #define GRAVITY 9.8
-#define LOCAL_WORK_GROUP_SIZE 256
+#define LOCAL_WORK_GROUP_SIZE 32
 layout(local_size_x = LOCAL_WORK_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 layout(push_constant) uniform PushConsts {
     vec2 grid_size;
-    uvec2 grid_count;
     vec2 slot_size;
     uvec2 slot_count;
     float grass_y;
+    uint grass_count;
+    uint dispatch_size;
 } push_constants;
 
 
@@ -125,20 +126,20 @@ void update_blade(uint index) {
     float tolerance = 3.0f;
 
     vec4 v0_NDC = ubo.proj * ubo.view * vec4(v0, 1.0);
-//    culled_Due_To_Frustum = (!inBounds(v0_NDC.x, v0_NDC.w + tolerance) ||!inBounds(v0_NDC.y, v0_NDC.w + tolerance));
-//
-//    if (culled_Due_To_Frustum)
-//    {
-//        vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
-//        vec4 m_NDC = ubo.proj * ubo.view * vec4(m, 1.0);
-//        culled_Due_To_Frustum = (!inBounds(m_NDC.x, m_NDC.w + tolerance) ||!inBounds(m_NDC.y, m_NDC.w + tolerance));
-//    }
-//
-//    if (culled_Due_To_Frustum)
-//    {
-//        vec4 v2_NDC = ubo.proj * ubo.view * vec4(v2, 1.0);
-//        culled_Due_To_Frustum = (!inBounds(v2_NDC.x, v2_NDC.w + tolerance) ||!inBounds(v2_NDC.y, v2_NDC.w + tolerance));
-//    }
+    //    culled_Due_To_Frustum = (!inBounds(v0_NDC.x, v0_NDC.w + tolerance) ||!inBounds(v0_NDC.y, v0_NDC.w + tolerance));
+    //
+    //    if (culled_Due_To_Frustum)
+    //    {
+    //        vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
+    //        vec4 m_NDC = ubo.proj * ubo.view * vec4(m, 1.0);
+    //        culled_Due_To_Frustum = (!inBounds(m_NDC.x, m_NDC.w + tolerance) ||!inBounds(m_NDC.y, m_NDC.w + tolerance));
+    //    }
+    //
+    //    if (culled_Due_To_Frustum)
+    //    {
+    //        vec4 v2_NDC = ubo.proj * ubo.view * vec4(v2, 1.0);
+    //        culled_Due_To_Frustum = (!inBounds(v2_NDC.x, v2_NDC.w + tolerance) ||!inBounds(v2_NDC.y, v2_NDC.w + tolerance));
+    //    }
 
     // 3. Distance culling
     float projected_distance = length(v0 - eye_worldSpace - up * dot(up, (v0 - eye_worldSpace)));
@@ -153,8 +154,7 @@ void update_blade(uint index) {
 
     //if (!culled_Due_To_Distance && !culled_Due_To_Frustum && !culled_Due_To_Orientaion)//
     {
-        //culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[index];
-        culledBlades[index] = inputBlades[index];
+        culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[index];
     }
 }
 
@@ -167,12 +167,6 @@ void main()
     }
     barrier();// Wait till all threads reach this point
 
-    uint slot_count_u = push_constants.slot_count.x * push_constants.slot_count.y;
-    uint start_idx = (gl_WorkGroupID.x * gl_WorkGroupID.y) * slot_count_u;
-    uint draw_count = uint(ceil(float(slot_count_u)/LOCAL_WORK_GROUP_SIZE));
-
-    for (uint i = 0; i < draw_count; i++) {
-        uint idx = gl_LocalInvocationIndex + i + start_idx;
-        update_blade(idx);
-    }
+    uint idx = gl_GlobalInvocationID.x;
+    update_blade(idx);
 }
