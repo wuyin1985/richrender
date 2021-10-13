@@ -124,22 +124,23 @@ void update_blade(uint index) {
 
     // 2. View-frustum culling
     float tolerance = 3.0f;
+    bool culled_Due_To_Frustum = false;
 
     vec4 v0_NDC = ubo.proj * ubo.view * vec4(v0, 1.0);
-    //    culled_Due_To_Frustum = (!inBounds(v0_NDC.x, v0_NDC.w + tolerance) ||!inBounds(v0_NDC.y, v0_NDC.w + tolerance));
-    //
-    //    if (culled_Due_To_Frustum)
-    //    {
-    //        vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
-    //        vec4 m_NDC = ubo.proj * ubo.view * vec4(m, 1.0);
-    //        culled_Due_To_Frustum = (!inBounds(m_NDC.x, m_NDC.w + tolerance) ||!inBounds(m_NDC.y, m_NDC.w + tolerance));
-    //    }
-    //
-    //    if (culled_Due_To_Frustum)
-    //    {
-    //        vec4 v2_NDC = ubo.proj * ubo.view * vec4(v2, 1.0);
-    //        culled_Due_To_Frustum = (!inBounds(v2_NDC.x, v2_NDC.w + tolerance) ||!inBounds(v2_NDC.y, v2_NDC.w + tolerance));
-    //    }
+    culled_Due_To_Frustum = (!inBounds(v0_NDC.x, v0_NDC.w + tolerance) ||!inBounds(v0_NDC.y, v0_NDC.w + tolerance));
+
+    if (culled_Due_To_Frustum)
+    {
+        vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
+        vec4 m_NDC = ubo.proj * ubo.view * vec4(m, 1.0);
+        culled_Due_To_Frustum = (!inBounds(m_NDC.x, m_NDC.w + tolerance) ||!inBounds(m_NDC.y, m_NDC.w + tolerance));
+    }
+
+    if (culled_Due_To_Frustum)
+    {
+        vec4 v2_NDC = ubo.proj * ubo.view * vec4(v2, 1.0);
+        culled_Due_To_Frustum = (!inBounds(v2_NDC.x, v2_NDC.w + tolerance) ||!inBounds(v2_NDC.y, v2_NDC.w + tolerance));
+    }
 
     // 3. Distance culling
     float projected_distance = length(v0 - eye_worldSpace - up * dot(up, (v0 - eye_worldSpace)));
@@ -147,12 +148,8 @@ void update_blade(uint index) {
     float numBuckets = 10.0;
     bool culled_Due_To_Distance = mod(index, numBuckets) > floor(numBuckets * (1.0 - projected_distance/dmax));
 
-    // Atomic operation to read and update numBlades.vertexCount is required because the compute shader is
-    // parallezied over the number of grass blades, ie two threads could try to update the numBlades.vertexCount
-    // at the same time.
-    // You want to write the visible blades to the buffer without write conflicts between threads
 
-    //if (!culled_Due_To_Distance && !culled_Due_To_Frustum && !culled_Due_To_Orientaion)//
+    if (!culled_Due_To_Distance && !culled_Due_To_Frustum && !culled_Due_To_Orientaion)//
     {
         culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[index];
     }
@@ -165,6 +162,7 @@ void main()
     {
         numBlades.vertexCount = 0;
     }
+
     barrier();// Wait till all threads reach this point
 
     uint idx = gl_GlobalInvocationID.x;

@@ -84,27 +84,27 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
 
             runner.grass.cmd_barrier(context, command_buffer);
             //shadow
-            // forward_render_pass.begin_shadow_pass(context, command_buffer);
-            //
-            // let mut list = Vec::new();
-            // for (handle, transform) in model_query.iter() {
-            //     let model_renderer = context.get_model(handle);
-            //     if let Some(mr) = model_renderer {
-            //         model_data.transform = transform.compute_matrix();
-            //         mr.draw_shadow(context, command_buffer, &model_data);
-            //         list.push((handle, transform));
-            //     }
-            // }
-            // forward_render_pass.end_shadow_pass(context, command_buffer);
+            forward_render_pass.begin_shadow_pass(context, command_buffer);
+
+            let mut list = Vec::new();
+            for (handle, transform) in model_query.iter() {
+                let model_renderer = context.get_model(handle);
+                if let Some(mr) = model_renderer {
+                    model_data.transform = transform.compute_matrix();
+                    mr.draw_shadow(context, command_buffer, &model_data);
+                    list.push((handle, transform));
+                }
+            }
+            forward_render_pass.end_shadow_pass(context, command_buffer);
 
             //draw
             forward_render_pass.begin_render_pass(context, command_buffer);
 
-            // for (handle, transform) in list {
-            //     let mr = context.get_model(handle).unwrap();
-            //     model_data.transform = transform.compute_matrix();
-            //     mr.draw(context, command_buffer, &model_data);
-            // }
+            for (handle, transform) in list {
+                let mr = context.get_model(handle).unwrap();
+                model_data.transform = transform.compute_matrix();
+                mr.draw(context, command_buffer, &model_data);
+            }
 
             runner.grass.draw(context, command_buffer);
 

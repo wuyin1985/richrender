@@ -439,8 +439,8 @@ impl GrassMgr {
         };
 
         let mut grid_data = GrassGridData {
-            grid_size: Vec2::new(1.0, 1.0),
-            slot_size: Vec2::new(0.25, 0.25),
+            grid_size: Vec2::new(100.0, 100.0),
+            slot_size: Vec2::new(0.3, 0.3),
             slot_count: UVec2::default(),
             grass_y: 0.0,
             grass_count: 0,
@@ -536,8 +536,7 @@ impl GrassMgr {
             context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.visible_grass_blade_buffer.buffer], &[0]);
             context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::GRAPHICS,
                                                     self.pipeline.get_layout(), 0, &[uni.descriptor_set], &[]);
-            //context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
-            context.device.cmd_draw(command_buffer, 10, 1, 0, 0);
+            context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
         }
     }
 }
