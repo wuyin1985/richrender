@@ -2,7 +2,7 @@
 #pragma shader_stage(compute)
 #define LOCAL_WORK_GROUP_SIZE 32
 
-#define MIN_HEIGHT 0.65
+#define MIN_HEIGHT 0.90
 #define MAX_HEIGHT 1.25
 #define MIN_WIDTH 0.05
 #define MAX_WIDTH 0.07

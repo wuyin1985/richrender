@@ -56,6 +56,12 @@ void update_blade(uint index) {
     vec3 v1 = blade.v1.xyz;
     vec3 v2 = blade.v2.xyz;
     vec3 up = blade.up.xyz;
+//
+//    vec2 view_plane_dir = -ubo.camera_dir.xz;
+//    float view_len = length(view_plane_dir);
+//    float cos_angle = view_plane_dir.y / view_len;
+//    float angle = acos(cos_angle);
+//    inputBlades[index].v0.w = angle;
 
     float angle = blade.v0.w;// orientation of the blade of grass;
     // if this angle is zero the thin width portion (non-flat portion) of the grass is facing +ve x.

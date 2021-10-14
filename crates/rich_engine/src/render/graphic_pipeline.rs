@@ -13,16 +13,18 @@ fn read_shader_data_from_file(context: &mut RenderContext, path: &str, defines: 
 pub struct PipelineVertexInputInfo {
     ci: Option<vk::PipelineVertexInputStateCreateInfo>,
     primitive: vk::PrimitiveTopology,
+    cull_mode: vk::CullModeFlags,
 }
 
 impl PipelineVertexInputInfo {
     pub fn from_bap(binding: &[vk::VertexInputBindingDescription], attributes:
-    &[vk::VertexInputAttributeDescription], primitive: vk::PrimitiveTopology) -> Self {
+    &[vk::VertexInputAttributeDescription], primitive: vk::PrimitiveTopology, cull: vk::CullModeFlags) -> Self {
         PipelineVertexInputInfo {
             ci: Some(vk::PipelineVertexInputStateCreateInfo::builder().
                 vertex_binding_descriptions(binding).vertex_attribute_descriptions(attributes)
                 .build()),
             primitive: primitive,
+            cull_mode: cull,
         }
     }
 
@@ -32,6 +34,7 @@ impl PipelineVertexInputInfo {
                 vertex_binding_descriptions(binding).vertex_attribute_descriptions(attributes)
                 .build()),
             primitive: vk::PrimitiveTopology::TRIANGLE_LIST,
+            cull_mode: vk::CullModeFlags::BACK,
         }
     }
 
@@ -39,6 +42,7 @@ impl PipelineVertexInputInfo {
         PipelineVertexInputInfo {
             ci: None,
             primitive: vk::PrimitiveTopology::TRIANGLE_LIST,
+            cull_mode: vk::CullModeFlags::BACK,
         }
     }
 
@@ -157,7 +161,7 @@ impl GraphicPipeline {
             .rasterizer_discard_enable(false)
             .polygon_mode(vk::PolygonMode::FILL)
             .line_width(1.0)
-            .cull_mode(vk::CullModeFlags::BACK)
+            .cull_mode(vertex_input.cull_mode)
             .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
             .depth_bias_enable(false)
             .depth_bias_constant_factor(0.0)
@@ -216,7 +220,6 @@ impl GraphicPipeline {
 
 
         let pipeline_info = {
-
             let ti = vk::PipelineTessellationStateCreateInfo::builder()
                 .patch_control_points(1).flags(vk::PipelineTessellationStateCreateFlags::empty()).build();
 

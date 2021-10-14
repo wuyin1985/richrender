@@ -3,7 +3,8 @@ mod egui_render;
 
 use rich_engine::prelude::*;
 use egui;
-use rich_engine::{FlyCamera, InputSystem};
+use egui::Align2;
+use rich_engine::{Diagnostic, Diagnostics, FlyCamera, FrameTimeDiagnosticsPlugin, InputSystem, RenderRunner};
 use crate::egui_integrate::{EguiContext, EguiPlugin};
 
 struct EditorPlugin {}
@@ -42,19 +43,47 @@ struct EditorState {
     age: i32,
 }
 
-fn process(mut state: Local<EditorState>, egui_context: Option<Res<EguiContext>>) {
+
+fn parse_diagnostic(diagnostic: &Diagnostic) -> Option<(String, String)> {
+    if let Some(value) = diagnostic.value() {
+        if let Some(average) = diagnostic.average() {
+            return Some(
+                (format!("{:.2}{:1}", value, diagnostic.suffix),
+                 format!("{:.4}{:}", average, diagnostic.suffix))
+            );
+        }
+    }
+
+    None
+}
+
+fn process(mut state: Local<EditorState>
+           , egui_context: Option<Res<EguiContext>>
+           , render_runner: Option<Res<RenderRunner>>
+           , time: Res<Time>
+           , diagnostics: Res<Diagnostics>) {
     if let Some(ctx) = &egui_context {
-        egui::Window::new("Hello").show(ctx.ctx(), |ui| {
-            ui.heading("My egui Application");
+        egui::Window::new("Statistics").anchor(Align2::RIGHT_TOP, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
+            ui.heading("summary");
             ui.horizontal(|ui| {
-                ui.label("Your name: ");
-                ui.text_edit_singleline(&mut state.name);
+                if let Some((fps, average_fps)) = parse_diagnostic(diagnostics.get(FrameTimeDiagnosticsPlugin::FPS).unwrap()) {
+                    ui.label(format!("Fps: {}", average_fps));
+                }
+                if let Some((frame_time, average_frame_time)) = parse_diagnostic(diagnostics.get(FrameTimeDiagnosticsPlugin::FRAME_TIME).unwrap()) {
+                    ui.label(format!("Frame Time: {}", average_frame_time));
+                }
             });
-            ui.add(egui::Slider::new(&mut state.age, 0..=120).text("age"));
-            if ui.button("Click each year").clicked() {
-                state.age += 1;
+
+            if let Some(rr) = &render_runner {
+                ui.heading("rendering");
+                let statistic = &rr.context.statistic;
+
+                ui.horizontal(|ui| {
+                    // for i in 0..co
+                    // ui.label(format!("Fps: {}", average_fps));
+                });
+
             }
-            ui.label(format!("Hello '{}', age {}", state.name, state.age));
         });
     }
 }
