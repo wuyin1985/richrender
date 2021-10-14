@@ -2,12 +2,12 @@
 #pragma shader_stage(compute)
 #define LOCAL_WORK_GROUP_SIZE 32
 
-#define MIN_HEIGHT 1.3
-#define MAX_HEIGHT 2.5
-#define MIN_WIDTH 0.1
-#define MAX_WIDTH 0.14
-#define MIN_BEND 7.0
-#define MAX_BEND 13.0
+#define MIN_HEIGHT 0.65
+#define MAX_HEIGHT 1.25
+#define MIN_WIDTH 0.05
+#define MAX_WIDTH 0.07
+#define MIN_BEND 7
+#define MAX_BEND 13
 
 layout (local_size_x = LOCAL_WORK_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -53,9 +53,9 @@ void main() {
     //bezier control point and height
     blades[idx].v1 = vec4(pos.xyz + bladeUp * height, height);
     //physical model guide and width
-    float width = MIN_WIDTH + (roll * (MAX_WIDTH - MIN_WIDTH));
+    float width = MIN_WIDTH + roll * (MAX_WIDTH - MIN_WIDTH);
     blades[idx].v2 = vec4(pos.xyz + bladeUp * height, width);
     //update vector and stiffness
-    float stiffness = MIN_BEND + (roll * (MAX_BEND - MIN_BEND));
+    float stiffness = MIN_BEND + roll * (MAX_BEND - MIN_BEND);
     blades[idx].up = vec4(bladeUp, stiffness);
 }

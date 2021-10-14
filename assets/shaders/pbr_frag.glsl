@@ -21,10 +21,6 @@ layout(location = 0) out vec4 out_color;
 
 layout (constant_id = 0) const float ambient_strength = 0.3;
 
-#define ambient_shadow 0.1
-
-
-
 float textureProj(vec4 shadowCoord, vec2 off)
 {
     float shadow = 0.0;
@@ -34,9 +30,6 @@ float textureProj(vec4 shadowCoord, vec2 off)
         shadow = 1.0;
     }
     return shadow;
-    //    shadowCoord.y = -shadowCoord.y;
-    //    vec2 uv = shadowCoord.st * 0.5 + 0.5;
-    //    return texture(shadow_map, uv).r;
 }
 
 float filterPCF(vec4 sc)

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use ash::vk;
 use ash::vk::PipelineStageFlags;
 use crate::render::graphic_pipeline::{GraphicPipeline, PipelineVertexInputInfo, ShaderStages};
-use crate::{Buffer, RenderContext};
+use crate::{Buffer, ForwardRenderPass, RenderContext};
 use crate::render::swapchain_mgr::SwapChainMgr;
 use crate::render::util;
 
@@ -345,6 +345,9 @@ pub struct GrassMgr {
     gen_compute: GrassGenerateCompute,
     update_compute: GrassUpdateCompute,
     grid: GrassGridData,
+
+    draw_descriptor_layout: vk::DescriptorSetLayout,
+    draw_descriptor_set: vk::DescriptorSet,
 }
 
 impl GrassMgr {
@@ -360,7 +363,7 @@ impl GrassMgr {
         }
     }
 
-    pub fn create(context: &mut RenderContext, swap_mgr: &SwapChainMgr, render_pass: vk::RenderPass,
+    pub fn create(context: &mut RenderContext, swap_mgr: &SwapChainMgr, render_pass: &ForwardRenderPass,
                   upload_command_buffer: vk::CommandBuffer) -> Self {
         let vb = [vk::VertexInputBindingDescription::builder()
             .binding(0)
@@ -397,10 +400,11 @@ impl GrassMgr {
                 .offset(4 * 4 * 3).build(),
         ];
 
-        let vi = PipelineVertexInputInfo::from_bap(&vb, &va, vk::PrimitiveTopology::PATCH_LIST);
+        let (draw_descriptor_layout, draw_descriptor_set) = Self::create_descriptors(context, render_pass);
 
+        let vi = PipelineVertexInputInfo::from_bap(&vb, &va, vk::PrimitiveTopology::PATCH_LIST);
         let uni = context.per_frame_uniform.as_ref().unwrap();
-        let pipe_ci = vk::PipelineLayoutCreateInfo::builder().set_layouts(&[uni.descriptor_set_layout])
+        let pipe_ci = vk::PipelineLayoutCreateInfo::builder().set_layouts(&[uni.descriptor_set_layout, draw_descriptor_layout])
             .build();
 
         let entry_point_name = CString::new("main").unwrap();
@@ -411,7 +415,7 @@ impl GrassMgr {
             tese: Some("grass_tese"),
         }.to_shader_stage_create_info_array(context, &[], &entry_point_name);
 
-        let pipeline = GraphicPipeline::create_with_info(context, swap_mgr, render_pass,
+        let pipeline = GraphicPipeline::create_with_info(context, swap_mgr, render_pass.get_native_render_pass(),
                                                          &vi, &pipe_ci, vk::SampleCountFlags::TYPE_1, &shaders);
 
         let compute_command_pool = {
@@ -440,7 +444,7 @@ impl GrassMgr {
 
         let mut grid_data = GrassGridData {
             grid_size: Vec2::new(100.0, 100.0),
-            slot_size: Vec2::new(0.3, 0.3),
+            slot_size: Vec2::new(0.15, 0.15),
             slot_count: UVec2::default(),
             grass_y: 0.0,
             grass_count: 0,
@@ -484,7 +488,71 @@ impl GrassMgr {
             gen_compute,
             update_compute,
             grid: grid_data,
+
+            draw_descriptor_layout,
+            draw_descriptor_set,
         }
+    }
+
+    fn create_descriptors(context: &mut RenderContext,
+                          render_pass: &ForwardRenderPass) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
+        let bindings = [
+            vk::DescriptorSetLayoutBinding::builder()
+                .binding(0)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .descriptor_count(1)
+                .stage_flags(vk::ShaderStageFlags::FRAGMENT)
+                .build(),
+        ];
+
+        let layout_info = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings).build();
+
+        let set_layout = unsafe {
+            context.device
+                .create_descriptor_set_layout(&layout_info, None)
+                .unwrap()
+        };
+
+        let layouts = [set_layout];
+
+        let allocate_info = vk::DescriptorSetAllocateInfo::builder()
+            .descriptor_pool(context.descriptor_pool)
+            .set_layouts(&layouts);
+        let set = unsafe {
+            context
+                .device
+                .allocate_descriptor_sets(&allocate_info)
+                .unwrap()[0]
+        };
+
+        let shadow_info = {
+            let shadow = render_pass.get_shadow();
+            let (view, sampler) = (shadow.shadow_view, shadow.sampler);
+
+            [vk::DescriptorImageInfo::builder()
+                .image_layout(vk::ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+                .image_view(view)
+                .sampler(sampler)
+                .build()]
+        };
+
+        let descriptor_writes = [
+            vk::WriteDescriptorSet::builder()
+                .dst_set(set)
+                .dst_binding(0)
+                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .image_info(&shadow_info)
+                .build(),
+        ];
+
+        unsafe {
+            context
+                .device
+                .update_descriptor_sets(&descriptor_writes, &[])
+        }
+
+
+        (set_layout, set)
     }
 
     pub fn compute_grass_data(&mut self, context: &RenderContext) {
@@ -535,7 +603,7 @@ impl GrassMgr {
             context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, pipe);
             context.device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.visible_grass_blade_buffer.buffer], &[0]);
             context.device.cmd_bind_descriptor_sets(command_buffer, vk::PipelineBindPoint::GRAPHICS,
-                                                    self.pipeline.get_layout(), 0, &[uni.descriptor_set], &[]);
+                                                    self.pipeline.get_layout(), 0, &[uni.descriptor_set, self.draw_descriptor_set], &[]);
             context.device.cmd_draw_indirect(command_buffer, self.update_compute.num_blades_buffer.buffer, 0, 1, 0);
         }
     }

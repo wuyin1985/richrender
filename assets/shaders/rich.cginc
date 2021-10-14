@@ -8,4 +8,8 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     float totalTime;
 } ubo;
 
-
+const mat4 shadowBiasMat = mat4(
+0.5, 0.0, 0.0, 0.0,
+0.0, -0.5, 0.0, 0.0,
+0.0, 0.0, 1.0, 0.0,
+0.5, 0.5, 0.0, 1.0 );

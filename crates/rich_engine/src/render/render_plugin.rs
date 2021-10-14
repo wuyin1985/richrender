@@ -158,8 +158,6 @@ fn update_render_state_from_camera(mut commands: Commands,
                 camera.z_far);
 
             let view = transform.compute_matrix().inverse();
-            // let light_matrix = proj * view;
-            // let light_dir = light_matrix.mul_vec4(Vec4::Z);
 
             let frame_data = PerFrameData {
                 view: view,
@@ -167,9 +165,10 @@ fn update_render_state_from_camera(mut commands: Commands,
                 light_matrix,
                 light_dir: Vec4::from((light_dir, 0.0)),
                 camera_pos: Vec4::from((pos, 1.0)),
-                delta_time: time.delta_seconds(),
+                delta_time: 0.016,
                 total_time: time.seconds_since_startup() as _,
             };
+
             runner.upload_per_frame_data(frame_data);
         }
     }

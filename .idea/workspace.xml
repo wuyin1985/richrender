@@ -11,9 +11,14 @@
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_frag.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_frag.glsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/pbr_frag.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/pbr_frag.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/pbr_vert.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/pbr_vert.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/shaders/rich.cginc" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/rich.cginc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +131,7 @@
       <workItem from="1633660129247" duration="88836000" />
       <workItem from="1634005125157" duration="36755000" />
       <workItem from="1634117165395" duration="3299000" />
-      <workItem from="1634123114448" duration="5966000" />
+      <workItem from="1634123114448" duration="9876000" />
     </task>
     <servers />
   </component>

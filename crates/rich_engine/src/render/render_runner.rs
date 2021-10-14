@@ -60,7 +60,7 @@ impl RenderRunner {
                                                         flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build());
             }
 
-            let grass = GrassMgr::create(&mut context, &swapchain, forward_render_pass.get_native_render_pass(), command_buffer);
+            let grass = GrassMgr::create(&mut context, &swapchain, &forward_render_pass, command_buffer);
 
             let dummy_res = DummyResources::create(&mut context, command_buffer);
             context.insert_resource(dummy_res);

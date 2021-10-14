@@ -11,6 +11,7 @@ layout(location = 2) in vec4 v2_tese[];
 
 layout(location = 0) out vec4 f_normal;
 layout(location = 1) out vec3 f_pos_world;
+layout(location = 2) out vec4 out_shadow_coord;
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -46,5 +47,5 @@ void main()
     f_pos_world = mix(c0, c1, t);
 
     gl_Position = ubo.proj * ubo.view * vec4(f_pos_world, 1.0);
-    //gl_Position = vec4(f_pos_world, 1.0);
+    out_shadow_coord = shadowBiasMat * ubo.light_matrix * vec4(f_pos_world, 1.0);
 }

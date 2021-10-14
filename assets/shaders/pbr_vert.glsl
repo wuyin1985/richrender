@@ -31,11 +31,7 @@ layout(location = 2) out vec3 out_camera_dir;
 layout(location = 3) out vec3 out_normal;
 #endif
 
-const mat4 biasMat = mat4(
-0.5, 0.0, 0.0, 0.0,
-0.0, -0.5, 0.0, 0.0,
-0.0, 0.0, 1.0, 0.0,
-0.5, 0.5, 0.0, 1.0 );
+
 
 void main() {
     vec4 loc_pos = push_constants.model * vec4(in_pos, 1.0);
@@ -51,6 +47,6 @@ void main() {
     out_tex_coord = in_tex_coord;
     #endif
 
-    out_shadow_coord = biasMat * ubo.light_matrix * loc_pos;
+    out_shadow_coord = shadowBiasMat * ubo.light_matrix * loc_pos;
 }
 
