@@ -29,8 +29,8 @@ void main()
 
     float width = v2_tese[0].w;
     float angle = v0_tese[0].w;
-    vec3 bitangent = vec3(cos(angle), 0.0, sin(angle));
 
+    vec3 bitangent = vec3(cos(angle), 0.0, sin(angle));
     float scaling = 1.2-v;
     vec3 c0 = center - width * scaling * bitangent;
     vec3 c1 = center + width * scaling * bitangent;

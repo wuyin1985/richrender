@@ -18,6 +18,7 @@ use std::mem::size_of;
 use crate::render::shader_collection::ShaderCollection;
 use crate::render::texture::Texture;
 use crate::render::model::ModelTexture;
+use crate::render::render_statistic::RenderStatistic;
 
 pub struct RenderConfig {
     pub msaa: vk::SampleCountFlags,
@@ -36,6 +37,7 @@ pub struct PerFrameData {
     pub light_matrix: Mat4,
     pub light_dir: Vec4,
     pub camera_pos: Vec4,
+    pub camera_dir: Vec4,
     pub delta_time: f32,
     pub total_time: f32,
 }
@@ -48,6 +50,7 @@ impl PerFrameData {
             light_matrix: Mat4::IDENTITY,
             light_dir: Vec4::Z,
             camera_pos: Vec4::ZERO,
+            camera_dir: Vec4::Z,
             delta_time: 0f32,
             total_time: 0f32,
         }
@@ -117,6 +120,8 @@ pub struct RenderContext {
     pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
     pub min_uniform_buffer_offset_alignment: u32,
     pub shader_modules: ShaderCollection,
+    #[cfg(feature = "statistic")]
+    pub statistic: RenderStatistic,
 }
 
 
@@ -180,6 +185,9 @@ impl RenderContext {
         unsafe {
             let mut sm = std::mem::take(&mut self.shader_modules);
             sm.destroy(self);
+
+            #[cfg(feature = "statistic")]
+                self.statistic.destroy(&self.device);
 
             let mut res = std::mem::take(&mut self.resources);
             for (_, r) in res.iter_mut() {
@@ -289,6 +297,17 @@ impl RenderContext {
         (graphics, present, compute)
     }
 
+    #[cfg(feature = "statistic")]
+    fn pipeline_statistic() -> u32 {
+        return 1;
+    }
+
+    #[cfg(not(feature = "statistic"))]
+    fn pipeline_statistic() -> u32 {
+        return 0;
+    }
+
+
     pub unsafe fn create<W: HasRawWindowHandle>(window: &W, window_width: u32, window_height: u32) -> Self {
         let app_name = CString::new("RichRender").unwrap();
 
@@ -360,6 +379,7 @@ impl RenderContext {
         let features = vk::PhysicalDeviceFeatures {
             shader_clip_distance: 1,
             tessellation_shader: 1,
+            pipeline_statistics_query: Self::pipeline_statistic(),
             ..Default::default()
         };
 
@@ -432,6 +452,9 @@ impl RenderContext {
 
         let collection = ShaderCollection::create();
 
+        #[cfg(feature = "statistic")]
+        let statistic = RenderStatistic::create(&device);
+
         RenderContext {
             window_width,
             window_height,
@@ -458,6 +481,8 @@ impl RenderContext {
             models: HashMap::new(),
             min_uniform_buffer_offset_alignment,
             shader_modules: collection,
+            #[cfg(feature = "statistic")]
+            statistic,
         }
     }
 

@@ -28,6 +28,8 @@ mod shader_collection;
 mod debug;
 mod grass;
 mod compute;
+#[cfg(feature = "statistic")]
+mod render_statistic;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;

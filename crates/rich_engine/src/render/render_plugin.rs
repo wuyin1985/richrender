@@ -78,6 +78,10 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
         let mut model_data = ModelData::default();
         if let Some((present_index, command_buffer)) = runner.begin_draw() {
             let context = &mut runner.context;
+
+            #[cfg(feature = "statistic")]
+                context.statistic.begin_query(&context.device, command_buffer);
+
             let forward_render_pass = &runner.forward_render_pass;
 
             runner.grass.compute_grass_data(context);
@@ -109,6 +113,9 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
             runner.grass.draw(context, command_buffer);
 
             forward_render_pass.end_render_pass(context, command_buffer);
+
+            #[cfg(feature = "statistic")]
+                context.statistic.end_query(&context.device, command_buffer);
         } else {
             runner.current_present_index = -1;
         }
@@ -165,6 +172,7 @@ fn update_render_state_from_camera(mut commands: Commands,
                 light_matrix,
                 light_dir: Vec4::from((light_dir, 0.0)),
                 camera_pos: Vec4::from((pos, 1.0)),
+                camera_dir: Vec4::from((transform.rotation.mul_vec3(Vec3::Z), 1.0)),
                 delta_time: 0.016,
                 total_time: time.seconds_since_startup() as _,
             };

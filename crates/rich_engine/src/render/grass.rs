@@ -402,7 +402,7 @@ impl GrassMgr {
 
         let (draw_descriptor_layout, draw_descriptor_set) = Self::create_descriptors(context, render_pass);
 
-        let vi = PipelineVertexInputInfo::from_bap(&vb, &va, vk::PrimitiveTopology::PATCH_LIST);
+        let vi = PipelineVertexInputInfo::from_bap(&vb, &va, vk::PrimitiveTopology::PATCH_LIST, vk::CullModeFlags::NONE);
         let uni = context.per_frame_uniform.as_ref().unwrap();
         let pipe_ci = vk::PipelineLayoutCreateInfo::builder().set_layouts(&[uni.descriptor_set_layout, draw_descriptor_layout])
             .build();

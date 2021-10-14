@@ -4,6 +4,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     mat4 light_matrix;
     vec4 light_dir;
     vec4 camera_pos;
+    vec4 camera_dir;
     float deltaTime;
     float totalTime;
 } ubo;

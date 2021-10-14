@@ -253,6 +253,9 @@ impl RenderRunner {
             self.context.device.queue_submit(self.context.graphics_queue, &[submit_info], cmd_buf_execute_fence);
         }
 
+        #[cfg(feature = "statistic")]
+        self.context.statistic.require_results(&self.context.device);
+
         self.swapchain_mgr.present(&self.context);
     }
 
