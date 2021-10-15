@@ -16,12 +16,16 @@ use crate::render::vertex_layout::VertexLayout;
 use crate::render::gltf_asset_loader::GltfAsset;
 
 use bevy::prelude::*;
+use crate::render::animation::{Animations, load_animations};
+use crate::render::skin::{create_skins_from_gltf, Skin};
 
 
 pub struct Model {
     meshes: Meshes,
     nodes: Nodes,
     textures: ModelTextures,
+    animations: Option<Animations>,
+    skins: Vec<Skin>,
     pub aabb: Aabb,
 }
 
@@ -36,6 +40,8 @@ impl Model {
         let meshes = Meshes::from_gltf(context, upload_command_buffer, &document, &buffers);
         let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
         let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
+        let animations = load_animations(document.animations(), &buffers);
+        let mut skins = create_skins_from_gltf(document.skins(), &buffers);
 
         let aabbs = nodes
             .nodes()
@@ -55,6 +61,8 @@ impl Model {
                 nodes,
                 textures,
                 meshes,
+                animations,
+                skins,
             })
     }
 
@@ -85,6 +93,16 @@ impl Model {
     pub fn get_textures(&self) -> &Vec<ModelTexture> {
         &self.textures.textures
     }
+
+    pub fn clone_animations(&self) -> Option<Animations> {
+        self.animations.clone()
+    }
+
+    pub fn clone_nodes(&self) -> Nodes {
+        self.nodes.clone()
+    }
+
+    pub fn clone_skins(&self) -> Vec<Skin> { self.skins.clone() }
 }
 
 

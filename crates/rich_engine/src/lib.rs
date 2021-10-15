@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::render::RenderPlugin;
 use bevy::log::{LogSettings, Level};
 use std::ops::{Deref, DerefMut};
-use crate::render::gltf_asset_loader::GltfAsset;
+use crate::render::gltf_asset_loader::{GltfAnimationRuntime, GltfAsset};
 use crate::render::model_renderer::ModelData;
 
 mod render;
@@ -53,7 +53,7 @@ fn init(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
         let t = Transform::from_scale(scale) *
             Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
 
-        commmands.spawn().insert(handle).insert(t);
+        commmands.spawn().insert(handle).insert(t).insert(GltfAnimationRuntime::default());
     }
 }
 

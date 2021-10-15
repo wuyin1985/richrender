@@ -30,6 +30,8 @@ mod grass;
 mod compute;
 #[cfg(feature = "statistic")]
 mod render_statistic;
+mod animation;
+mod skin;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;

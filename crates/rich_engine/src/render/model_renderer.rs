@@ -10,11 +10,13 @@ use crate::render::texture::Texture;
 use bevy::prelude::*;
 use crate::render::uniform::UniformObject;
 use crate::render::aabb::Aabb;
-use crate::render::gltf_asset_loader::GltfAsset;
+use crate::render::animation::Animations;
+use crate::render::gltf_asset_loader::{GltfAnimationRuntime, GltfAsset};
 use crate::render::material::Material;
 use crate::render::vertex_layout::VertexLayout;
 use crate::render::mesh::Primitive;
 use crate::render::forward_render::ForwardRenderPass;
+use crate::render::node::{Node, Nodes};
 
 const UBO_BINDING: u32 = 0;
 const COLOR_SAMPLER_BINDING: u32 = 1;
@@ -41,10 +43,15 @@ impl Default for ModelData {
     }
 }
 
+struct AnimationWithNodes {
+    animations: Animations,
+    nodes: Nodes,
+}
 
 pub struct ModelRenderer {
     model: Model,
     primitive_renders: Vec<PrimitiveRender>,
+    anim_nodes: Option<AnimationWithNodes>,
 }
 
 impl ModelRenderer {
@@ -99,11 +106,8 @@ impl ModelRenderer {
 
     pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: &ForwardRenderPass,
                   command_buffer: vk::CommandBuffer, gltf_asset: &GltfAsset, shader_names: &ShadeNames) -> ModelRenderer {
-        info!("start load model");
         let model = Model::from_gltf(context, command_buffer, gltf_asset).expect("load error");
-        info!("load model complete, primitive_count {}", model.primitive_count());
 
-        info!("start create renders for primitives");
         let mut primitive_renders = Vec::new();
         for node in model.get_nodes() {
             if let Some(mesh_idx) = node.mesh_index() {
@@ -114,18 +118,32 @@ impl ModelRenderer {
                 }
             }
         }
-        info!("create renders for primitives complete");
+
+        let mut anim_nodes = None;
+
+        if let Some(anim) = model.clone_animations() {
+            anim_nodes = Some(AnimationWithNodes { animations: anim, nodes: model.clone_nodes() });
+        }
 
         ModelRenderer {
             primitive_renders,
             model,
+            anim_nodes,
         }
     }
 
-    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData) {
+    fn get_nodes<'a>(&'a self, runtime: &'a GltfAnimationRuntime) -> &'a [Node] {
+        if let Some(anim_nodes) = runtime.data.as_ref() {
+            return anim_nodes.nodes.nodes();
+        }
+
+        self.model.get_nodes()
+    }
+
+    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &GltfAnimationRuntime) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
-        for node in self.model.get_nodes() {
+        for node in self.get_nodes(runtime) {
             if let Some(mesh_idx) = node.mesh_index() {
                 let m_data = ModelData { transform: model_data.transform * node.transform() };
                 let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
@@ -164,11 +182,11 @@ impl ModelRenderer {
         }
     }
 
-    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData) {
+    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &GltfAnimationRuntime) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
 
-        for node in self.model.get_nodes() {
+        for node in self.get_nodes(runtime) {
             if let Some(mesh_idx) = node.mesh_index() {
                 let m_data = ModelData { transform: model_data.transform * node.transform() };
                 let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };

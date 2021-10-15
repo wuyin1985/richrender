@@ -10,21 +10,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_statistic.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/animation.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/skin.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_generate_comp.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_tese.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/grass_update_comp.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/rich.cginc" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/rich.cginc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/graphic_pipeline.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/gltf_asset_loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/gltf_asset_loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/node.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/node.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,11 +84,6 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package richrender --bin richrender" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -108,6 +98,11 @@
       <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <recent_temporary>
@@ -137,7 +132,8 @@
       <workItem from="1633660129247" duration="88836000" />
       <workItem from="1634005125157" duration="36755000" />
       <workItem from="1634117165395" duration="3299000" />
-      <workItem from="1634123114448" duration="28170000" />
+      <workItem from="1634123114448" duration="28619000" />
+      <workItem from="1634212865127" duration="15458000" />
     </task>
     <servers />
   </component>

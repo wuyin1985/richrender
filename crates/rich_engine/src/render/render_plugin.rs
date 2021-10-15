@@ -10,11 +10,12 @@ use crate::render::{RenderStage, vertex};
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
-use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
+use crate::render::gltf_asset_loader::{AnimationWithNodes, GltfAnimationRuntime, GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
 use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
 use bevy::math::Vec4Swizzles;
+use bevy::tasks::ComputeTaskPool;
 
 pub struct RenderInitEvent {}
 
@@ -71,8 +72,18 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
     }
 }
 
+fn update_animation_system(
+    pool: Res<ComputeTaskPool>,
+    time: Res<Time>,
+    mut query: Query<(&mut GltfAnimationRuntime)>) {
+    query.par_for_each_mut(&pool, 32, |(mut runtime)| {
+        runtime.update_animation_nodes(time.delta_seconds());
+    });
+}
 
-fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Query<(&Handle<GltfAsset>, &Transform)>) {
+
+fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
+                      mut model_query: Query<(&mut GltfAnimationRuntime, &Handle<GltfAsset>, &Transform)>) {
     if let Some(runner) = &mut runner {
         let runner = runner.deref_mut();
         let mut model_data = ModelData::default();
@@ -91,12 +102,22 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
             forward_render_pass.begin_shadow_pass(context, command_buffer);
 
             let mut list = Vec::new();
-            for (handle, transform) in model_query.iter() {
+            for (mut runtime, handle, transform) in model_query.iter_mut() {
                 let model_renderer = context.get_model(handle);
                 if let Some(mr) = model_renderer {
+                    if !runtime.init {
+                        runtime.init = true;
+                        let m = mr.get_model();
+                        if let Some(anim) = m.clone_animations() {
+                            runtime.data = Some(AnimationWithNodes::create(anim, m.clone_nodes(), m.clone_skins()));
+                        } else {
+                            runtime.data = None;
+                        }
+                    }
+
                     model_data.transform = transform.compute_matrix();
-                    mr.draw_shadow(context, command_buffer, &model_data);
-                    list.push((handle, transform));
+                    mr.draw_shadow(context, command_buffer, &model_data, &runtime);
+                    list.push((handle, transform, runtime));
                 }
             }
             forward_render_pass.end_shadow_pass(context, command_buffer);
@@ -104,10 +125,10 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>, model_query: Que
             //draw
             forward_render_pass.begin_render_pass(context, command_buffer);
 
-            for (handle, transform) in list {
+            for (handle, transform, runtime) in list {
                 let mr = context.get_model(handle).unwrap();
                 model_data.transform = transform.compute_matrix();
-                mr.draw(context, command_buffer, &model_data);
+                mr.draw(context, command_buffer, &model_data, &runtime);
             }
 
             runner.grass.draw(context, command_buffer);
@@ -305,6 +326,8 @@ impl Plugin for RenderPlugin {
 
         app.add_system_to_stage(RenderStage::BeginDraw, draw_models_system.system());
         app.add_system_to_stage(RenderStage::EndDraw, end_draw_system.system());
+
+        app.add_system(update_animation_system.system());
         app.add_plugin(FlyCameraPlugin);
     }
 }

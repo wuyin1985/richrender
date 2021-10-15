@@ -162,9 +162,7 @@ impl Node {
     fn apply_transform(&mut self, transform: Mat4) {
         self.global_transform_matrix = transform * self.get_local_transform();
     }
-}
 
-impl Node {
     pub fn transform(&self) -> Mat4 {
         self.global_transform_matrix
     }
@@ -185,7 +183,7 @@ impl Node {
         self.local_position = translation;
     }
 
-    pub fn set_rotation(&mut self, rotation: Quat) {
+    pub fn set_local_rotation(&mut self, rotation: Quat) {
         self.local_rotation = rotation;
     }
 
