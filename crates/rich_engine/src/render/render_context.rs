@@ -57,6 +57,41 @@ impl PerFrameData {
     }
 }
 
+pub struct SkinBufferMgr {
+    pub descriptor_set_layout: vk::DescriptorSetLayout,
+}
+
+impl SkinBufferMgr {
+    pub fn destroy(&mut self, device: &ash::Device) {
+        unsafe {
+            device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
+        }
+    }
+
+    pub fn create(device: &ash::Device) -> Self {
+        let mut bindings = [
+            vk::DescriptorSetLayoutBinding::builder()
+                .binding(0)
+                .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+                .descriptor_count(1)
+                .stage_flags(vk::ShaderStageFlags::VERTEX)
+                .build()
+        ];
+
+        let layout_info = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings).build();
+
+        let descriptor_set_layout = unsafe {
+            device
+                .create_descriptor_set_layout(&layout_info, None)
+                .unwrap()
+        };
+
+        Self {
+            descriptor_set_layout
+        }
+    }
+}
+
 pub trait RenderResource: 'static + Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
@@ -120,6 +155,7 @@ pub struct RenderContext {
     pub per_frame_uniform: Option<UniformObject<PerFrameData>>,
     pub min_uniform_buffer_offset_alignment: u32,
     pub shader_modules: ShaderCollection,
+    pub skin_buffer_mgr: SkinBufferMgr,
     #[cfg(feature = "statistic")]
     pub statistic: RenderStatistic,
 }
@@ -183,6 +219,8 @@ unsafe extern "system" fn vulkan_debug_callback(
 impl RenderContext {
     pub fn destroy(&mut self) {
         unsafe {
+            self.skin_buffer_mgr.destroy(&self.device);
+
             let mut sm = std::mem::take(&mut self.shader_modules);
             sm.destroy(self);
 
@@ -450,10 +488,12 @@ impl RenderContext {
         };
         let min_uniform_buffer_offset_alignment = props.limits.min_uniform_buffer_offset_alignment as u32;
 
+        let skin_buffer_mgr = SkinBufferMgr::create(&device);
+
         let collection = ShaderCollection::create();
 
         #[cfg(feature = "statistic")]
-        let statistic = RenderStatistic::create(&device);
+            let statistic = RenderStatistic::create(&device);
 
         RenderContext {
             window_width,
@@ -480,6 +520,7 @@ impl RenderContext {
             per_frame_uniform: None,
             models: HashMap::new(),
             min_uniform_buffer_offset_alignment,
+            skin_buffer_mgr,
             shader_modules: collection,
             #[cfg(feature = "statistic")]
             statistic,

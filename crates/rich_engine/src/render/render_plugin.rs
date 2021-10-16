@@ -10,7 +10,7 @@ use crate::render::{RenderStage, vertex};
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
-use crate::render::gltf_asset_loader::{AnimationWithNodes, GltfAnimationRuntime, GltfAsset, GltfAssetLoader};
+use crate::render::gltf_asset_loader::{AnimationWithNodes, GltfAnimationRuntime, GltfAnimationRuntimeInit, GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
 use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
@@ -105,17 +105,10 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             for (mut runtime, handle, transform) in model_query.iter_mut() {
                 let model_renderer = context.get_model(handle);
                 if let Some(mr) = model_renderer {
-                    if !runtime.init {
-                        runtime.init = true;
-                        let m = mr.get_model();
-                        if let Some(anim) = m.clone_animations() {
-                            runtime.data = Some(AnimationWithNodes::create(anim, m.clone_nodes(), m.clone_skins()));
-                        } else {
-                            runtime.data = None;
-                        }
-                    }
-
                     model_data.transform = transform.compute_matrix();
+
+                    runtime.update_buffer(context);
+
                     mr.draw_shadow(context, command_buffer, &model_data, &runtime);
                     list.push((handle, transform, runtime));
                 }
@@ -231,7 +224,30 @@ fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
     }
 }
 
-fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>, mut assets: ResMut<Assets<GltfAsset>>,
+fn init_skin_assets(
+    mut commands: Commands,
+    mut runner: Option<ResMut<RenderRunner>>,
+    mut query: Query<(Entity, &mut GltfAnimationRuntime, &Handle<GltfAsset>), Without<GltfAnimationRuntimeInit>>) {
+    //let runner = runner.deref_mut();
+    if let Some(runner) = &mut runner {
+        let context = &mut runner.context;
+        for (entity, mut runtime, handle) in query.iter_mut() {
+            if let Some(mr) = context.get_model(handle) {
+                commands.entity(entity).insert(GltfAnimationRuntimeInit {});
+
+                let m = mr.get_model();
+                if let Some(anim) = m.clone_animations() {
+                    runtime.data = Some(AnimationWithNodes::create(context, anim, m.clone_nodes(), m.clone_skins()));
+                } else {
+                    runtime.data = None;
+                }
+            }
+        }
+    }
+}
+
+fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
+                             mut assets: ResMut<Assets<GltfAsset>>,
                              mut gltf_events: EventReader<AssetEvent<GltfAsset>>) {
     if let Some(runner) = &mut runner {
         let runner: &mut RenderRunner = runner.deref_mut();
@@ -248,9 +264,11 @@ fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>, mut asset
                 }
                 AssetEvent::Modified { ref handle } => {
                     changed_gltf_set.insert(handle.clone_weak());
+                    //todo remove resource
                     //remove_current_mesh_resources(render_resource_context, handle);
                 }
                 AssetEvent::Removed { ref handle } => {
+                    //todo remove resource
                     //remove_current_mesh_resources(render_resource_context, handle);
                     changed_gltf_set.remove(handle);
                 }
@@ -322,6 +340,7 @@ impl Plugin for RenderPlugin {
 
         app.add_system_to_stage(RenderStage::BeginUpload, begin_upload.system());
         app.add_system_to_stage(RenderStage::Upload, load_gltf_2_device_system.system());
+        app.add_system_to_stage(RenderStage::Upload, init_skin_assets.system());
         app.add_system_to_stage(RenderStage::EndUpload, end_upload.system());
 
         app.add_system_to_stage(RenderStage::BeginDraw, draw_models_system.system());

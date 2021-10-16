@@ -43,6 +43,13 @@ impl Model {
         let animations = load_animations(document.animations(), &buffers);
         let mut skins = create_skins_from_gltf(document.skins(), &buffers);
 
+        nodes.get_skins_transform()
+            .iter()
+            .for_each(|(index, transform)| {
+                let skin = &mut skins[*index];
+                skin.compute_joints_matrices(*transform, &nodes.nodes());
+            });
+
         let aabbs = nodes
             .nodes()
             .iter()
@@ -103,6 +110,10 @@ impl Model {
     }
 
     pub fn clone_skins(&self) -> Vec<Skin> { self.skins.clone() }
+
+    pub fn has_animation(&self) -> bool {
+        self.animations.is_some()
+    }
 }
 
 

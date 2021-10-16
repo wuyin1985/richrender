@@ -63,24 +63,6 @@ impl ModelRenderer {
         self.model.destroy(context);
     }
 
-    fn create_model_descriptor_set_layout(context: &RenderContext) -> vk::DescriptorSetLayout {
-        let bindings = [
-            vk::DescriptorSetLayoutBinding::builder()
-                .binding(0)
-                .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
-                .descriptor_count(1)
-                .stage_flags(vk::ShaderStageFlags::FRAGMENT)
-                .build()];
-
-        let layout_info = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings).build();
-
-        unsafe {
-            context.device
-                .create_descriptor_set_layout(&layout_info, None)
-                .unwrap()
-        }
-    }
-
     pub fn get_center_transform(model_aabb: Aabb) -> Mat4 {
         let aabb = model_aabb * Mat4::from_rotation_x(0f32.to_radians());
         let CAMERA_DIS: f32 = 1.0;
@@ -169,11 +151,17 @@ impl ModelRenderer {
                                                              vertex_layout.indices.index as _,
                                                              vertex_layout.indices_type);
 
+                        let mut descriptor_sets = vec![uniform.descriptor_set, set];
+                        if self.model.has_animation() {
+                            let set = runtime.data.as_ref().unwrap().skin_descriptor_set;
+                            descriptor_sets.push(set);
+                        }
+
                         context.device.cmd_bind_descriptor_sets(command_buffer,
                                                                 vk::PipelineBindPoint::GRAPHICS,
                                                                 render.graphic_pipeline.get_layout(),
                                                                 0,
-                                                                &[uniform.descriptor_set], &[]);
+                                                                &descriptor_sets, &[]);
 
                         context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
                     }
@@ -212,11 +200,17 @@ impl ModelRenderer {
                                                              vertex_layout.indices.index as _,
                                                              vertex_layout.indices_type);
 
+                        let mut descriptor_sets = vec![uniform.descriptor_set, set];
+                        if self.model.has_animation() {
+                            let set = runtime.data.as_ref().unwrap().skin_descriptor_set;
+                            descriptor_sets.push(set);
+                        }
+
                         context.device.cmd_bind_descriptor_sets(command_buffer,
                                                                 vk::PipelineBindPoint::GRAPHICS,
                                                                 render.graphic_pipeline.get_layout(),
                                                                 0,
-                                                                &[uniform.descriptor_set, set], &[]);
+                                                                &descriptor_sets, &[]);
 
                         context.device.cmd_draw_indexed(command_buffer, vertex_layout.indices.count as _, 1, 0, 0, 0);
                     }
@@ -243,7 +237,7 @@ impl PrimitiveRender {
     fn create_descriptors(context: &mut RenderContext,
                           render_pass: &ForwardRenderPass,
                           material: &Material, model: &Model) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
-        let bindings = [
+        let mut bindings = vec![
             vk::DescriptorSetLayoutBinding::builder()
                 .binding(0)
                 .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
@@ -352,13 +346,21 @@ impl PrimitiveRender {
         let vertex_bindings = vertex_layout.build_vk_bindings();
         let vertex_attributes = vertex_layout.build_vk_attributes();
         let vertex_input = PipelineVertexInputInfo::from(&vertex_bindings, &vertex_attributes);
-        let shader_defines = vertex_layout.get_shader_defines();
+        let mut shader_defines = vertex_layout.get_shader_defines();
+        if model.has_animation() {
+            shader_defines.push("SKIN")
+        }
+
         let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();
         let frame_uniform_layout = context.per_frame_uniform.as_mut().unwrap().descriptor_set_layout;
 
         let (descriptor_set_layout, descriptor_set) = Self::create_descriptors(context, render_pass, &material, model);
 
-        let all_layout = [frame_uniform_layout, descriptor_set_layout];
+        let mut all_layout = vec![frame_uniform_layout, descriptor_set_layout];
+
+        if model.has_animation() {
+            all_layout.push(context.skin_buffer_mgr.descriptor_set_layout);
+        }
 
         let constant_ranges = [
             vk::PushConstantRange::builder().offset(0).size(size_of::<ModelData>() as _).stage_flags(vk::ShaderStageFlags::VERTEX).build()
