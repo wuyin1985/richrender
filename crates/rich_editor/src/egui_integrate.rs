@@ -216,7 +216,7 @@ impl Plugin for EguiPlugin {
                 .after(EguiSystem::ProcessInput),
         );
         app.add_system_to_stage(
-            RenderStage::Prepare,
+            RenderStage::PrepareDraw,
             init_egui_ctx.system(),
         );
         app.add_system_to_stage(

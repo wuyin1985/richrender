@@ -10,12 +10,14 @@ use crate::render::{RenderStage, vertex};
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
-use crate::render::gltf_asset_loader::{AnimationWithNodes, GltfAnimationRuntime, GltfAnimationRuntimeInit, GltfAsset, GltfAssetLoader};
+use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
 use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
 use bevy::math::Vec4Swizzles;
 use bevy::tasks::ComputeTaskPool;
+use crate::render::animation_system::{AnimationRuntime, AnimationRuntimeInit, AnimationWithNodes};
+use super::animation_system;
 
 pub struct RenderInitEvent {}
 
@@ -72,18 +74,10 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
     }
 }
 
-fn update_animation_system(
-    pool: Res<ComputeTaskPool>,
-    time: Res<Time>,
-    mut query: Query<(&mut GltfAnimationRuntime)>) {
-    query.par_for_each_mut(&pool, 32, |(mut runtime)| {
-        runtime.update_animation_nodes(time.delta_seconds());
-    });
-}
 
 
 fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
-                      mut model_query: Query<(&mut GltfAnimationRuntime, &Handle<GltfAsset>, &Transform)>) {
+                      mut model_query: Query<(&mut AnimationRuntime, &Handle<GltfAsset>, &Transform)>) {
     if let Some(runner) = &mut runner {
         let runner = runner.deref_mut();
         let mut model_data = ModelData::default();
@@ -227,13 +221,13 @@ fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
 fn init_skin_assets(
     mut commands: Commands,
     mut runner: Option<ResMut<RenderRunner>>,
-    mut query: Query<(Entity, &mut GltfAnimationRuntime, &Handle<GltfAsset>), Without<GltfAnimationRuntimeInit>>) {
+    mut query: Query<(Entity, &mut AnimationRuntime, &Handle<GltfAsset>), Without<AnimationRuntimeInit>>) {
     //let runner = runner.deref_mut();
     if let Some(runner) = &mut runner {
         let context = &mut runner.context;
         for (entity, mut runtime, handle) in query.iter_mut() {
             if let Some(mr) = context.get_model(handle) {
-                commands.entity(entity).insert(GltfAnimationRuntimeInit {});
+                commands.entity(entity).insert(AnimationRuntimeInit {});
 
                 let m = mr.get_model();
                 if let Some(anim) = m.clone_animations() {
@@ -303,6 +297,12 @@ fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
 
 pub struct RenderPlugin {}
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+enum UploadLabel {
+    Model,
+    Skin
+}
+
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut AppBuilder) {
         //init camera
@@ -325,28 +325,29 @@ impl Plugin for RenderPlugin {
 
         app.add_event::<RenderInitEvent>();
 
-        app.add_stage_after(CoreStage::PostUpdate, RenderStage::Prepare, SystemStage::parallel());
-
+        //upload
         app.add_stage_after(CoreStage::PreUpdate, RenderStage::BeginUpload, SystemStage::parallel());
-        app.add_stage_after(RenderStage::BeginUpload, RenderStage::Upload, SystemStage::parallel());
+        app.add_stage_after(RenderStage::BeginUpload, RenderStage::Upload, SystemStage::single_threaded());
         app.add_stage_after(RenderStage::Upload, RenderStage::EndUpload, SystemStage::parallel());
 
-        app.add_stage_after(RenderStage::Prepare, RenderStage::BeginDraw, SystemStage::parallel());
+        app.add_system_to_stage(RenderStage::BeginUpload, begin_upload.system());
+        app.add_system_to_stage(RenderStage::Upload, load_gltf_2_device_system.system().label(UploadLabel::Model));
+        app.add_system_to_stage(RenderStage::Upload, init_skin_assets.system().after(UploadLabel::Model));
+        app.add_system_to_stage(RenderStage::EndUpload, end_upload.system());
+
+        //draw
+        app.add_stage_after(CoreStage::PostUpdate, RenderStage::PrepareDraw, SystemStage::parallel());
+        app.add_stage_after(RenderStage::PrepareDraw, RenderStage::BeginDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::BeginDraw, RenderStage::Draw, SystemStage::parallel());
         app.add_stage_after(RenderStage::Draw, RenderStage::EndDraw, SystemStage::parallel());
 
-        app.add_system_to_stage(RenderStage::Prepare, render_system.exclusive_system());
-        app.add_system_to_stage(RenderStage::Prepare, update_render_state_from_camera.system());
-
-        app.add_system_to_stage(RenderStage::BeginUpload, begin_upload.system());
-        app.add_system_to_stage(RenderStage::Upload, load_gltf_2_device_system.system());
-        app.add_system_to_stage(RenderStage::Upload, init_skin_assets.system());
-        app.add_system_to_stage(RenderStage::EndUpload, end_upload.system());
+        app.add_system_to_stage(RenderStage::PrepareDraw, render_system.exclusive_system());
+        app.add_system_to_stage(RenderStage::PrepareDraw, update_render_state_from_camera.system());
 
         app.add_system_to_stage(RenderStage::BeginDraw, draw_models_system.system());
         app.add_system_to_stage(RenderStage::EndDraw, end_draw_system.system());
 
-        app.add_system(update_animation_system.system());
+        app.add_system(animation_system::update_animation_system.system());
         app.add_plugin(FlyCameraPlugin);
     }
 }

@@ -32,6 +32,7 @@ mod compute;
 mod render_statistic;
 mod animation;
 mod skin;
+mod animation_system;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;
@@ -42,11 +43,12 @@ pub use buffer::Buffer;
 pub use render_runner::RenderRunner;
 pub use render_plugin::RenderInitEvent;
 pub use fly_camera::FlyCamera;
+pub use animation_system::*;
 
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 pub enum RenderStage {
-    Prepare,
+    PrepareDraw,
     BeginUpload,
     Upload,
     EndUpload,

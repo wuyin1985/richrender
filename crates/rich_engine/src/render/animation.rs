@@ -5,13 +5,13 @@ use gltf::{
         util::{ReadOutputs, Reader},
         Channel as GltfChannel, Interpolation as GltfInterpolation, Property,
     },
-    buffer::{Buffer, Data},
+    buffer,
     iter::Animations as GltfAnimations,
     Animation as GltfAnimation,
 };
 
 use std::cmp::Ordering;
-use bevy::prelude::{Quat, Vec3};
+use bevy::prelude::{Mat4, Quat, Vec3};
 use bevy::math::Vec4Swizzles;
 
 trait Interpolate: Copy {
@@ -241,6 +241,10 @@ impl Animations {
         }
     }
 
+    pub fn play(&mut self) {
+        self.playback_state.paused = false;
+    }
+
     pub fn set_playback_mode(&mut self, playback_mode: PlaybackMode) {
         self.playback_state.playback_mode = playback_mode;
     }
@@ -308,7 +312,7 @@ impl Animation {
     }
 }
 
-pub fn load_animations(gltf_animations: GltfAnimations, data: &[Data]) -> Option<Animations> {
+pub fn load_animations(gltf_animations: GltfAnimations, data: &[buffer::Data]) -> Option<Animations> {
     if gltf_animations.len() == 0 {
         return None;
     }
@@ -330,7 +334,7 @@ pub fn load_animations(gltf_animations: GltfAnimations, data: &[Data]) -> Option
     })
 }
 
-fn map_animation(gltf_animation: &GltfAnimation, data: &[Data]) -> Animation {
+fn map_animation(gltf_animation: &GltfAnimation, data: &[buffer::Data]) -> Animation {
     let translation_channels = map_translation_channels(gltf_animation.channels(), data);
     let rotation_channels = map_rotation_channels(gltf_animation.channels(), data);
     let scale_channels = map_scale_channels(gltf_animation.channels(), data);
@@ -364,7 +368,7 @@ fn map_animation(gltf_animation: &GltfAnimation, data: &[Data]) -> Animation {
     }
 }
 
-fn map_translation_channels(gltf_channels: Channels, data: &[Data]) -> Vec<Channel<Vec3>> {
+fn map_translation_channels(gltf_channels: Channels, data: &[buffer::Data]) -> Vec<Channel<Vec3>> {
     gltf_channels
         .filter(|c| c.target().property() == Property::Translation)
         .filter_map(|c| map_translation_channel(&c, data))
@@ -373,7 +377,7 @@ fn map_translation_channels(gltf_channels: Channels, data: &[Data]) -> Vec<Chann
 
 fn map_translation_channel(
     gltf_channel: &GltfChannel,
-    data: &[Data],
+    data: &[buffer::Data],
 ) -> Option<Channel<Vec3>> {
     let gltf_sampler = gltf_channel.sampler();
     if let Property::Translation = gltf_channel.target().property() {
@@ -395,7 +399,7 @@ fn map_translation_channel(
     }
 }
 
-fn map_rotation_channels(gltf_channels: Channels, data: &[Data]) -> Vec<Channel<Quat>> {
+fn map_rotation_channels(gltf_channels: Channels, data: &[buffer::Data]) -> Vec<Channel<Quat>> {
     gltf_channels
         .filter(|c| c.target().property() == Property::Rotation)
         .filter_map(|c| map_rotation_channel(&c, data))
@@ -404,7 +408,7 @@ fn map_rotation_channels(gltf_channels: Channels, data: &[Data]) -> Vec<Channel<
 
 fn map_rotation_channel(
     gltf_channel: &GltfChannel,
-    data: &[Data],
+    data: &[buffer::Data],
 ) -> Option<Channel<Quat>> {
     let gltf_sampler = gltf_channel.sampler();
     if let Property::Rotation = gltf_channel.target().property() {
@@ -426,14 +430,14 @@ fn map_rotation_channel(
     }
 }
 
-fn map_scale_channels(gltf_channels: Channels, data: &[Data]) -> Vec<Channel<Vec3>> {
+fn map_scale_channels(gltf_channels: Channels, data: &[buffer::Data]) -> Vec<Channel<Vec3>> {
     gltf_channels
         .filter(|c| c.target().property() == Property::Scale)
         .filter_map(|c| map_scale_channel(&c, data))
         .collect::<Vec<_>>()
 }
 
-fn map_scale_channel(gltf_channel: &GltfChannel, data: &[Data]) -> Option<Channel<Vec3>> {
+fn map_scale_channel(gltf_channel: &GltfChannel, data: &[buffer::Data]) -> Option<Channel<Vec3>> {
     let gltf_sampler = gltf_channel.sampler();
     if let Property::Scale = gltf_channel.target().property() {
         map_interpolation(gltf_sampler.interpolation()).map(|i| {
@@ -462,14 +466,14 @@ fn map_interpolation(gltf_interpolation: GltfInterpolation) -> Option<Interpolat
     }
 }
 
-fn read_times<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<f32> where F: Clone + Fn(Buffer<'a>) -> Option<&'s [u8]>,
+fn read_times<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<f32> where F: Clone + Fn(buffer::Buffer<'a>) -> Option<&'s [u8]>,
 {
     reader.read_inputs().map_or(vec![], |times| times.collect())
 }
 
 fn read_translations<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Vec3>
     where
-        F: Clone + Fn(Buffer<'a>) -> Option<&'s [u8]>,
+        F: Clone + Fn(buffer::Buffer<'a>) -> Option<&'s [u8]>,
 {
     reader
         .read_outputs()
@@ -479,7 +483,7 @@ fn read_translations<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Vec3>
         })
 }
 
-fn read_scales<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Vec3> where F: Clone + Fn(Buffer<'a>) -> Option<&'s [u8]>,
+fn read_scales<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Vec3> where F: Clone + Fn(buffer::Buffer<'a>) -> Option<&'s [u8]>,
 {
     reader
         .read_outputs()
@@ -489,7 +493,7 @@ fn read_scales<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Vec3> where F: Clon
         })
 }
 
-fn read_rotations<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Quat> where F: Clone + Fn(Buffer<'a>) -> Option<&'s [u8]>,
+fn read_rotations<'a, 's, F>(reader: &Reader<'a, 's, F>) -> Vec<Quat> where F: Clone + Fn(buffer::Buffer<'a>) -> Option<&'s [u8]>,
 {
     reader
         .read_outputs()

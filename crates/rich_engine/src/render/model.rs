@@ -41,6 +41,8 @@ impl Model {
         let textures = ModelTextures::from_gltf(context, upload_command_buffer, document.textures(), &images);
         let nodes = Nodes::from_gltf(document.nodes(), &document.default_scene().unwrap());
         let animations = load_animations(document.animations(), &buffers);
+        info!("animations is some {}", animations.is_some());
+
         let mut skins = create_skins_from_gltf(document.skins(), &buffers);
 
         nodes.get_skins_transform()

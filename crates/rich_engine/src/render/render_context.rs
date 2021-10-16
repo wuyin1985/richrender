@@ -418,6 +418,7 @@ impl RenderContext {
             shader_clip_distance: 1,
             tessellation_shader: 1,
             pipeline_statistics_query: Self::pipeline_statistic(),
+            sampler_anisotropy: 1,
             ..Default::default()
         };
 

@@ -47,6 +47,7 @@ impl VertexLayout {
 
             //joints
             (DataType::U8, 4) => vk::Format::R8G8B8A8_UINT,
+            (DataType::U16, 4) => vk::Format::R16G16B16A16_UINT,
             (DataType::U32, 4) => vk::Format::R32G32B32A32_UINT,
 
             _ => { panic!("unsupported gltf data type {:?} {}", data_type, data_count) }
@@ -64,6 +65,7 @@ impl VertexLayout {
             vk::Format::R32G32B32A32_SFLOAT => 16,
             vk::Format::R8G8B8A8_UINT => 4,
             vk::Format::R32G32B32A32_UINT => 16,
+            vk::Format::R16G16B16A16_UINT => 8,
             _ => { panic!("unsupported vk format {:?}", format) }
         }
     }

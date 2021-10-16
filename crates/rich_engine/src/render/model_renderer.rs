@@ -10,8 +10,9 @@ use crate::render::texture::Texture;
 use bevy::prelude::*;
 use crate::render::uniform::UniformObject;
 use crate::render::aabb::Aabb;
+use crate::render::animation_system::AnimationRuntime;
 use crate::render::animation::Animations;
-use crate::render::gltf_asset_loader::{GltfAnimationRuntime, GltfAsset};
+use crate::render::gltf_asset_loader::{GltfAsset};
 use crate::render::material::Material;
 use crate::render::vertex_layout::VertexLayout;
 use crate::render::mesh::Primitive;
@@ -114,7 +115,7 @@ impl ModelRenderer {
         }
     }
 
-    fn get_nodes<'a>(&'a self, runtime: &'a GltfAnimationRuntime) -> &'a [Node] {
+    fn get_nodes<'a>(&'a self, runtime: &'a AnimationRuntime) -> &'a [Node] {
         if let Some(anim_nodes) = runtime.data.as_ref() {
             return anim_nodes.nodes.nodes();
         }
@@ -122,12 +123,13 @@ impl ModelRenderer {
         self.model.get_nodes()
     }
 
-    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &GltfAnimationRuntime) {
+    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &AnimationRuntime) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
         for node in self.get_nodes(runtime) {
             if let Some(mesh_idx) = node.mesh_index() {
-                let m_data = ModelData { transform: model_data.transform * node.transform() };
+                let node_transform = node.transform();
+                let m_data = ModelData { transform: model_data.transform * node_transform };
                 let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
 
                 let mesh = &self.model.get_meshes()[mesh_idx];
@@ -170,7 +172,7 @@ impl ModelRenderer {
         }
     }
 
-    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &GltfAnimationRuntime) {
+    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &AnimationRuntime) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
 

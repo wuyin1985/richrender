@@ -11,9 +11,17 @@
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/shaders/pbr_vert.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/shaders/pbr_vert.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/egui_integrate.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/egui_integrate.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/animation.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/animation.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/gltf_asset_loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/gltf_asset_loader.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_const.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/shader_const.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/vertex_layout.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/vertex_layout.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,11 +86,6 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package richrender --bin richrender" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -97,6 +100,11 @@
       <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <recent_temporary>
@@ -128,7 +136,8 @@
       <workItem from="1634117165395" duration="3299000" />
       <workItem from="1634123114448" duration="28619000" />
       <workItem from="1634212865127" duration="19029000" />
-      <workItem from="1634348642444" duration="6318000" />
+      <workItem from="1634348642444" duration="12751000" />
+      <workItem from="1634366606851" duration="2857000" />
     </task>
     <servers />
   </component>
@@ -143,6 +152,13 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <watches-manager>
+      <configuration name="CargoCommandRunConfiguration">
+        <watch expression="runtime-&gt;data.is_some()" language="Rust" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
