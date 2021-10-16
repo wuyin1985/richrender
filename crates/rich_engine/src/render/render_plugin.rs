@@ -156,11 +156,11 @@ fn update_render_state_from_camera(mut commands: Commands,
             let light_dir = light_look_at - light_pos;
 
             let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-            let light_project = Mat4::perspective_rh(
-                camera.fov,
-                1f32,
-                1f32,
-                96f32);
+            let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, 1.0, 20.0);
+                // camera.fov,
+                // 1f32,
+                // 1f32,
+                // 96f32);
 
             let light_matrix = light_project * light_view;
 
@@ -311,7 +311,7 @@ impl Plugin for RenderPlugin {
         let trans = Mat4::from_scale_rotation_translation(Vec3::ONE,
                                                           //Quat::from_axis_angle(Vec3::X, 180f32.to_radians()),
                                                           Quat::IDENTITY,
-                                                          Vec3::new(0.0, 3.0, 1.0));
+                                                          Vec3::new(0.0, 0.0, 1.0));
 
         let ce = world.spawn().insert(Camera::default())
             .insert(FlyCamera::default())

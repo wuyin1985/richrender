@@ -153,7 +153,7 @@ impl ModelRenderer {
                                                              vertex_layout.indices.index as _,
                                                              vertex_layout.indices_type);
 
-                        let mut descriptor_sets = vec![uniform.descriptor_set, set];
+                        let mut descriptor_sets = vec![uniform.descriptor_set];
                         if self.model.has_animation() {
                             let set = runtime.data.as_ref().unwrap().skin_descriptor_set;
                             descriptor_sets.push(set);
@@ -161,7 +161,7 @@ impl ModelRenderer {
 
                         context.device.cmd_bind_descriptor_sets(command_buffer,
                                                                 vk::PipelineBindPoint::GRAPHICS,
-                                                                render.graphic_pipeline.get_layout(),
+                                                                render.shadow_pipeline.get_layout(),
                                                                 0,
                                                                 &descriptor_sets, &[]);
 
@@ -377,7 +377,10 @@ impl PrimitiveRender {
                                                        &vertex_input, &pipeline_layout_ci, context.render_config.msaa,
                                                        shader_names.vertex, shader_names.frag, &shader_defines);
 
-        let shadow_layout = [frame_uniform_layout];
+        let mut shadow_layout = vec![frame_uniform_layout];
+        if model.has_animation() {
+            shadow_layout.push(context.skin_buffer_mgr.descriptor_set_layout);
+        }
         let shadow_layout_ci = vk::PipelineLayoutCreateInfo::builder()
             .set_layouts(&shadow_layout)
             .push_constant_ranges(&constant_ranges)

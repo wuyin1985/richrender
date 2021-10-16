@@ -36,9 +36,9 @@ pub use crate::render::RenderInitEvent;
 pub use crate::render::FlyCamera;
 
 fn init(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
-    let s = 0.919468641f32;
+    let s = 1.0;
     let scale = Vec3::new(s, s, s);
-    let pos = Vec3::new(0.00248157978f32, 0f32, -1f32);
+    let pos = Vec3::new(0.0, 0f32, -1f32);
 
     // {
     //     let handle: Handle<GltfAsset> = asset_server.load("gltf/vulkanscene_shadow.gltf");
