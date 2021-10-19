@@ -113,6 +113,7 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             forward_render_pass.begin_render_pass(context, command_buffer);
 
             for (handle, transform, runtime) in list {
+
                 let mr = context.get_model(handle).unwrap();
                 model_data.transform = transform.compute_matrix();
                 mr.draw(context, command_buffer, &model_data, &runtime);
@@ -216,6 +217,12 @@ fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
 
         context.flush_staging_buffer();
     }
+}
+
+fn it_works() {
+    let num1 : usize = 1;
+    let mut num2 : usize = num1;
+    num2 += num1;
 }
 
 fn init_skin_assets(

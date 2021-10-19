@@ -335,6 +335,7 @@ struct GrassBlade {
 
 
 pub struct GrassMgr {
+    pub enable_draw: bool,
     all_grass_blade_buffer: Buffer,
     visible_grass_blade_buffer: Buffer,
     pipeline: GraphicPipeline,
@@ -488,6 +489,7 @@ impl GrassMgr {
             gen_compute,
             update_compute,
             grid: grid_data,
+            enable_draw: false,
 
             draw_descriptor_layout,
             draw_descriptor_set,
@@ -597,6 +599,10 @@ impl GrassMgr {
     }
 
     pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer) {
+        if !self.enable_draw {
+            return;
+        }
+
         let uni = context.per_frame_uniform.as_ref().unwrap();
         let pipe = self.pipeline.get_pipeline();
         unsafe {

@@ -2,10 +2,9 @@
 extern crate lazy_static;
 
 use bevy::prelude::*;
-use crate::render::{AnimationRuntime, AnimCommand, AnimCommands, RenderPlugin};
+use crate::render::{RenderPlugin};
 use bevy::log::{LogSettings, Level};
 use std::ops::{Deref, DerefMut};
-use crate::render::gltf_asset_loader::{GltfAsset};
 use crate::render::model_renderer::ModelData;
 
 mod render;
@@ -34,36 +33,47 @@ pub use crate::render::Buffer;
 pub use crate::render::RenderRunner;
 pub use crate::render::RenderInitEvent;
 pub use crate::render::FlyCamera;
+pub use crate::render::AnimationRuntime;
+pub use crate::render::AnimCommands;
+pub use crate::render::AnimCommand;
+pub use crate::render::gltf_asset_loader::GltfAsset;
+
+
+pub struct StartupArgs {
+    pub data: Vec<String>,
+}
+
+impl StartupArgs {
+    pub fn create(data: Vec<String>) -> Self {
+        Self {
+            data
+        }
+    }
+}
 
 fn init(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
-    let s = 1.0;
-    let scale = Vec3::new(s, s, s);
-    let pos = Vec3::new(0.0, 0f32, -1f32);
-
+    // let s = 1.0;
+    // let scale = Vec3::new(s, s, s);
+    // let pos = Vec3::new(0.0, 0f32, -1f32);
+    //
     // {
-    //     let handle: Handle<GltfAsset> = asset_server.load("gltf/vulkanscene_shadow.gltf");
+    //     let handle: Handle<GltfAsset> = asset_server.load("gltf/CesiumMan.glb");
     //     let t = Transform::from_scale(scale) *
-    //         Transform::from_translation(pos);
-    // 
-    //     commmands.spawn().insert(handle).insert(t);
+    //         Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
+    //
+    //     commmands.spawn().insert(handle).insert(t)
+    //         .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
     // }
-
-    {
-        let handle: Handle<GltfAsset> = asset_server.load("gltf/CesiumMan.glb");
-        let t = Transform::from_scale(scale) *
-            Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
-
-        commmands.spawn().insert(handle).insert(t)
-            .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
-    }
 }
 
 pub struct ExternalStartupInfo {
     pub external_plugins: Vec<Box<dyn Plugin>>,
 }
 
-pub fn startup(info: ExternalStartupInfo) {
+pub fn startup(info: ExternalStartupInfo, args: Vec<String>) {
     let mut app = App::build();
+
+    app.insert_resource(StartupArgs::create(args));
     // .insert_resource(LogSettings {
     //     filter: "".to_string(),
     //     level: Level::INFO
@@ -75,6 +85,7 @@ pub fn startup(info: ExternalStartupInfo) {
     for p in info.external_plugins {
         p.build(&mut app);
     }
+
 
     app.add_startup_system(init.system()).run();
 }

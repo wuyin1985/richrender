@@ -189,6 +189,11 @@ fn mouse_motion_system(
     }
 
     for (mut options, mut transform) in query.iter_mut() {
+
+        if !options.enabled {
+            continue;
+        }
+
         for event in mouse_button_input_events.iter() {
             if event.state.is_pressed() {
                 options.mouse_pressed = Some(event.button);
@@ -199,10 +204,6 @@ fn mouse_motion_system(
                     }
                 }
             }
-        }
-        
-        if !options.enabled {
-            continue;
         }
 
         if let Some(button) = options.mouse_pressed {

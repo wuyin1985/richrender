@@ -53,10 +53,11 @@ pub struct GltfAssetLoader;
 impl AssetLoader for GltfAssetLoader {
     fn load<'a>(&'a self, bytes: &'a [u8], load_context: &'a mut LoadContext) -> BoxedFuture<'a, anyhow::Result<(), anyhow::Error>> {
         Box::pin(async move {
+            info!("start parse gltf");
             let (document, buffers, images) = gltf::import_slice(bytes)?;
             let data = GltfAsset { data: GltfData::Raw { document, buffers, images } };
             load_context.set_default_asset(LoadedAsset::new(data));
-            println!("load !! assets");
+            info!("parse complete");
             Ok(())
         })
     }

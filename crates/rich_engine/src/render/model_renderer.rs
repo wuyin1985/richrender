@@ -350,7 +350,7 @@ impl PrimitiveRender {
         let vertex_input = PipelineVertexInputInfo::from(&vertex_bindings, &vertex_attributes);
         let mut shader_defines = vertex_layout.get_shader_defines();
         if model.has_animation() {
-            shader_defines.push("SKIN")
+            shader_defines.push("SKIN");
         }
 
         let buffers_ref_for_draw = (0..vertex_bindings.len()).map(|_| model.get_buffer().buffer).collect::<Vec<_>>();

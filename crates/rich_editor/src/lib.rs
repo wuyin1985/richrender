@@ -1,27 +1,45 @@
 mod egui_integrate;
 mod egui_render;
+mod file_selector;
+mod event;
 
+use std::cell::{Cell, RefCell};
 use rich_engine::prelude::*;
 use egui;
 use egui::Align2;
-use rich_engine::{Diagnostic, Diagnostics, FlyCamera, FrameTimeDiagnosticsPlugin, InputSystem, RenderRunner};
+use rich_engine::{AnimationRuntime, AnimCommand, AnimCommands, Diagnostic, Diagnostics, FlyCamera, FrameTimeDiagnosticsPlugin, GltfAsset, InputSystem, RenderRunner};
 use crate::egui_integrate::{EguiContext, EguiPlugin};
+use crate::file_selector::FileSelector;
+use std::env;
+use structopt::StructOpt;
+use std::path::PathBuf;
+use crate::event::EditorEvent;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "args", about = "rich args.")]
+struct Cli {
+    #[structopt(parse(from_os_str))]
+    search_dirs: Vec<PathBuf>,
+}
 
 struct EditorPlugin {}
 
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_plugin(EguiPlugin);
+        app.add_event::<EditorEvent>();
+
+        let cli = Cli::from_args();
+        let search_dirs = cli.search_dirs;
 
         app.add_system(
             process.system().config(|config| {
                 config.0 = Some(EditorState {
-                    name: "hello".to_string(),
-                    age: 2,
-
+                    file_selector: FileSelector::create(search_dirs),
                 })
             })
         );
+        app.add_system(process_editor_events.system());
 
         app.add_system_to_stage(CoreStage::PreUpdate, enable_fly_camera.system().after(InputSystem));
     }
@@ -39,10 +57,8 @@ fn enable_fly_camera(egui_context: Option<Res<EguiContext>>, mut query: Query<(&
 
 #[derive(Debug, Default)]
 struct EditorState {
-    name: String,
-    age: i32,
+    file_selector: FileSelector,
 }
-
 
 fn parse_diagnostic(diagnostic: &Diagnostic) -> Option<(String, String)> {
     if let Some(value) = diagnostic.value() {
@@ -59,9 +75,10 @@ fn parse_diagnostic(diagnostic: &Diagnostic) -> Option<(String, String)> {
 
 fn process(mut state: Local<EditorState>
            , egui_context: Option<Res<EguiContext>>
-           , render_runner: Option<Res<RenderRunner>>
+           , mut render_runner: Option<ResMut<RenderRunner>>
            , time: Res<Time>
-           , diagnostics: Res<Diagnostics>) {
+           , diagnostics: Res<Diagnostics>
+           , mut event_writer: EventWriter<EditorEvent>) {
     if let Some(ctx) = &egui_context {
         egui::Window::new("Statistics").anchor(Align2::RIGHT_TOP, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
             ui.heading("summary");
@@ -74,7 +91,7 @@ fn process(mut state: Local<EditorState>
                 }
             });
 
-            if let Some(rr) = &render_runner {
+            if let Some(rr) = &mut render_runner {
                 ui.heading("rendering");
                 let statistic = &rr.context.statistic;
 
@@ -83,8 +100,47 @@ fn process(mut state: Local<EditorState>
                     // ui.label(format!("Fps: {}", average_fps));
                 });
 
+                ui.checkbox(&mut rr.grass.enable_draw, "draw grass");
             }
         });
+
+        //editor
+        egui::Window::new("Entities").anchor(Align2::LEFT_TOP, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
+            ui.horizontal(|ui| {
+                ui.heading("list");
+                let popup_id = ui.make_persistent_id("open_model_list_popup");
+                let button_rsp = ui.add(egui::Button::new("+").small());
+                if button_rsp.clicked() {
+                    ui.memory().toggle_popup(popup_id);
+                }
+
+                egui::popup::popup_below_widget(ui, popup_id, &button_rsp, |ui| {
+                    state.file_selector.draw(ui, event_writer);
+                })
+            });
+        });
+    }
+}
+
+fn process_editor_events(mut event_reader: EventReader<EditorEvent>
+                         , mut commands: Commands
+                         , mut asset_server: ResMut<AssetServer>) {
+    for e in event_reader.iter() {
+        match e {
+            EditorEvent::CreateAsset(p) => {
+                let handle: Handle<GltfAsset> = asset_server.load(p.as_str());
+                let s = 1.0;
+                let scale = Vec3::new(s, s, s);
+                let pos = Vec3::new(0.0, 0f32, -1f32);
+                let t = Transform::from_scale(scale) *
+                    Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
+
+                info!("start load {}", p);
+
+                commands.spawn().insert(handle).insert(t)
+                    .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
+            }
+        }
     }
 }
 

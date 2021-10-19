@@ -6,7 +6,10 @@ pub struct Camera {
     pub aspect: f32,
     pub z_near: f32,
     pub z_far: f32,
+
 }
+
+
 
 impl Default for Camera {
     fn default() -> Self {

@@ -31,6 +31,7 @@ impl VertexLayout {
         match (data_type, data_count) {
 
             //indices
+            (DataType::U8, 1) => vk::Format::R8_UINT,
             (DataType::U16, 1) => vk::Format::R16_UINT,
             (DataType::U32, 1) => vk::Format::R32_UINT,
 
@@ -56,6 +57,7 @@ impl VertexLayout {
 
     pub fn vk_format_size(format: vk::Format) -> u32 {
         match format {
+            vk::Format::R8_UINT => 1,
             vk::Format::R16_UINT => 2,
             vk::Format::R32_UINT => 4,
             vk::Format::R8G8_UINT => 2,
