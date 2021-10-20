@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+use std::borrow::Cow;
 use bevy::prelude::*;
 use crate::render::{RenderPlugin};
 use bevy::log::{LogSettings, Level};
@@ -38,6 +39,24 @@ pub use crate::render::AnimCommands;
 pub use crate::render::AnimCommand;
 pub use crate::render::gltf_asset_loader::GltfAsset;
 
+
+pub struct DisplayName {
+    pub name: String,
+}
+
+impl DisplayName {
+    pub fn from_string(name: String) -> Self {
+        Self {
+            name
+        }
+    }
+
+    pub fn from_str(name: &str) -> Self {
+        Self {
+            name: name.to_string()
+        }
+    }
+}
 
 pub struct StartupArgs {
     pub data: Vec<String>,
@@ -85,7 +104,6 @@ pub fn startup(info: ExternalStartupInfo, args: Vec<String>) {
     for p in info.external_plugins {
         p.build(&mut app);
     }
-
 
     app.add_startup_system(init.system()).run();
 }

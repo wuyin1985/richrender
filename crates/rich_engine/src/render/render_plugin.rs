@@ -16,10 +16,13 @@ use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
 use bevy::math::Vec4Swizzles;
 use bevy::tasks::ComputeTaskPool;
+use crate::DisplayName;
 use crate::render::animation_system::{AnimationRuntime, AnimationRuntimeInit, AnimationWithNodes};
 use super::animation_system;
 
 pub struct RenderInitEvent {}
+
+pub struct MainLight {}
 
 
 struct RenderMgr {
@@ -75,7 +78,6 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
 }
 
 
-
 fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
                       mut model_query: Query<(&mut AnimationRuntime, &Handle<GltfAsset>, &Transform)>) {
     if let Some(runner) = &mut runner {
@@ -113,7 +115,6 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             forward_render_pass.begin_render_pass(context, command_buffer);
 
             for (handle, transform, runtime) in list {
-
                 let mr = context.get_model(handle).unwrap();
                 model_data.transform = transform.compute_matrix();
                 mr.draw(context, command_buffer, &model_data, &runtime);
@@ -148,45 +149,40 @@ fn update_render_state_from_camera(mut commands: Commands,
                                    mut runner: Option<ResMut<RenderRunner>>,
                                    time: Res<Time>,
                                    camera_query: Query<(&Camera, &Transform)>,
+                                   main_light_query: Query<(&MainLight, &Transform)>,
 )
 {
     if let Some(runner) = &mut runner {
-        if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
-            let light_pos = Vec3::new(-12.0, 3.5, -2.0);
-            let light_look_at = Vec3::ZERO;
-            let light_dir = light_look_at - light_pos;
+        if let Ok((light, light_transform)) = main_light_query.single() {
+            if let Ok((camera, transform)) = camera_query.get(render_camera.camera) {
+                let light_view = light_transform.compute_matrix().inverse();
+                let light_dir = light_view.transform_vector3(Vec3::Z);
 
-            let light_view = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y);
-            let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, 1.0, 20.0);
-                // camera.fov,
-                // 1f32,
-                // 1f32,
-                // 96f32);
+                let light_project = Mat4::orthographic_rh(-10.0, 10.0, -10.0, 10.0, 1.0, 20.0);
+                let light_matrix = light_project * light_view;
+                let pos = transform.translation;
 
-            let light_matrix = light_project * light_view;
+                let proj = Mat4::perspective_rh(
+                    camera.fov,
+                    camera.aspect,
+                    camera.z_near,
+                    camera.z_far);
 
-            let pos = transform.translation;
+                let view = transform.compute_matrix().inverse();
 
-            let proj = Mat4::perspective_rh(
-                camera.fov,
-                camera.aspect,
-                camera.z_near,
-                camera.z_far);
+                let frame_data = PerFrameData {
+                    view: view,
+                    proj: proj,
+                    light_matrix,
+                    light_dir: Vec4::from((light_dir, 0.0)),
+                    camera_pos: Vec4::from((pos, 1.0)),
+                    camera_dir: Vec4::from((transform.rotation.mul_vec3(Vec3::Z), 1.0)),
+                    delta_time: 0.016,
+                    total_time: time.seconds_since_startup() as _,
+                };
 
-            let view = transform.compute_matrix().inverse();
-
-            let frame_data = PerFrameData {
-                view: view,
-                proj: proj,
-                light_matrix,
-                light_dir: Vec4::from((light_dir, 0.0)),
-                camera_pos: Vec4::from((pos, 1.0)),
-                camera_dir: Vec4::from((transform.rotation.mul_vec3(Vec3::Z), 1.0)),
-                delta_time: 0.016,
-                total_time: time.seconds_since_startup() as _,
-            };
-
-            runner.upload_per_frame_data(frame_data);
+                runner.upload_per_frame_data(frame_data);
+            }
         }
     }
 }
@@ -220,8 +216,8 @@ fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
 }
 
 fn it_works() {
-    let num1 : usize = 1;
-    let mut num2 : usize = num1;
+    let num1: usize = 1;
+    let mut num2: usize = num1;
     num2 += num1;
 }
 
@@ -307,7 +303,7 @@ pub struct RenderPlugin {}
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 enum UploadLabel {
     Model,
-    Skin
+    Skin,
 }
 
 impl Plugin for RenderPlugin {
@@ -322,8 +318,17 @@ impl Plugin for RenderPlugin {
 
         let ce = world.spawn().insert(Camera::default())
             .insert(FlyCamera::default())
+            .insert(DisplayName::from_str("camera"))
             .insert(Transform::from_matrix(trans)).id();
         world.insert_resource(RenderCamera { camera: ce });
+
+        let light_pos = Vec3::new(-12.0, 3.5, -2.0);
+        let light_look_at = Vec3::ZERO;
+        let light_mat = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y).inverse();
+
+        let light = world.spawn().insert(MainLight {})
+            .insert(Transform::from_matrix(light_mat))
+            .insert(DisplayName::from_str("main_light"));
 
 
         let render_system = get_render_system(app.world_mut());

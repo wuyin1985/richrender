@@ -8,12 +8,12 @@ use std::cell::{Cell, RefCell};
 use rich_engine::prelude::*;
 use egui;
 use egui::Align2;
-use rich_engine::{AnimationRuntime, AnimCommand, AnimCommands, Diagnostic, Diagnostics, FlyCamera, FrameTimeDiagnosticsPlugin, GltfAsset, InputSystem, RenderRunner};
+use rich_engine::{AnimationRuntime, AnimCommand, AnimCommands, Diagnostic, Diagnostics, DisplayName, FlyCamera, FrameTimeDiagnosticsPlugin, GltfAsset, InputSystem, RenderRunner};
 use crate::egui_integrate::{EguiContext, EguiPlugin};
 use crate::file_selector::FileSelector;
 use std::env;
 use structopt::StructOpt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use crate::event::EditorEvent;
 
 #[derive(Debug, StructOpt)]
@@ -146,9 +146,8 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
                 let t = Transform::from_scale(scale) *
                     Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
 
-                info!("start load {}", p);
-
-                commands.spawn().insert(handle).insert(t)
+                let path = Path::new(&p).file_stem().unwrap().to_str().unwrap();
+                commands.spawn().insert(handle).insert(t).insert(DisplayName::from_str(path))
                     .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
             }
         }

@@ -2,14 +2,14 @@ use std::num::ParseFloatError;
 use egui::{Align2, Direction, Ui};
 use crate::EditorState;
 use rich_engine::prelude::*;
-use rich_engine::RenderRunner;
+use rich_engine::{DisplayName, RenderRunner};
 use crate::egui_integrate::egui::{Align, ScrollArea};
 use crate::egui_integrate::EguiContext;
 use crate::event::EditorEvent;
 
 pub fn draw_entity_list(mut state: ResMut<EditorState>
                         , egui_context: Option<Res<EguiContext>>
-                        , mut query: Query<(Entity, &Transform)>) {
+                        , mut query: Query<(Entity, &Transform, Option<&DisplayName>)>) {
     if let Some(ctx) = &egui_context {
         egui::Window::new("EntityList").anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
             let mut scroll_area = ScrollArea::from_max_height(300.0);
@@ -17,10 +17,15 @@ pub fn draw_entity_list(mut state: ResMut<EditorState>
                 {
                     ui.vertical(|ui|
                         {
-                            ui.with_layout(egui::Layout::from_main_dir_and_cross_align(Direction::TopDown, Align::Max).with_cross_justify(true),
+                            ui.with_layout(egui::Layout::from_main_dir_and_cross_align(Direction::TopDown, Align::Max)
+                                               .with_cross_justify(true),
                                            |ui| {
-                                               for (entity, mut transform) in query.iter_mut() {
-                                                   if ui.button(format!("[{:?}]", entity).as_str()).clicked() {
+                                               for (entity, mut transform, od) in query.iter_mut() {
+                                                   let name = match od {
+                                                       Some(d) => { &d.name }
+                                                       None => "",
+                                                   };
+                                                   if ui.button(format!("[{:?} {}]", entity, name).as_str()).clicked() {
                                                        state.current_select_entity = Some(entity);
                                                    }
                                                }
