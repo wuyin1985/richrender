@@ -10,4 +10,4 @@ rich_editor = { path = "crates/rich_editor", features = ["manage_clipboard"] }
 rich_engine = { path = "crates/rich_engine" }
 
 [profile.dev.package."*"]
-opt-level = 2
+opt-level = 3

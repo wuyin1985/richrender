@@ -2,6 +2,7 @@ mod egui_integrate;
 mod egui_render;
 mod file_selector;
 mod event;
+mod entity_list;
 
 use std::cell::{Cell, RefCell};
 use rich_engine::prelude::*;
@@ -32,13 +33,13 @@ impl Plugin for EditorPlugin {
         let cli = Cli::from_args();
         let search_dirs = cli.search_dirs;
 
-        app.add_system(
-            process.system().config(|config| {
-                config.0 = Some(EditorState {
-                    file_selector: FileSelector::create(search_dirs),
-                })
-            })
-        );
+        app.insert_resource(EditorState::create(search_dirs));
+
+        app.add_system(process.system());
+
+        app.add_system(entity_list::draw_entity_list.system());
+        app.add_system(entity_list::draw_entity_property.system());
+
         app.add_system(process_editor_events.system());
 
         app.add_system_to_stage(CoreStage::PreUpdate, enable_fly_camera.system().after(InputSystem));
@@ -56,8 +57,18 @@ fn enable_fly_camera(egui_context: Option<Res<EguiContext>>, mut query: Query<(&
 }
 
 #[derive(Debug, Default)]
-struct EditorState {
+pub struct EditorState {
     file_selector: FileSelector,
+    current_select_entity: Option<Entity>,
+}
+
+impl EditorState {
+    pub fn create(search_dirs: Vec<PathBuf>) -> Self {
+        EditorState {
+            file_selector: FileSelector::create(search_dirs),
+            current_select_entity: None,
+        }
+    }
 }
 
 fn parse_diagnostic(diagnostic: &Diagnostic) -> Option<(String, String)> {
@@ -73,7 +84,7 @@ fn parse_diagnostic(diagnostic: &Diagnostic) -> Option<(String, String)> {
     None
 }
 
-fn process(mut state: Local<EditorState>
+fn process(mut state: ResMut<EditorState>
            , egui_context: Option<Res<EguiContext>>
            , mut render_runner: Option<ResMut<RenderRunner>>
            , time: Res<Time>
