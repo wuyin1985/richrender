@@ -35,7 +35,7 @@ pub struct Joint {
 impl Joint {
     fn new(inverse_bind_matrix: Mat4, node_id: usize) -> Self {
         Joint {
-            matrix: Mat4::identity(),
+            matrix: Mat4::IDENTITY,
             inverse_bind_matrix,
             node_id,
         }

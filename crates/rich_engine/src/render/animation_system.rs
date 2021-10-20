@@ -117,7 +117,7 @@ impl AnimationRuntime {
     pub fn update_buffer(&mut self, context: &RenderContext) {
         if let Some(anim_nodes) = self.data.as_mut() {
             let skins = &anim_nodes.skins;
-            let mut skin_matrices = vec![[Mat4::identity(); MAX_JOINTS_PER_MESH]; skins.len()];
+            let mut skin_matrices = vec![[Mat4::IDENTITY; MAX_JOINTS_PER_MESH]; skins.len()];
             for (skin_idx, skin) in skins.iter().enumerate() {
                 let ms = &mut skin_matrices[skin_idx];
                 for (joint_idx, joint) in skin.joints().iter().enumerate() {

@@ -1,3 +1,4 @@
+use bevy::math::EulerRot;
 use gltf::{iter::Nodes as GltfNodes, scene::Transform, Scene};
 use bevy::prelude::*;
 
@@ -10,7 +11,7 @@ fn compute_transform_matrix(transform: &Transform) -> Mat4 {
             scale,
         } => {
             let translation = Mat4::from_translation(Vec3::from(*translation));
-            let rotation = Mat4::from_quat(Quat::from_slice_unaligned(rotation));
+            let rotation = Mat4::from_quat(Quat::from_slice(rotation));
             let scale = Mat4::from_scale(Vec3::from(*scale));
             translation * rotation * scale
         }
@@ -29,7 +30,7 @@ fn transform_2_scale_rot_position(transform: &Transform) -> (Vec3, Quat, Vec3) {
             scale,
         } => {
             let translation = Vec3::from(*translation);
-            let rotation = Quat::from_slice_unaligned(rotation);
+            let rotation = Quat::from_slice(rotation);
             let scale = Vec3::from(*scale);
             (scale, rotation, translation)
         }

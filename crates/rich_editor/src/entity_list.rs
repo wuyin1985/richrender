@@ -53,6 +53,19 @@ pub fn draw_entity_property(mut state: ResMut<EditorState>
                         changed |= draw_and_edit_float(ui, &mut p.y);
                         changed |= draw_and_edit_float(ui, &mut p.z);
                     });
+
+                    ui.horizontal(|ui| {
+                        ui.label("rotation:");
+                        let mut angles = transform.rotation.to_euler(EulerRot::ZXY);
+                        let mut changed = false;
+                        changed |= draw_and_edit_float(ui, &mut angles.1);
+                        changed |= draw_and_edit_float(ui, &mut angles.2);
+                        changed |= draw_and_edit_float(ui, &mut angles.0);
+
+                        if changed {
+                            transform.rotation = Quat::from_euler(EulerRot::ZXY, angles.0, angles.1, angles.2);
+                        }
+                    });
                 }
             }
         });
