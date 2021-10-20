@@ -140,8 +140,8 @@ fn end_draw_system(mut runner: Option<ResMut<RenderRunner>>) {
     }
 }
 
-struct RenderCamera {
-    camera: Entity,
+pub struct RenderCamera {
+    pub camera: Entity,
 }
 
 fn update_render_state_from_camera(mut commands: Commands,

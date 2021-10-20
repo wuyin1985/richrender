@@ -12,8 +12,9 @@
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -142,7 +143,7 @@
       <workItem from="1634374384106" duration="3942000" />
       <workItem from="1634524019304" duration="8783000" />
       <workItem from="1634609837450" duration="26765000" />
-      <workItem from="1634695316090" duration="9518000" />
+      <workItem from="1634695316090" duration="27625000" />
     </task>
     <servers />
   </component>

@@ -16,6 +16,8 @@ pub mod prelude {
     pub use bevy::window::WindowId;
     pub use bevy::ecs as bevy_ecs;
     pub use crate::render::RenderStage;
+    pub use bevy::math::Vec4Swizzles;
+    pub use bevy::math::Vec3Swizzles;
 }
 
 pub use winit::window::CursorIcon;
@@ -38,6 +40,9 @@ pub use crate::render::AnimationRuntime;
 pub use crate::render::AnimCommands;
 pub use crate::render::AnimCommand;
 pub use crate::render::gltf_asset_loader::GltfAsset;
+pub use crate::render::Camera;
+pub use crate::render::RenderCamera;
+
 
 
 pub struct DisplayName {

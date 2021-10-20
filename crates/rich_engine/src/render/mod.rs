@@ -44,6 +44,8 @@ pub use render_runner::RenderRunner;
 pub use render_plugin::RenderInitEvent;
 pub use fly_camera::FlyCamera;
 pub use animation_system::*;
+pub use camera::Camera;
+pub use render_plugin::RenderCamera;
 
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
