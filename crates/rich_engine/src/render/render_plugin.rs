@@ -6,7 +6,7 @@ use crate::render::swapchain_mgr::SwapChainMgr;
 use crate::render::render_runner::RenderRunner;
 use crate::render::graphic_pipeline::{PipelineVertexInputInfo, GraphicPipeline};
 use ash::vk;
-use crate::render::{RenderStage, vertex};
+use crate::render::{CameraOpEvent, RenderStage, vertex};
 use crate::render::camera::Camera;
 use crate::render::fly_camera::{FlyCamera, FlyCameraPlugin};
 use crate::render::render_context::PerFrameData;
@@ -336,6 +336,7 @@ impl Plugin for RenderPlugin {
         app.add_asset::<GltfAsset>();
 
         app.add_event::<RenderInitEvent>();
+        app.add_event::<CameraOpEvent>();
 
         //upload
         app.add_stage_after(CoreStage::PreUpdate, RenderStage::BeginUpload, SystemStage::parallel());
@@ -353,6 +354,7 @@ impl Plugin for RenderPlugin {
         app.add_stage_after(RenderStage::BeginDraw, RenderStage::Draw, SystemStage::parallel());
         app.add_stage_after(RenderStage::Draw, RenderStage::EndDraw, SystemStage::parallel());
 
+        app.add_system_to_stage(RenderStage::PrepareDraw, Camera::update_camera_op_event_system.system());
         app.add_system_to_stage(RenderStage::PrepareDraw, render_system.exclusive_system());
         app.add_system_to_stage(RenderStage::PrepareDraw, update_render_state_from_camera.system());
 

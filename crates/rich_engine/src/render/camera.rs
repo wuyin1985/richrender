@@ -1,4 +1,11 @@
 use bevy::prelude::*;
+use crate::{FlyCamera, RenderCamera};
+
+pub enum CameraOpEvent {
+    Focus(Transform, f32),
+    ChangeTranslation(Vec3),
+    ChangeRotation(Quat),
+}
 
 #[derive(Debug)]
 pub struct Camera {
@@ -28,5 +35,34 @@ impl Camera {
         res = res * 0.5f32 + Vec3::new(0.5f32, 0.5f32, 0.0);
         res.y = 1f32 - res.y;
         Vec3::new(window_size.x * (res.x), window_size.y * (res.y), res.z)
+    }
+
+    pub fn update_camera_op_event_system(
+        render_camera: Res<RenderCamera>,
+        mut camera_query: Query<(&Camera, &mut Transform)>,
+        mut event_read: EventReader<CameraOpEvent>,
+    )
+    {
+        if let Ok((camera, mut camera_transform)) = camera_query.get_mut(render_camera.camera) {
+            let mut changed = false;
+            for event in event_read.iter() {
+                changed = true;
+                match event {
+                    CameraOpEvent::Focus(target_transform, distance) => {
+                        let eye_pos = target_transform.translation + target_transform.rotation.mul_vec3(Vec3::Z).normalize() * (*distance);
+                        let look_mat = Mat4::look_at_rh(eye_pos, target_transform.translation, Vec3::Y).inverse();
+                        let (_, r, t) = look_mat.to_scale_rotation_translation();
+                        camera_transform.translation = t;
+                        camera_transform.rotation = r;
+                    }
+                    CameraOpEvent::ChangeTranslation(pos) => {
+                        camera_transform.translation = *pos;
+                    }
+                    CameraOpEvent::ChangeRotation(rot) => {
+                        camera_transform.rotation = *rot;
+                    }
+                }
+            }
+        }
     }
 }

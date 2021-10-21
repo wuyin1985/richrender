@@ -50,6 +50,14 @@ pub struct FlyCamera {
     pub mouse_pressed: Option<MouseButton>,
 }
 
+impl FlyCamera {
+    pub fn refresh_transform(&mut self, transform: &Transform) {
+        let (z, x, y) = transform.rotation.to_euler(EulerRot::ZXY);
+        self.pitch = -x.to_degrees();
+        self.yaw = y.to_degrees();
+    }
+}
+
 impl Default for FlyCamera {
     fn default() -> Self {
         Self {
@@ -95,6 +103,8 @@ fn camera_movement_system(
     mut query: Query<(&mut FlyCamera, &mut Transform)>,
 ) {
     for (mut options, mut transform) in query.iter_mut() {
+        options.refresh_transform(&transform);
+
         let (axis_h, axis_v, axis_float) = if options.enabled {
             (
                 movement_axis(&keyboard_input, options.key_right, options.key_left),
@@ -111,8 +121,8 @@ fn camera_movement_system(
 
         let rotation = transform.rotation;
         let accel: Vec3 = (strafe_vector(&rotation) * axis_h)
-            + (forward_walk_vector(&rotation) * axis_v)
-            + (Vec3::Y * axis_float);
+            + (forward_walk_vector(&rotation) * axis_v);
+        //+ (Vec3::Y * axis_float);
         let accel: Vec3 = if accel.length() != 0.0 {
             accel.normalize() * options.accel
         } else {
@@ -189,7 +199,6 @@ fn mouse_motion_system(
     }
 
     for (mut options, mut transform) in query.iter_mut() {
-
         if !options.enabled {
             continue;
         }

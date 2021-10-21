@@ -10,6 +10,8 @@ use crate::event::EditorEvent;
 
 pub fn draw_entity_list(mut state: ResMut<EditorState>
                         , egui_context: Option<Res<EguiContext>>
+                        , keyboard_input: Res<Input<KeyCode>>
+                        , mut camera_op_event_writer: EventWriter<CameraOpEvent>
                         , mut query: Query<(Entity, &Transform, Option<&DisplayName>)>) {
     if let Some(ctx) = &egui_context {
         egui::Window::new("EntityList").anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
@@ -19,22 +21,26 @@ pub fn draw_entity_list(mut state: ResMut<EditorState>
                     ui.vertical(|ui|
                         {
                             ui.with_layout(egui::Layout::from_main_dir_and_cross_align(Direction::TopDown, Align::Max)
-                                               .with_cross_justify(true),
-                                           |ui| {
-                                               for (entity, mut transform, od) in query.iter_mut() {
-                                                   let name = match od {
-                                                       Some(d) => { &d.name }
-                                                       None => "",
-                                                   };
-                                                   let mut bc: Option<Color32> = None;
-                                                   if state.current_select_entity == Some(entity) {
-                                                       bc = Some(Color32::GREEN);
-                                                   }
-                                                   if ui.add(egui::Button::new(format!("[{:?} {}]", entity, name).as_str()).text_color_opt(bc)).clicked() {
-                                                       state.current_select_entity = Some(entity);
-                                                   }
-                                               }
-                                           },
+                                               .with_cross_justify(true), |ui| {
+                                for (entity, mut transform, od) in query.iter_mut() {
+                                    let name = match od {
+                                        Some(d) => { &d.name }
+                                        None => "",
+                                    };
+                                    let mut bc: Option<Color32> = None;
+                                    if state.current_select_entity == Some(entity) {
+                                        bc = Some(Color32::GREEN);
+
+                                        if keyboard_input.pressed(KeyCode::F) && keyboard_input.pressed(KeyCode::LShift) {
+                                            info!("trigger");
+                                            camera_op_event_writer.send(CameraOpEvent::Focus(*transform, 5f32));
+                                        }
+                                    }
+                                    if ui.add(egui::Button::new(format!("[{:?} {}]", entity, name).as_str()).text_color_opt(bc)).clicked() {
+                                        state.current_select_entity = Some(entity);
+                                    }
+                                }
+                            },
                             );
                         });
                 });
@@ -54,7 +60,7 @@ pub fn draw_entity_property(mut state: ResMut<EditorState>
                             , egui_context: Option<Res<EguiContext>>
                             , render_runner: Option<Res<RenderRunner>>
                             , render_camera: Res<RenderCamera>
-                            , mut event_writer: EventWriter<EditorEvent>
+                            , mut eidtor_event_writer: EventWriter<EditorEvent>
                             , mut queries: QuerySet<(
         Query<(Entity, &mut Transform)>,
         Query<(&Camera, &Transform)>,

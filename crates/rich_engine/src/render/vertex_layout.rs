@@ -23,6 +23,7 @@ impl VertexLayout {
         match data_type {
             DataType::U16 => vk::IndexType::UINT16,
             DataType::U32 => vk::IndexType::UINT32,
+            DataType::U8 => vk::IndexType::UINT16,
             _ => { panic!("unsupported data type {:?}", data_type) }
         }
     }

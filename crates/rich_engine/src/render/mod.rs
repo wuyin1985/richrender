@@ -45,6 +45,7 @@ pub use render_plugin::RenderInitEvent;
 pub use fly_camera::FlyCamera;
 pub use animation_system::*;
 pub use camera::Camera;
+pub use camera::CameraOpEvent;
 pub use render_plugin::RenderCamera;
 
 

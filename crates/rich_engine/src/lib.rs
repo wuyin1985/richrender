@@ -18,6 +18,7 @@ pub mod prelude {
     pub use crate::render::RenderStage;
     pub use bevy::math::Vec4Swizzles;
     pub use bevy::math::Vec3Swizzles;
+    pub use crate::render::CameraOpEvent;
 }
 
 pub use winit::window::CursorIcon;
