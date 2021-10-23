@@ -11,6 +11,7 @@ use crate::event::EditorEvent;
 pub fn draw_entity_list(mut state: ResMut<EditorState>
                         , egui_context: Option<Res<EguiContext>>
                         , keyboard_input: Res<Input<KeyCode>>
+                        , mut editor_event_writer: EventWriter<EditorEvent>
                         , mut camera_op_event_writer: EventWriter<CameraOpEvent>
                         , mut query: Query<(Entity, &Transform, Option<&DisplayName>)>) {
     if let Some(ctx) = &egui_context {
@@ -32,8 +33,12 @@ pub fn draw_entity_list(mut state: ResMut<EditorState>
                                         bc = Some(Color32::GREEN);
 
                                         if keyboard_input.pressed(KeyCode::F) && keyboard_input.pressed(KeyCode::LShift) {
-                                            info!("trigger");
                                             camera_op_event_writer.send(CameraOpEvent::Focus(*transform, 5f32));
+                                        }
+
+                                        if keyboard_input.pressed(KeyCode::Delete) {
+                                            editor_event_writer.send(EditorEvent::DeleteEntity(entity));
+                                            state.current_select_entity = None;
                                         }
                                     }
                                     if ui.add(egui::Button::new(format!("[{:?} {}]", entity, name).as_str()).text_color_opt(bc)).clicked() {
@@ -60,7 +65,8 @@ pub fn draw_entity_property(mut state: ResMut<EditorState>
                             , egui_context: Option<Res<EguiContext>>
                             , render_runner: Option<Res<RenderRunner>>
                             , render_camera: Res<RenderCamera>
-                            , mut eidtor_event_writer: EventWriter<EditorEvent>
+                            , mut editor_event_writer: EventWriter<EditorEvent>
+                            , mut camera_op_event_writer: EventWriter<CameraOpEvent>
                             , mut queries: QuerySet<(
         Query<(Entity, &mut Transform)>,
         Query<(&Camera, &Transform)>,
@@ -79,6 +85,12 @@ pub fn draw_entity_property(mut state: ResMut<EditorState>
                         changed |= draw_and_edit_float(ui, &mut p.x);
                         changed |= draw_and_edit_float(ui, &mut p.y);
                         changed |= draw_and_edit_float(ui, &mut p.z);
+
+                        if changed {
+                            if render_camera.camera == entity {
+                                camera_op_event_writer.send(CameraOpEvent::ChangeTranslation(*p));
+                            }
+                        }
                     });
 
                     ui.horizontal(|ui| {
@@ -95,6 +107,11 @@ pub fn draw_entity_property(mut state: ResMut<EditorState>
                         if changed {
                             angles = angles * 1f32.to_radians();
                             transform.rotation = Quat::from_euler(EulerRot::ZXY, angles.x, angles.y, angles.z);
+                            if changed {
+                                if render_camera.camera == entity {
+                                    camera_op_event_writer.send(CameraOpEvent::ChangeRotation(transform.rotation));
+                                }
+                            }
                         }
                     });
 

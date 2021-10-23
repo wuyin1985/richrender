@@ -103,7 +103,6 @@ fn camera_movement_system(
     mut query: Query<(&mut FlyCamera, &mut Transform)>,
 ) {
     for (mut options, mut transform) in query.iter_mut() {
-        options.refresh_transform(&transform);
 
         let (axis_h, axis_v, axis_float) = if options.enabled {
             (

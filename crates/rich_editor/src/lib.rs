@@ -150,6 +150,10 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
                 commands.spawn().insert(handle).insert(t).insert(DisplayName::from_str(path))
                     .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
             }
+
+            EditorEvent::DeleteEntity(e) => {
+                commands.entity(*e).despawn_recursive();
+            }
         }
     }
 }

@@ -39,11 +39,11 @@ impl Camera {
 
     pub fn update_camera_op_event_system(
         render_camera: Res<RenderCamera>,
-        mut camera_query: Query<(&Camera, &mut Transform)>,
+        mut camera_query: Query<(&Camera, &mut Transform, &mut FlyCamera)>,
         mut event_read: EventReader<CameraOpEvent>,
     )
     {
-        if let Ok((camera, mut camera_transform)) = camera_query.get_mut(render_camera.camera) {
+        if let Ok((camera, mut camera_transform, mut fly_camera)) = camera_query.get_mut(render_camera.camera) {
             let mut changed = false;
             for event in event_read.iter() {
                 changed = true;
@@ -62,6 +62,10 @@ impl Camera {
                         camera_transform.rotation = *rot;
                     }
                 }
+            }
+
+            if changed {
+                fly_camera.refresh_transform(&camera_transform);
             }
         }
     }

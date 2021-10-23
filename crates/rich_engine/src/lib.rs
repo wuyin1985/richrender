@@ -10,6 +10,7 @@ use crate::render::model_renderer::ModelData;
 
 mod render;
 mod game;
+mod terrain;
 
 pub mod prelude {
     pub use bevy::prelude::*;

@@ -62,6 +62,25 @@ impl Texture {
         }
     }
 
+    pub fn create_from_data_with_format(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, width: u32, height: u32,
+                                        format: vk::Format, data: &[u8]) -> Self {
+        let image_ci = vk::ImageCreateInfo::builder()
+            .extent(vk::Extent3D { width: width, height: height, depth: 1 })
+            .usage(vk::ImageUsageFlags::TRANSFER_SRC | vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE)
+            .mip_levels(1)
+            .array_layers(1)
+            .initial_layout(vk::ImageLayout::UNDEFINED)
+            .samples(vk::SampleCountFlags::TYPE_1)
+            .format(format)
+            .flags(vk::ImageCreateFlags::empty())
+            .image_type(vk::ImageType::TYPE_2D)
+            .tiling(vk::ImageTiling::OPTIMAL)
+            .build();
+
+        Self::create_from_data(context, upload_command_buffer, &image_ci, data)
+    }
+
     pub fn create_from_data(context: &mut RenderContext, upload_command_buffer: vk::CommandBuffer, image_ci: &vk::ImageCreateInfo, data: &[u8]) -> Self {
         let texture = Self::create(context, image_ci, "image");
         let image_size = (data.len() * size_of::<u8>()) as vk::DeviceSize;
@@ -525,6 +544,10 @@ impl Texture {
 
     pub fn get_mip_map_count(&self) -> u32 {
         self.head.mip_map_count
+    }
+
+    pub fn get_size(&self) -> (u32, u32) {
+        (self.head.width, self.head.height)
     }
 }
 
