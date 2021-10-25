@@ -10,18 +10,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/terrain/mod.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/terrain/terrain_mgr.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/event.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/event.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/fly_camera.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/fly_camera.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/texture.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/texture.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,6 +91,11 @@
     </key>
   </component>
   <component name="RunManager">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package richrender --bin richrender  search_dirs &quot;assets/gltf&quot;" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -116,11 +110,6 @@
       <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
   </component>
@@ -159,6 +148,7 @@
       <workItem from="1634807490678" duration="3840000" />
       <workItem from="1634868180013" duration="7810000" />
       <workItem from="1634955232789" duration="14512000" />
+      <workItem from="1635140325793" duration="12153000" />
     </task>
     <servers />
   </component>
