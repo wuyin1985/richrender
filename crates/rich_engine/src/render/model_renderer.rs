@@ -10,13 +10,13 @@ use crate::render::texture::Texture;
 use bevy::prelude::*;
 use crate::render::uniform::UniformObject;
 use crate::render::aabb::Aabb;
-use crate::render::animation_system::AnimationRuntime;
 use crate::render::animation::Animations;
 use crate::render::gltf_asset_loader::{GltfAsset};
 use crate::render::material::Material;
 use crate::render::vertex_layout::VertexLayout;
 use crate::render::mesh::Primitive;
 use crate::render::forward_render::ForwardRenderPass;
+use crate::render::model_runtime::{ModelRuntime, ModelSkins};
 use crate::render::node::{Node, Nodes};
 
 const UBO_BINDING: u32 = 0;
@@ -64,29 +64,6 @@ impl ModelRenderer {
         self.model.destroy(context);
     }
 
-    pub fn get_center_transform(model_aabb: Aabb) -> Mat4 {
-        let aabb = model_aabb * Mat4::from_rotation_x(0f32.to_radians());
-        let CAMERA_DIS: f32 = 1.0;
-        let CAMERA_FOV: f32 = 45f32.to_radians() / 2f32;
-        let target_z = (aabb.max.z - aabb.min.z) / 2f32;
-        let target_y = (aabb.max.y - aabb.min.y) / 2f32;
-
-        let offset_x = (aabb.max.x + aabb.min.x) / 2f32;
-        let offset_z = (aabb.max.z + aabb.min.z) / 2f32;
-        let offset_y = (aabb.max.y + aabb.min.y) / 2f32;
-
-        assert!(target_y > 0f32, "error model half y");
-        let to_z = -1f32;
-        let desire_y = CAMERA_FOV.tan() * (CAMERA_DIS - to_z);
-        let s = desire_y / target_y;
-        //let scale = 1f32;
-
-        let scale = Vec3::new(s, s, s);
-        let rot = Quat::IDENTITY;
-        let pos = Vec3::new(-offset_x, 0f32, to_z);
-        return Mat4::from_scale_rotation_translation(scale, rot, pos);
-    }
-
     pub fn create(context: &mut RenderContext, swapchain_mgr: &SwapChainMgr, render_pass: &ForwardRenderPass,
                   command_buffer: vk::CommandBuffer, gltf_asset: &GltfAsset, shader_names: &ShadeNames) -> ModelRenderer {
         let model = Model::from_gltf(context, command_buffer, gltf_asset).expect("load error");
@@ -115,21 +92,18 @@ impl ModelRenderer {
         }
     }
 
-    fn get_nodes<'a>(&'a self, runtime: &'a AnimationRuntime) -> &'a [Node] {
-        if let Some(anim_nodes) = runtime.data.as_ref() {
-            return anim_nodes.nodes.nodes();
-        }
-
-        self.model.get_nodes()
-    }
-
-    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &AnimationRuntime) {
+    pub fn draw_shadow(&self, context: &RenderContext, command_buffer: vk::CommandBuffer,
+                       runtime: &ModelRuntime, skins: Option<&ModelSkins>, transform_query: &Query<&GlobalTransform>) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
-        for node in self.get_nodes(runtime) {
-            if let Some(mesh_idx) = node.mesh_index() {
-                let node_transform = node.transform();
-                let m_data = ModelData { transform: model_data.transform * node_transform };
+        for model_node in runtime.get_nodes() {
+            if let Some(mesh_idx) = model_node.node.mesh_index() {
+                let transform = transform_query.get(model_node.entity);
+                if transform.is_err() {
+                    continue;
+                }
+
+                let m_data = ModelData { transform: transform.unwrap().compute_matrix() };
                 let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
 
                 let mesh = &self.model.get_meshes()[mesh_idx];
@@ -137,7 +111,6 @@ impl ModelRenderer {
                     let render = &self.primitive_renders[primitive_idx];
                     let vertex_layout = &primitive.get_vertex_layout();
                     primitive_idx += 1;
-                    let set = render.descriptor_set;
                     unsafe {
                         context.device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, render.shadow_pipeline.get_pipeline());
 
@@ -154,9 +127,8 @@ impl ModelRenderer {
                                                              vertex_layout.indices_type);
 
                         let mut descriptor_sets = vec![uniform.descriptor_set];
-                        if self.model.has_animation() {
-                            let set = runtime.data.as_ref().unwrap().skin_descriptor_set;
-                            descriptor_sets.push(set);
+                        if let Some(skins) = skins {
+                            descriptor_sets.push(skins.skin_descriptor_set);
                         }
 
                         context.device.cmd_bind_descriptor_sets(command_buffer,
@@ -172,13 +144,19 @@ impl ModelRenderer {
         }
     }
 
-    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, model_data: &ModelData, runtime: &AnimationRuntime) {
+    pub fn draw(&self, context: &RenderContext, command_buffer: vk::CommandBuffer, runtime: &ModelRuntime, skins: Option<&ModelSkins>,
+                transform_query: &Query<&GlobalTransform>) {
         let mut primitive_idx = 0;
         let uniform = context.per_frame_uniform.as_ref().unwrap();
 
-        for node in self.get_nodes(runtime) {
-            if let Some(mesh_idx) = node.mesh_index() {
-                let m_data = ModelData { transform: model_data.transform * node.transform() };
+        for model_node in runtime.get_nodes() {
+            if let Some(mesh_idx) = model_node.node.mesh_index() {
+                let transform = transform_query.get(model_node.entity);
+                if transform.is_err() {
+                    continue;
+                }
+
+                let m_data = ModelData { transform: transform.unwrap().compute_matrix() };
                 let model_data_bytes: &[u8] = unsafe { util::any_as_u8_slice(&m_data) };
 
                 let mesh = &self.model.get_meshes()[mesh_idx];
@@ -203,9 +181,8 @@ impl ModelRenderer {
                                                              vertex_layout.indices_type);
 
                         let mut descriptor_sets = vec![uniform.descriptor_set, set];
-                        if self.model.has_animation() {
-                            let set = runtime.data.as_ref().unwrap().skin_descriptor_set;
-                            descriptor_sets.push(set);
+                        if let Some(skins) = skins {
+                            descriptor_sets.push(skins.skin_descriptor_set);
                         }
 
                         context.device.cmd_bind_descriptor_sets(command_buffer,

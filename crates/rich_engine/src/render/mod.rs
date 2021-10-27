@@ -33,6 +33,7 @@ mod render_statistic;
 mod animation;
 mod skin;
 mod animation_system;
+mod model_runtime;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;

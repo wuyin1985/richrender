@@ -150,6 +150,14 @@ impl Buffer {
         }
     }
 
+    pub fn get_memory(&self) -> *mut c_void {
+        if let Some(ptr) = &self.mapped_ptr {
+            ptr.0
+        } else {
+            panic!("the buffer hasn't mapped")
+        }
+    }
+
     fn unmap_memory(&mut self, context: &RenderContext) {
         if self.mapped_ptr.take().is_some() {
             unsafe {

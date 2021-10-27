@@ -41,12 +41,21 @@ impl Joint {
         }
     }
 
+    pub fn get_node_idx(&self) -> usize {
+        self.node_id
+    }
+
     fn compute_matrix(&mut self, transform: Mat4, nodes: &[Node]) {
         let global_transform_inverse = transform
             .inverse();
         let node_transform = nodes[self.node_id].transform();
 
         self.matrix = global_transform_inverse * node_transform * self.inverse_bind_matrix;
+    }
+
+    pub fn compute_matrix_2_skin(&self, skin_transform: Mat4, self_transform: Mat4) -> Mat4 {
+        let global_transform_inverse = skin_transform.inverse();
+        global_transform_inverse * self_transform * self.inverse_bind_matrix
     }
 }
 
@@ -88,7 +97,7 @@ fn map_inverse_bind_matrices(gltf_skin: &GltfSkin, data: &[Data]) -> Vec<Mat4> {
         .reader(|buffer| Some(&data[buffer.index()]))
         .read_inverse_bind_matrices()
         .expect("IBM reader not found for skin");
-    iter.map(|data| {Mat4::from_cols_array_2d(&data)}).collect::<Vec<_>>()
+    iter.map(|data| { Mat4::from_cols_array_2d(&data) }).collect::<Vec<_>>()
 }
 
 fn map_node_ids(gltf_skin: &GltfSkin) -> Vec<usize> {

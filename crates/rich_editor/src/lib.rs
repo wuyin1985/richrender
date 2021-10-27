@@ -8,7 +8,7 @@ use std::cell::{Cell, RefCell};
 use rich_engine::prelude::*;
 use egui;
 use egui::Align2;
-use rich_engine::{AnimationRuntime, AnimCommand, AnimCommands, Diagnostic, Diagnostics, DisplayName, FlyCamera, FrameTimeDiagnosticsPlugin, GltfAsset, InputSystem, RenderRunner};
+use rich_engine::{AnimCommand, AnimCommands, Diagnostic, Diagnostics, DisplayName, FlyCamera, FrameTimeDiagnosticsPlugin, GltfAsset, InputSystem, RenderRunner};
 use crate::egui_integrate::{EguiContext, EguiPlugin};
 use crate::file_selector::FileSelector;
 use std::env;
@@ -147,8 +147,11 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
                     Transform::from_translation(pos + Vec3::new(0f32, 0f32, 0.0));
 
                 let path = Path::new(&p).file_stem().unwrap().to_str().unwrap();
-                commands.spawn().insert(handle).insert(t).insert(DisplayName::from_str(path))
-                    .insert(AnimationRuntime::default()).insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
+                commands.spawn().insert(handle)
+                    .insert(t)
+                    .insert(GlobalTransform::identity())
+                    .insert(DisplayName::from_str(path))
+                    .insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
             }
 
             EditorEvent::DeleteEntity(e) => {

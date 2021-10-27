@@ -16,9 +16,11 @@ use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
 use bevy::math::Vec4Swizzles;
 use bevy::tasks::ComputeTaskPool;
+use bevy::transform::TransformSystem;
 use crate::DisplayName;
-use crate::render::animation_system::{AnimationRuntime, AnimationRuntimeInit, AnimationWithNodes};
 use super::animation_system;
+use crate::render::model_runtime;
+use crate::render::model_runtime::{ModelRuntime, ModelSkins};
 
 pub struct RenderInitEvent {}
 
@@ -79,7 +81,8 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
 
 
 fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
-                      mut model_query: Query<(&mut AnimationRuntime, &Handle<GltfAsset>, &Transform)>) {
+                      mut transform_query: Query<&GlobalTransform>,
+                      mut model_query: Query<(&ModelRuntime, Option<&ModelSkins>, &Handle<GltfAsset>, &GlobalTransform)>) {
     if let Some(runner) = &mut runner {
         let runner = runner.deref_mut();
         let mut model_data = ModelData::default();
@@ -98,15 +101,11 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             forward_render_pass.begin_shadow_pass(context, command_buffer);
 
             let mut list = Vec::new();
-            for (mut runtime, handle, transform) in model_query.iter_mut() {
+            for (mut runtime, skins, handle, transform) in model_query.iter_mut() {
                 let model_renderer = context.get_model(handle);
                 if let Some(mr) = model_renderer {
-                    model_data.transform = transform.compute_matrix();
-
-                    runtime.update_buffer(context);
-
-                    mr.draw_shadow(context, command_buffer, &model_data, &runtime);
-                    list.push((handle, transform, runtime));
+                    mr.draw_shadow(context, command_buffer, &runtime, skins, &transform_query);
+                    list.push((handle, skins, transform, runtime));
                 }
             }
             forward_render_pass.end_shadow_pass(context, command_buffer);
@@ -114,10 +113,9 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             //draw
             forward_render_pass.begin_render_pass(context, command_buffer);
 
-            for (handle, transform, runtime) in list {
+            for (handle, skins, transform, runtime) in list {
                 let mr = context.get_model(handle).unwrap();
-                model_data.transform = transform.compute_matrix();
-                mr.draw(context, command_buffer, &model_data, &runtime);
+                mr.draw(context, command_buffer, &runtime, skins, &transform_query);
             }
 
             runner.grass.draw(context, command_buffer);
@@ -219,28 +217,6 @@ fn it_works() {
     let num1: usize = 1;
     let mut num2: usize = num1;
     num2 += num1;
-}
-
-fn init_skin_assets(
-    mut commands: Commands,
-    mut runner: Option<ResMut<RenderRunner>>,
-    mut query: Query<(Entity, &mut AnimationRuntime, &Handle<GltfAsset>), Without<AnimationRuntimeInit>>) {
-    //let runner = runner.deref_mut();
-    if let Some(runner) = &mut runner {
-        let context = &mut runner.context;
-        for (entity, mut runtime, handle) in query.iter_mut() {
-            if let Some(mr) = context.get_model(handle) {
-                commands.entity(entity).insert(AnimationRuntimeInit {});
-
-                let m = mr.get_model();
-                if let Some(anim) = m.clone_animations() {
-                    runtime.data = Some(AnimationWithNodes::create(context, anim, m.clone_nodes(), m.clone_skins()));
-                } else {
-                    runtime.data = None;
-                }
-            }
-        }
-    }
 }
 
 fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
@@ -345,7 +321,7 @@ impl Plugin for RenderPlugin {
 
         app.add_system_to_stage(RenderStage::BeginUpload, begin_upload.system());
         app.add_system_to_stage(RenderStage::Upload, load_gltf_2_device_system.system().label(UploadLabel::Model));
-        app.add_system_to_stage(RenderStage::Upload, init_skin_assets.system().after(UploadLabel::Model));
+        app.add_system_to_stage(RenderStage::Upload, model_runtime::init_model_runtime_system.system().after(UploadLabel::Model));
         app.add_system_to_stage(RenderStage::EndUpload, end_upload.system());
 
         //draw
@@ -361,7 +337,10 @@ impl Plugin for RenderPlugin {
         app.add_system_to_stage(RenderStage::BeginDraw, draw_models_system.system());
         app.add_system_to_stage(RenderStage::EndDraw, end_draw_system.system());
 
-        app.add_system(animation_system::update_animation_system.system());
+        app.add_system(model_runtime::update_model_runtime_animation.system());
+
+        app.add_system_to_stage(CoreStage::PostUpdate, model_runtime::update_skin_joint_matrix.system().after(TransformSystem::TransformPropagate));
+
         app.add_plugin(FlyCameraPlugin);
     }
 }

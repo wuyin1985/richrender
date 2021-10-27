@@ -1,4 +1,6 @@
 /target
 /assets/spv/temp
-/.idea
 /assets/gltf/Sample
+/.idea
+
+/.idea/*.*

@@ -13,7 +13,7 @@ pub fn draw_entity_list(mut state: ResMut<EditorState>
                         , keyboard_input: Res<Input<KeyCode>>
                         , mut editor_event_writer: EventWriter<EditorEvent>
                         , mut camera_op_event_writer: EventWriter<CameraOpEvent>
-                        , mut query: Query<(Entity, &Transform, Option<&DisplayName>)>) {
+                        , mut query: Query<(Entity, &Transform, Option<&DisplayName>), Without<Parent>>) {
     if let Some(ctx) = &egui_context {
         egui::Window::new("EntityList").anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0)).show(ctx.ctx(), |ui| {
             let mut scroll_area = ScrollArea::from_max_height(300.0);

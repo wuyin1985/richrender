@@ -87,6 +87,10 @@ impl Model {
         self.nodes.nodes()
     }
 
+    pub fn nodes(&self) -> &Nodes{
+        &self.nodes
+    }
+
     pub fn aabb(&self) -> Aabb {
         self.aabb
     }
@@ -112,6 +116,10 @@ impl Model {
     }
 
     pub fn clone_skins(&self) -> Vec<Skin> { self.skins.clone() }
+
+    pub fn get_skins(&self) -> &Vec<Skin> {
+        &self.skins
+    }
 
     pub fn has_animation(&self) -> bool {
         self.animations.is_some()

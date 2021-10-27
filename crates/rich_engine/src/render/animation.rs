@@ -170,11 +170,17 @@ impl<T: Interpolate> Channel<T> {
     }
 }
 
-struct NodesKeyFrame(
-    Vec<(usize, Vec3)>,
-    Vec<(usize, Quat)>,
-    Vec<(usize, Vec3)>,
+pub struct NodesKeyFrame(
+    pub Vec<(usize, Vec3)>,
+    pub Vec<(usize, Quat)>,
+    pub Vec<(usize, Vec3)>,
 );
+
+impl NodesKeyFrame {
+    pub fn is_not_empty(&self) -> bool {
+        !self.0.is_empty() || !self.1.is_empty() || !self.2.is_empty()
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Animations {
@@ -215,17 +221,22 @@ pub enum PlaybackMode {
 }
 
 impl Animations {
-    pub fn update(&mut self, nodes: &mut Nodes, delta_time: f32) -> bool {
+    pub fn update(&mut self, delta_time: f32) -> Option<NodesKeyFrame> {
         if self.playback_state.paused {
-            return false;
+            return None;
         }
 
         match self.animations.get_mut(self.playback_state.current) {
             Some(animation) => {
                 self.playback_state.advance(delta_time);
-                animation.animate(nodes, self.playback_state.time)
+                let ret = animation.sample(self.playback_state.time);
+                if ret.is_not_empty() {
+                    Some(ret)
+                } else {
+                    None
+                }
             }
-            _ => false,
+            _ => None,
         }
     }
 
