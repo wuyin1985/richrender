@@ -580,6 +580,12 @@ impl RenderContext {
         self.models.insert(handle, model);
     }
 
+    pub fn remove_model(&mut self, handle: &Handle<GltfAsset>) {
+        if let Some(mut m) = self.models.remove(handle) {
+            m.destroy(self);
+        }
+    }
+
     pub fn get_model(&self, handle: &Handle<GltfAsset>) -> Option<&ModelRenderer> {
         self.models.get(&handle)
     }

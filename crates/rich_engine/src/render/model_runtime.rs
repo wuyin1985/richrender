@@ -6,6 +6,7 @@ use crate::render::animation::{Animations, NodesKeyFrame};
 use crate::render::node::{Node, Nodes};
 use crate::render::skin::{Joint, Skin};
 use ash::vk;
+use crate::core::destroy::Destroy;
 
 pub const MAX_JOINTS_PER_MESH: usize = 512;
 
@@ -32,6 +33,18 @@ pub struct ModelSkins {
     pub skin_buffer: Buffer,
     pub skin_buffer_element_size: u32,
     pub skin_descriptor_set: vk::DescriptorSet,
+    pub valid: bool,
+}
+
+impl ModelSkins {
+    pub fn destroy(&mut self, context: &RenderContext) {
+        assert!(self.valid, "the model skins has already destroy");
+        self.valid = false;
+        self.skin_buffer.destroy(context);
+        unsafe {
+            context.device.free_descriptor_sets(context.descriptor_pool, &[self.skin_descriptor_set]);
+        }
+    }
 }
 
 pub struct ModelJointRef {
@@ -77,6 +90,10 @@ pub fn init_model_runtime_system(
             };
 
             if let Some((nodes, skins, animations)) = nodes_and_skins {
+                if skins.len() > 1 {
+                    //todo 多重skin需要创建多个set
+                    panic!("multi skin not supported ")
+                }
                 //create runtime
                 let mut named_nodes: HashMap<u64, usize> = HashMap::new();
                 let mut entity_map: HashMap<usize, Entity> = HashMap::new();
@@ -128,11 +145,23 @@ pub fn init_model_runtime_system(
     }
 }
 
+pub fn destroy_model_skins_system(
+    mut runner: Option<ResMut<RenderRunner>>,
+    mut query: Query<(&mut ModelSkins), With<Destroy>>,
+)
+{
+    if let Some(mut runner) = runner {
+        for mut skins in query.iter_mut() {
+            skins.destroy(&mut runner.context);
+            info!("remove skins");
+        }
+    }
+}
+
 fn create_model_skins(context: &mut RenderContext, skins: Vec<Skin>) -> ModelSkins {
     let skin_count = skins.len();
     let elem_size = context.get_ubo_alignment::<SkinJointsUbo>();
     let buffer_size = elem_size * (skin_count as u32);
-    info!("buffer size {}", buffer_size);
     let skin_buffer = Buffer::create_host_visible_buffer_with_size(context, vk::BufferUsageFlags::UNIFORM_BUFFER,
                                                                    buffer_size as _);
 
@@ -173,6 +202,7 @@ fn create_model_skins(context: &mut RenderContext, skins: Vec<Skin>) -> ModelSki
         skin_buffer,
         skin_descriptor_set,
         skin_buffer_element_size: elem_size,
+        valid: true,
     }
 }
 

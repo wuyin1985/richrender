@@ -10,26 +10,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_runtime.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/richrender.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/richrender.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/core/destroy.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/file_selector.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/file_selector.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/animation.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/animation.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/animation_system.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/animation_system.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/buffer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/buffer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/node.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/node.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_runtime.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_runtime.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/skin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/skin.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +164,7 @@
       <workItem from="1635140325793" duration="12815000" />
       <workItem from="1635214329793" duration="3352000" />
       <workItem from="1635217726347" duration="23878000" />
-      <workItem from="1635300670558" duration="19225000" />
+      <workItem from="1635300670558" duration="24881000" />
     </task>
     <servers />
   </component>

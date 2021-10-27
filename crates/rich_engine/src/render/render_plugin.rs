@@ -17,6 +17,7 @@ use std::ops::DerefMut;
 use bevy::math::Vec4Swizzles;
 use bevy::tasks::ComputeTaskPool;
 use bevy::transform::TransformSystem;
+use crate::core::destroy::{Destroy, DestroyStage};
 use crate::DisplayName;
 use super::animation_system;
 use crate::render::model_runtime;
@@ -82,7 +83,8 @@ fn get_render_system(world: &mut World) -> impl FnMut(&mut World) {
 
 fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
                       mut transform_query: Query<&GlobalTransform>,
-                      mut model_query: Query<(&ModelRuntime, Option<&ModelSkins>, &Handle<GltfAsset>, &GlobalTransform)>) {
+                      mut model_query: Query<(&ModelRuntime, Option<&ModelSkins>, &Handle<GltfAsset>, &GlobalTransform),
+                          Without<Destroy>>) {
     if let Some(runner) = &mut runner {
         let runner = runner.deref_mut();
         let mut model_data = ModelData::default();
@@ -229,6 +231,7 @@ fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
         let swap_mgr = &runner.swapchain_mgr;
 
         let mut changed_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
+        let mut destroy_gltf_set: HashSet<Handle<GltfAsset>> = HashSet::default();
 
         for event in gltf_events.iter() {
             match event {
@@ -237,15 +240,22 @@ fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
                 }
                 AssetEvent::Modified { ref handle } => {
                     changed_gltf_set.insert(handle.clone_weak());
+                    destroy_gltf_set.insert(handle.clone_weak());
                     //todo remove resource
                     //remove_current_mesh_resources(render_resource_context, handle);
                 }
                 AssetEvent::Removed { ref handle } => {
                     //todo remove resource
                     //remove_current_mesh_resources(render_resource_context, handle);
+                    destroy_gltf_set.insert(handle.clone_weak());
                     changed_gltf_set.remove(handle);
                 }
             }
+        }
+
+        for destroy_handle in &destroy_gltf_set {
+            context.remove_model(destroy_handle);
+            info!("remove gltf asset");
         }
 
         if changed_gltf_set.len() == 0 {
@@ -340,6 +350,8 @@ impl Plugin for RenderPlugin {
         app.add_system(model_runtime::update_model_runtime_animation.system());
 
         app.add_system_to_stage(CoreStage::PostUpdate, model_runtime::update_skin_joint_matrix.system().after(TransformSystem::TransformPropagate));
+
+        app.add_system_to_stage(DestroyStage::Prepare, model_runtime::destroy_model_skins_system.system());
 
         app.add_plugin(FlyCameraPlugin);
     }

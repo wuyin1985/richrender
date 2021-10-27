@@ -12,6 +12,7 @@ use rand::Rng;
 mod render;
 mod game;
 mod terrain;
+mod core;
 
 pub mod prelude {
     pub use bevy::prelude::*;
@@ -21,6 +22,7 @@ pub mod prelude {
     pub use bevy::math::Vec4Swizzles;
     pub use bevy::math::Vec3Swizzles;
     pub use crate::render::CameraOpEvent;
+    pub use crate::core::destroy::Destroy;
 }
 
 pub use winit::window::CursorIcon;
@@ -31,6 +33,7 @@ pub use bevy::ecs::system::SystemParam;
 pub use bevy::input::mouse::*;
 pub use bevy::input::*;
 pub use bevy::diagnostic::*;
+use crate::core::CorePlugin;
 
 pub use crate::render::Texture;
 pub use crate::render::RenderContext;
@@ -104,6 +107,7 @@ pub fn startup(info: ExternalStartupInfo, args: Vec<String>) {
     //     level: Level::INFO
     // })
     app.add_plugins(DefaultPlugins)
+        .add_plugin(CorePlugin {})
         .add_plugin(RenderPlugin {})
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default());
 

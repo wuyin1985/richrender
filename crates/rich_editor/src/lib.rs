@@ -155,7 +155,7 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
             }
 
             EditorEvent::DeleteEntity(e) => {
-                commands.entity(*e).despawn_recursive();
+                commands.entity(*e).insert(Destroy {});
             }
         }
     }
