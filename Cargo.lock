@@ -1859,6 +1859,7 @@ dependencies = [
  "ash",
  "ash-window",
  "bevy",
+ "bindgen",
  "gltf",
  "image",
  "lazy_static",
@@ -1873,7 +1874,6 @@ dependencies = [
 name = "richrender"
 version = "0.1.0"
 dependencies = [
- "bindgen",
  "rich_editor",
  "rich_engine",
 ]

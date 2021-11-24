@@ -26,3 +26,7 @@ features = ["KHR_lights_punctual", "KHR_materials_unlit", "KHR_materials_pbrSpec
 [features]
 default = ["statistic"]
 statistic = []
+
+
+[build-dependencies]
+bindgen = "0.59"

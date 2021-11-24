@@ -24,6 +24,7 @@ typedef struct {
 
 __declspec( dllexport ) void RunWithPlatform();
 
+
 __declspec( dllexport ) void Startup(void *graphic, void *renderPass);
 
 __declspec( dllexport ) void UpdateFrame(void *renderPass);
@@ -34,6 +35,7 @@ __declspec( dllexport ) int StartupWithExternalVulkan(void *vk_device, void *vk_
                                                       void *vk_queue, void *vk_command_pool,
                                                       ShareTexture color, ShareTexture depth);
 
+__declspec( dllexport ) int32_t TestCall(int32_t input);
 
 #ifdef __cplusplus
 }

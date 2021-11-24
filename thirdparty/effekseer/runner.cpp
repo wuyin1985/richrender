@@ -97,3 +97,7 @@ int StartupWithExternalVulkan(void *vk_device, void *vk_phy_device,
     Startup(graphics, renderPass);
     return 0;
 }
+
+int32_t TestCall(int32_t input) {
+    return input + 1;
+}

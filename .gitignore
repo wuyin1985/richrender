@@ -4,6 +4,7 @@
 /.idea
 /crates/rich_editor/target
 /crates/rich_engine/target
+/lib
 
 **/.idea
 

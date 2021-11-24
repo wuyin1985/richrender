@@ -48,6 +48,7 @@ pub use crate::render::AnimCommand;
 pub use crate::render::gltf_asset_loader::GltfAsset;
 pub use crate::render::Camera;
 pub use crate::render::RenderCamera;
+use crate::vfx::test_vfx;
 
 
 pub struct DisplayName {

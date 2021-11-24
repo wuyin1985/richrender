@@ -1,7 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
-    <generated />
+    <generated>
+      <config projectName="Effekseer" targetName="EffekseerRendererDX11" />
+      <config projectName="Effekseer" targetName="EffekseerRendererDX9" />
+      <config projectName="Effekseer" targetName="LLGI" />
+      <config projectName="Effekseer" targetName="Example_NetworkClient" />
+      <config projectName="Effekseer" targetName="EffekseerSoundXAudio2" />
+      <config projectName="Effekseer" targetName="Example_SortHandle" />
+      <config projectName="Effekseer" targetName="EffekseerRendererDX12" />
+      <config projectName="Effekseer" targetName="Effekseer" />
+      <config projectName="Effekseer" targetName="Example_Culling" />
+      <config projectName="Effekseer" targetName="Example_Utils" />
+      <config projectName="Effekseer" targetName="EffekseerRendererGL" />
+      <config projectName="Effekseer" targetName="Example_OpenGL" />
+      <config projectName="Effekseer" targetName="Example_DirectX11" />
+      <config projectName="Effekseer" targetName="Example_DirectX12" />
+      <config projectName="Effekseer" targetName="Example_CustomLoader" />
+      <config projectName="Effekseer" targetName="Example_Multithread" />
+      <config projectName="Effekseer" targetName="Example_DirectX9" />
+      <config projectName="Effekseer" targetName="Example_Distortion" />
+      <config projectName="Effekseer" targetName="ExternalProject_glfw" />
+      <config projectName="Effekseer" targetName="Example_NetworkServer" />
+      <config projectName="Effekseer" targetName="EffekseerSoundDSound" />
+    </generated>
   </component>
   <component name="CMakeSettings">
     <configurations>
@@ -13,31 +38,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/build.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/bevy/Cargo.lock" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/main.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/richrender.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/build.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +73,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" />
   </component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
@@ -103,27 +119,156 @@
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/target/debug" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/bevy/crates/bevy_gltf/src/loader.rs" value="true" />
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/rich_engine/src/terrain/terrain_mgr.rs" value="true" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="Console" />
   </component>
   <component name="ReaderModeSettings">
     <option name="enabled" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\learn\richrender\target\debug" />
       <recent name="D:\learn\richrender\assets\shaders" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\learn\richrender" />
+      <recent name="D:\learn\richrender\crates\rich_engine" />
       <recent name="D:\learn\richrender\assets\terrain\palette" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Cargo.Test vfx::tests::it_works">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Effekseer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Effekseer" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerRendererDX11" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerRendererDX11" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerRendererDX12" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerRendererDX12" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerRendererDX9" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerRendererDX9" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerRendererGL" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerRendererGL" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerSoundDSound" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerSoundDSound" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EffekseerSoundXAudio2" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="EffekseerSoundXAudio2" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_Culling" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_Culling" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_Culling">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_CustomLoader" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_CustomLoader" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_CustomLoader">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_DirectX11" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_DirectX11" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_DirectX11">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_DirectX12" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_DirectX12" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_DirectX12">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_DirectX9" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_DirectX9" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_DirectX9">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_Distortion" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_Distortion" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_Distortion">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_Multithread" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_Multithread" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_Multithread">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_NetworkClient" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_NetworkClient" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_NetworkClient">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_NetworkServer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_NetworkServer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_NetworkServer">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_OpenGL" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_OpenGL" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_OpenGL">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_SortHandle" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_SortHandle" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Effekseer" RUN_TARGET_NAME="Example_SortHandle">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Example_Utils" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Example_Utils" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExternalProject_glfw" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="ExternalProject_glfw" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="LLGI" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="LLGI" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package richrender --bin richrender  search_dirs &quot;assets/gltf&quot;" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test vfx::tests::it_works" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package rich_engine --lib vfx::tests::it_works -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="channel" value="DEFAULT" />
       <option name="requiredFeatures" value="true" />
@@ -143,6 +288,36 @@
         <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Cargo.Run richrender" />
+      <item itemvalue="Cargo.Test vfx::tests::it_works" />
+      <item itemvalue="CMake Application.ExternalProject_glfw" />
+      <item itemvalue="CMake Application.LLGI" />
+      <item itemvalue="CMake Application.Effekseer" />
+      <item itemvalue="CMake Application.EffekseerRendererDX11" />
+      <item itemvalue="CMake Application.EffekseerRendererDX12" />
+      <item itemvalue="CMake Application.EffekseerRendererDX9" />
+      <item itemvalue="CMake Application.EffekseerRendererGL" />
+      <item itemvalue="CMake Application.EffekseerSoundDSound" />
+      <item itemvalue="CMake Application.EffekseerSoundXAudio2" />
+      <item itemvalue="CMake Application.Example_Culling" />
+      <item itemvalue="CMake Application.Example_CustomLoader" />
+      <item itemvalue="CMake Application.Example_DirectX11" />
+      <item itemvalue="CMake Application.Example_DirectX12" />
+      <item itemvalue="CMake Application.Example_DirectX9" />
+      <item itemvalue="CMake Application.Example_Distortion" />
+      <item itemvalue="CMake Application.Example_Multithread" />
+      <item itemvalue="CMake Application.Example_NetworkClient" />
+      <item itemvalue="CMake Application.Example_NetworkServer" />
+      <item itemvalue="CMake Application.Example_OpenGL" />
+      <item itemvalue="CMake Application.Example_SortHandle" />
+      <item itemvalue="CMake Application.Example_Utils" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo.Test vfx::tests::it_works" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -192,7 +367,7 @@
       <workItem from="1637324542994" duration="150000" />
       <workItem from="1637656015184" duration="1872000" />
       <workItem from="1637719855750" duration="2124000" />
-      <workItem from="1637740458896" duration="673000" />
+      <workItem from="1637740458896" duration="7860000" />
     </task>
     <servers />
   </component>
