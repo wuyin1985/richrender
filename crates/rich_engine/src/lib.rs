@@ -13,6 +13,7 @@ mod render;
 mod game;
 mod terrain;
 mod core;
+mod vfx;
 
 pub mod prelude {
     pub use bevy::prelude::*;

@@ -246,7 +246,7 @@ fn create_texture_by_gltf_image_data(context: &mut RenderContext, upload_command
         .tiling(vk::ImageTiling::OPTIMAL)
         .build();
 
-    let rgba = build_rgba_buffer(&image);
+    let rgba = build_rgba_buffer(image);
 
     let texture = Texture::create_from_data(context, upload_command_buffer, &image_ci, &rgba);
     texture.cmd_transition_image_layout(context, upload_command_buffer, vk::ImageLayout::UNDEFINED, vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL);

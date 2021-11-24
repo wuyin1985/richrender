@@ -2,5 +2,9 @@
 /assets/spv/temp
 /assets/gltf/Sample
 /.idea
+/crates/rich_editor/target
+/crates/rich_engine/target
 
-/.idea/*.*
+**/.idea
+
+**/cmake-build-debug

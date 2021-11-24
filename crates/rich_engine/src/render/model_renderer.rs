@@ -19,8 +19,6 @@ use crate::render::forward_render::ForwardRenderPass;
 use crate::render::model_runtime::{ModelRuntime, ModelSkins};
 use crate::render::node::{Node, Nodes};
 
-const UBO_BINDING: u32 = 0;
-const COLOR_SAMPLER_BINDING: u32 = 1;
 
 pub struct ShadeNames {
     pub vertex: &'static str,
@@ -44,15 +42,10 @@ impl Default for ModelData {
     }
 }
 
-struct AnimationWithNodes {
-    animations: Animations,
-    nodes: Nodes,
-}
 
 pub struct ModelRenderer {
     model: Model,
     primitive_renders: Vec<PrimitiveRender>,
-    anim_nodes: Option<AnimationWithNodes>,
 }
 
 impl ModelRenderer {
@@ -79,16 +72,9 @@ impl ModelRenderer {
             }
         }
 
-        let mut anim_nodes = None;
-
-        if let Some(anim) = model.clone_animations() {
-            anim_nodes = Some(AnimationWithNodes { animations: anim, nodes: model.clone_nodes() });
-        }
-
         ModelRenderer {
             primitive_renders,
             model,
-            anim_nodes,
         }
     }
 
@@ -216,7 +202,7 @@ impl PrimitiveRender {
     fn create_descriptors(context: &mut RenderContext,
                           render_pass: &ForwardRenderPass,
                           material: &Material, model: &Model) -> (vk::DescriptorSetLayout, vk::DescriptorSet) {
-        let mut bindings = vec![
+        let bindings = vec![
             vk::DescriptorSetLayoutBinding::builder()
                 .binding(0)
                 .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)

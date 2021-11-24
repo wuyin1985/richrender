@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated />
+  </component>
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
@@ -10,13 +13,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/crates/rich_engine/src/core/destroy.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/build.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/bevy/Cargo.lock" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/main.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/richrender.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_runtime.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_runtime.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_editor/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_editor/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +51,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="GLSL Shader" />
+        <option value="CMakeLists.txt" />
         <option value="Rust File" />
       </list>
     </option>
@@ -46,17 +68,18 @@
     </file-type-list>
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/aabb.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/animation_system.rs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/crates/rich_editor/src/entity_list.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/game/map/mod.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/grass.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/bevy_ecs-0.5.0/src/system/query.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/fly_camera.rs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/model_renderer.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/camera.rs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/render_context.rs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MacroExpansionManager">
@@ -66,6 +89,7 @@
     <option name="selectedIndex" value="2" />
   </component>
   <component name="ProjectId" id="1z9vBPOWN2Np5O5saVouRASqifW" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -78,7 +102,8 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/assets/shaders" />
+    <property name="cmake.loaded.for.project" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/bevy/crates/bevy_gltf/src/loader.rs" value="true" />
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/rich_engine/src/terrain/terrain_mgr.rs" value="true" />
@@ -118,13 +143,6 @@
         <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Cargo.Expand rich_engine::render::node" />
-        <item itemvalue="Cargo.Expand rich_engine::render::node" />
-        <item itemvalue="Cargo.Expand rich_engine::render::node" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -164,7 +182,17 @@
       <workItem from="1635140325793" duration="12815000" />
       <workItem from="1635214329793" duration="3352000" />
       <workItem from="1635217726347" duration="23878000" />
-      <workItem from="1635300670558" duration="24881000" />
+      <workItem from="1635300670558" duration="26972000" />
+      <workItem from="1635388155974" duration="1205000" />
+      <workItem from="1635407686169" duration="5539000" />
+      <workItem from="1635941991169" duration="1000" />
+      <workItem from="1636771933986" duration="1913000" />
+      <workItem from="1636978610304" duration="204000" />
+      <workItem from="1637312604243" duration="2689000" />
+      <workItem from="1637324542994" duration="150000" />
+      <workItem from="1637656015184" duration="1872000" />
+      <workItem from="1637719855750" duration="2124000" />
+      <workItem from="1637740458896" duration="673000" />
     </task>
     <servers />
   </component>

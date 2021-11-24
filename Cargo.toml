@@ -11,3 +11,6 @@ rich_engine = { path = "crates/rich_engine" }
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[build-dependencies]
+bindgen = "0.59"

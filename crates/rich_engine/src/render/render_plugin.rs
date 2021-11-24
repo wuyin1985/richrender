@@ -103,7 +103,8 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             forward_render_pass.begin_shadow_pass(context, command_buffer);
 
             let mut list = Vec::new();
-            for (mut runtime, skins, handle, transform) in model_query.iter_mut() {
+            for (runtime, skins, handle, transform) in model_query.iter_mut() {
+
                 let model_renderer = context.get_model(handle);
                 if let Some(mr) = model_renderer {
                     mr.draw_shadow(context, command_buffer, &runtime, skins, &transform_query);
@@ -115,7 +116,7 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
             //draw
             forward_render_pass.begin_render_pass(context, command_buffer);
 
-            for (handle, skins, transform, runtime) in list {
+            for (handle, skins, _, runtime) in list {
                 let mr = context.get_model(handle).unwrap();
                 mr.draw(context, command_buffer, &runtime, skins, &transform_query);
             }

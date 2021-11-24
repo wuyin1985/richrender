@@ -1554,6 +1554,7 @@ dependencies = [
  "gltf",
  "image",
  "lazy_static",
+ "rand",
  "raw-window-handle",
  "serde 1.0.130",
  "serde_json 0.9.10",
