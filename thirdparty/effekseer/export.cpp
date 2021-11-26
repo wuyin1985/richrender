@@ -136,7 +136,7 @@ void Startup(void *vGraphic, void *vRenderPass) {
                                              ::Effekseer::Vector3D(0.0f, 1.0f, 0.0f)));
 
     // Load an effect
-    auto effect = Effekseer::Effect::Create(manager, u"Assets/test.efk", 1.0f, nullptr);
+    auto effect = Effekseer::Effect::Create(manager, u"assets/test.efk", 1.0f, nullptr);
     context->effect = effect;
 }
 

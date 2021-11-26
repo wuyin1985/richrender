@@ -39,19 +39,25 @@
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/build.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/build.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/LLGI.Texture.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/LLGI.Texture.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" afterDir="false" />
     </list>
@@ -73,7 +79,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
@@ -116,6 +122,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
@@ -124,7 +131,7 @@
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/bevy/crates/bevy_gltf/src/loader.rs" value="true" />
     <property name="org.rust.disableDetachedFileInspectionD:/learn/richrender/crates/rich_engine/src/terrain/terrain_mgr.rs" value="true" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="Console" />
+    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
   </component>
   <component name="ReaderModeSettings">
     <option name="enabled" value="false" />
@@ -140,12 +147,7 @@
       <recent name="D:\learn\richrender\assets\terrain\palette" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Test vfx::tests::it_works">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="Cargo.Run richrender">
     <configuration name="Effekseer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="Effekseer" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -247,6 +249,11 @@
       </method>
     </configuration>
     <configuration name="LLGI" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Effekseer" TARGET_NAME="LLGI" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -367,7 +374,8 @@
       <workItem from="1637324542994" duration="150000" />
       <workItem from="1637656015184" duration="1872000" />
       <workItem from="1637719855750" duration="2124000" />
-      <workItem from="1637740458896" duration="7860000" />
+      <workItem from="1637740458896" duration="29717000" />
+      <workItem from="1637916832980" duration="6375000" />
     </task>
     <servers />
   </component>
@@ -384,9 +392,26 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.RenderPassPipelineStateCacheVulkan.cpp</url>
+          <line>86</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="CargoCommandRunConfiguration">
-        <watch expression="runtime-&gt;data.is_some()" language="Rust" />
+        <watch expression="depth_texture.get_format()" language="Rust" />
+        <watch expression="depth_texture-&gt;get_format().as_raw()" language="Rust" />
       </configuration>
     </watches-manager>
   </component>

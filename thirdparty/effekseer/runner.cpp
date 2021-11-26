@@ -12,7 +12,10 @@
 #include <Vulkan/LLGI.GraphicsVulkan.h>
 #include <Vulkan/LLGI.TextureVulkan.h>
 
+typedef struct Test_T22 *testT;
+
 void RunWithPlatform() {
+
     int32_t windowWidth = 1280;
     int32_t windowHeight = 720;
 
@@ -44,12 +47,44 @@ void RunWithPlatform() {
     Shutdown();
 }
 
-int StartupWithExternalVulkan(void *vk_device, void *vk_phy_device,
-                              void *vk_queue, void *vk_command_pool,
+void get_image_and_view(ShareTexture &texture, vk::Image &image, vk::ImageView &view) {
+    auto imageHandle = (VkImage) texture.image;
+    auto imageViewHandle = (VkImageView) texture.view;
+
+    image = vk::Image(imageHandle);
+    view = vk::ImageView(imageViewHandle);
+}
+
+int StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device,
+                              uint64_t vk_queue, uint64_t vk_command_pool,
                               ShareTexture color, ShareTexture depth) {
 
-    auto vkQueue = *reinterpret_cast<const vk::Queue *>(vk_queue);
-    auto vkDevice = *reinterpret_cast<const vk::Device *>(vk_device);
+    auto vkQueueHandle = (VkQueue) vk_queue;
+    auto vkDeviceHandle = (VkDevice) vk_device;
+    auto vkPhyDeviceHandle = (VkPhysicalDevice) vk_phy_device;
+    //auto vkCommandPoolHandle = (VkCommandPool) vk_command_pool;
+
+    auto vkQueue = vk::Queue(vkQueueHandle);
+    auto vkDevice = vk::Device(vkDeviceHandle);
+    auto vkPhyDevice = vk::PhysicalDevice(vkPhyDeviceHandle);
+    //auto vkCommandPool = vk::CommandPool(vkCommandPoolHandle);
+
+    vk::CommandPoolCreateInfo cmdPoolInfo;
+    cmdPoolInfo.queueFamilyIndex = 0;
+    cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    auto vkCommandPool = vkDevice.createCommandPool(cmdPoolInfo);
+
+    auto queueFamilyProperties = vkPhyDevice.getQueueFamilyProperties();
+    int graphicsQueueInd = -1;
+
+    for (size_t i = 0; i < queueFamilyProperties.size(); i++) {
+        auto &queueProp = queueFamilyProperties[i];
+        if (queueProp.queueFlags &
+            vk::QueueFlagBits::eGraphics /* && vkPhysicalDevice.getSurfaceSupportKHR(i, surface_)*/) {
+            graphicsQueueInd = static_cast<int32_t>(i);
+            break;
+        }
+    }
 
     auto addCommand = [vkQueue](vk::CommandBuffer commandBuffer, vk::Fence fence) -> void {
         std::array<vk::SubmitInfo, 1> copySubmitInfos;
@@ -59,12 +94,11 @@ int StartupWithExternalVulkan(void *vk_device, void *vk_phy_device,
                        fence);
     };
 
-
     auto graphics = new LLGI::GraphicsVulkan(
             vkDevice,
             vkQueue,
-            *reinterpret_cast<const vk::CommandPool *>(vk_command_pool),
-            *reinterpret_cast<const vk::PhysicalDevice *>(vk_phy_device),
+            vkCommandPool,
+            vkPhyDevice,
             1,
             addCommand,
             nullptr,
@@ -72,28 +106,41 @@ int StartupWithExternalVulkan(void *vk_device, void *vk_phy_device,
 
     auto colorTexture = new LLGI::TextureVulkan();
     auto colorSize = LLGI::Vec2I(color.width, color.height);
-    colorTexture->InitializeAsScreen(
-            *reinterpret_cast<vk::Image *>(color.image),
-            *reinterpret_cast<vk::ImageView *>(color.view),
-            static_cast<vk::Format>(color.format),
-            colorSize);
+
+    {
+        vk::Image image;
+        vk::ImageView view;
+        get_image_and_view(color, image, view);
+
+        colorTexture->InitializeAsScreen(
+                image,
+                view,
+                static_cast<vk::Format>(color.format),
+                colorSize);
+
+        colorTexture->SetType(LLGI::TextureType::Render);
+    }
 
     auto depthTexture = new LLGI::TextureVulkan();
+
     auto depthSize = LLGI::Vec2I(depth.width, depth.height);
-    depthTexture->InitializeAsScreen(
-            *reinterpret_cast<vk::Image *>(depth.image),
-            *reinterpret_cast<vk::ImageView *>(depth.view),
-            static_cast<vk::Format>(depth.format),
-            depthSize);
 
-    auto renderPass = new LLGI::RenderPassVulkan(nullptr, vkDevice, nullptr);
+    {
 
-    std::array<LLGI::TextureVulkan *, 1> textures;
-    textures[0] = colorTexture;
-    renderPass->Initialize(const_cast<const LLGI::TextureVulkan **>(textures.data()), 1,
-                           depthTexture, nullptr, nullptr);
+        vk::Image image;
+        vk::ImageView view;
+        get_image_and_view(depth, image, view);
 
+        depthTexture->InitializeAsDepthExternal(
+                image,
+                view,
+                static_cast<vk::Format>(depth.format),
+                depthSize);
 
+        depthTexture->SetType(LLGI::TextureType::Depth);
+    }
+
+    auto renderPass = graphics->CreateRenderPass(colorTexture, nullptr, depthTexture, nullptr);
     Startup(graphics, renderPass);
     return 0;
 }

@@ -48,6 +48,7 @@ pub use animation_system::*;
 pub use camera::Camera;
 pub use camera::CameraOpEvent;
 pub use render_plugin::RenderCamera;
+pub use command_buffer_list::CommandBufferList;
 
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]

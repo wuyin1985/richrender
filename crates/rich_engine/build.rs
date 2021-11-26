@@ -2,13 +2,9 @@ use std::env;
 use std::path::PathBuf;
 
 fn build_effect_binding() {
-
-
     let export_h = "./../../thirdparty/effekseer/include/export.hpp";
-
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed='{}'",export_h);
-
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.

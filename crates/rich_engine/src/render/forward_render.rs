@@ -75,7 +75,8 @@ impl ForwardRenderPass {
                 Texture::create_as_render_target(context, context.window_width,
                                                  context.window_height, render_config.color_format,
                                                  msaa,
-                                                 vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE | vk::ImageUsageFlags::TRANSFER_SRC,
+                                                 vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::STORAGE |
+                                                     vk::ImageUsageFlags::TRANSFER_SRC | vk::ImageUsageFlags::SAMPLED,
                                                  "color_render_texture", vk::ImageCreateFlags::empty());
 
             let color_view = color_texture.create_color_view(context);
@@ -313,8 +314,16 @@ impl ForwardRenderPass {
         self.color_view
     }
 
+    pub fn get_color_texture(&self) -> &Texture {
+        &self.color_texture
+    }
+
     pub fn get_depth_view(&self) -> vk::ImageView {
         self.depth_view
+    }
+
+    pub fn get_depth_texture(&self) -> &Texture {
+        &self.depth_texture
     }
 
     pub fn get_native_render_pass(&self) -> vk::RenderPass {

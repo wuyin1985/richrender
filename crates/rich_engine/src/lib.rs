@@ -48,7 +48,7 @@ pub use crate::render::AnimCommand;
 pub use crate::render::gltf_asset_loader::GltfAsset;
 pub use crate::render::Camera;
 pub use crate::render::RenderCamera;
-use crate::vfx::test_vfx;
+use crate::vfx::VfxPlugin;
 
 
 pub struct DisplayName {
@@ -111,6 +111,7 @@ pub fn startup(info: ExternalStartupInfo, args: Vec<String>) {
     app.add_plugins(DefaultPlugins)
         .add_plugin(CorePlugin {})
         .add_plugin(RenderPlugin {})
+        .add_plugin(VfxPlugin {})
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default());
 
     for p in info.external_plugins {

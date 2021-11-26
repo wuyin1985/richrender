@@ -2,11 +2,11 @@
 name = "rich_engine"
 version = "0.1.0"
 edition = "2018"
+links = "RichEffekseer"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
 bevy = { path = "../bevy", features = ["bevy_winit"], default-features = false }
 ash = "0.33"
 ash-window = "0.7"

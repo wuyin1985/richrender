@@ -80,5 +80,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 
 add_custom_command(TARGET RichEffekseer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/RichEffekseer.dll ../../../lib/RichEffekseer.dll
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/RichEffekseer.dll ../../../target/debug/RichEffekseer.dll
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/RichEffekseer.pdb ../../../lib/RichEffekseer.pdb
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/RichEffekseer.pdb ../../../target/debug/RichEffekseer.pdb
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/RichEffekseer.lib ../../../lib/RichEffekseer.lib
         )

@@ -69,8 +69,8 @@ pub type CEffekseerManager = *mut ::std::os::raw::c_void;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ShareTexture {
-    pub image: *mut ::std::os::raw::c_void,
-    pub view: *mut ::std::os::raw::c_void,
+    pub image: u64,
+    pub view: u64,
     pub format: i32,
     pub width: i32,
     pub height: i32,
@@ -152,10 +152,10 @@ extern "C" {
 }
 extern "C" {
     pub fn StartupWithExternalVulkan(
-        vk_device: *mut ::std::os::raw::c_void,
-        vk_phy_device: *mut ::std::os::raw::c_void,
-        vk_queue: *mut ::std::os::raw::c_void,
-        vk_command_pool: *mut ::std::os::raw::c_void,
+        vk_device: u64,
+        vk_phy_device: u64,
+        vk_queue: u64,
+        vk_command_pool: u64,
         color: ShareTexture,
         depth: ShareTexture,
     ) -> ::std::os::raw::c_int;

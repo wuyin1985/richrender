@@ -45,4 +45,6 @@ impl CommandBufferList {
     pub fn get_upload_command_buffer(&self) -> vk::CommandBuffer {
         self.commands[self.commands.len() - 1]
     }
+
+    pub fn get_command_pool(&self) -> vk::CommandPool { self.command_pool }
 }

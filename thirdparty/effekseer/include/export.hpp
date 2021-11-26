@@ -15,8 +15,8 @@ extern "C" {
 #endif
 
 typedef struct {
-    void *image;
-    void *view;
+    uint64_t image;
+    uint64_t view;
     int32_t format;
     int32_t width;
     int32_t height;
@@ -31,8 +31,8 @@ __declspec( dllexport ) void UpdateFrame(void *renderPass);
 
 __declspec( dllexport ) void Shutdown();
 
-__declspec( dllexport ) int StartupWithExternalVulkan(void *vk_device, void *vk_phy_device,
-                                                      void *vk_queue, void *vk_command_pool,
+__declspec( dllexport ) int StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device,
+                                                      uint64_t vk_queue, uint64_t vk_command_pool,
                                                       ShareTexture color, ShareTexture depth);
 
 __declspec( dllexport ) int32_t TestCall(int32_t input);
