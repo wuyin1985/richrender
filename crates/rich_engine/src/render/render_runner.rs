@@ -43,7 +43,7 @@ impl RenderRunner {
                                                                        vk::DescriptorType::UNIFORM_BUFFER,
                                                                        vk::ShaderStageFlags::VERTEX |
                                                                            vk::ShaderStageFlags::FRAGMENT |
-                                                                           vk::ShaderStageFlags::TESSELLATION_EVALUATION|
+                                                                           vk::ShaderStageFlags::TESSELLATION_EVALUATION |
                                                                            vk::ShaderStageFlags::COMPUTE);
             context.per_frame_uniform = Some(per_frame_data);
             //context.push_resource(per_frame_data);
@@ -241,20 +241,46 @@ impl RenderRunner {
             }
         }
 
+        //recover color layout
+        {
+            let image_barriers = [
+                vk::ImageMemoryBarrier::builder().image(self.forward_render_pass.get_final_render_image())
+                    .src_access_mask(vk::AccessFlags::MEMORY_WRITE).dst_access_mask(vk::AccessFlags::MEMORY_READ)
+                    .old_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
+                    .new_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+                    .subresource_range(vk::ImageSubresourceRange {
+                        aspect_mask: vk::ImageAspectFlags::COLOR,
+                        base_mip_level: 0,
+                        level_count: 1,
+                        base_array_layer: 0,
+                        layer_count: 1,
+                    }).build(),
+            ];
+
+            unsafe {
+                self.context.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
+                                                         vk::PipelineStageFlags::ALL_COMMANDS,
+                                                         vk::DependencyFlags::empty(), &[], &[],
+                                                         &image_barriers);
+            }
+        }
+
+
         unsafe {
             self.context.device.end_command_buffer(command_buffer);
         }
 
+        let mut command_buffers = vec![command_buffer];
         let submit_info = vk::SubmitInfo::builder()
             .wait_semaphores(&[present_image_available_semaphore]).wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
-            .command_buffers(&[command_buffer]).signal_semaphores(&[render_finish_semaphore]).build();
+            .command_buffers(&command_buffers).signal_semaphores(&[render_finish_semaphore]).build();
 
         unsafe {
             self.context.device.queue_submit(self.context.graphics_queue, &[submit_info], cmd_buf_execute_fence);
         }
 
         #[cfg(feature = "statistic")]
-        self.context.statistic.require_results(&self.context.device);
+            self.context.statistic.require_results(&self.context.device);
 
         self.swapchain_mgr.present(&self.context);
     }

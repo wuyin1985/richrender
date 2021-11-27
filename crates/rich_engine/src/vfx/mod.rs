@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::ffi::c_void;
-use std::ops::DerefMut;
+use std::ops::{Deref, DerefMut};
 use ash::vk::Handle;
 use bevy::ecs::system::LocalState;
 
@@ -16,7 +16,7 @@ struct Vfx
     id: i32,
 }
 
-fn startup_vfx_system(runner: &RenderRunner) {
+fn startup_vfx_system(runner: & RenderRunner) {
     use ash::vk::Handle;
     use std::ffi::c_void;
 
@@ -54,8 +54,8 @@ fn startup_vfx_system(runner: &RenderRunner) {
     let command_pool = command_list.get_command_pool().as_raw();
 
     unsafe {
-        crate::vfx::bindings::StartupWithExternalVulkan(device, phy_device, queue, command_pool, color, depth);
-    }
+        crate::vfx::bindings::StartupWithExternalVulkan(device, phy_device, queue, command_pool, color, depth)
+    };
 }
 
 #[derive(Debug, Default)]
@@ -63,13 +63,13 @@ struct VfxSystemState {
     inited: bool,
 }
 
-fn init_vfx(mut state: ResMut<VfxSystemState>, mut render_runner: Option<ResMut<RenderRunner>>, time: Res<Time>)
+fn init_vfx(mut state: ResMut<VfxSystemState>, render_runner: Option<Res<RenderRunner>>, time: Res<Time>)
 {
     if render_runner.is_none() {
         return;
     }
     let mut render_runner = render_runner.unwrap();
-    let render_runner = render_runner.deref_mut();
+    let render_runner = render_runner.deref();
 
     if !state.inited {
         startup_vfx_system(render_runner);
@@ -77,7 +77,7 @@ fn init_vfx(mut state: ResMut<VfxSystemState>, mut render_runner: Option<ResMut<
     }
 }
 
-fn update_vfx(mut state: ResMut<VfxSystemState>, time: Res<Time>)
+fn update_vfx(mut state: ResMut<VfxSystemState>, time: Res<Time>, render_runner: Option<Res<RenderRunner>>)
 {
     if !state.inited {
         return;
@@ -85,7 +85,10 @@ fn update_vfx(mut state: ResMut<VfxSystemState>, time: Res<Time>)
 
     unsafe {
         let p = 0 as *mut c_void;
-        crate::vfx::bindings::UpdateFrame(p);
+        let mut render_runner = render_runner.unwrap();
+        let command_buffer = render_runner.get_current_command_buffer().unwrap();
+
+        crate::vfx::bindings::UpdateFrame(p, command_buffer.as_raw());
     }
 }
 
@@ -101,7 +104,7 @@ impl Plugin for VfxPlugin {
         );
 
         app.add_system_to_stage(
-            RenderStage::Draw,
+            RenderStage::PostDraw,
             update_vfx.system(),
         );
     }

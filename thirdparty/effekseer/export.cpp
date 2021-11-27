@@ -15,23 +15,19 @@ VkQueue GetVkQueue();
 
 VkCommandPool GetVkCommandPool();
 
-VkCommandBuffer GetCommandList();
-
-int GetSwapBufferCount();
-
 
 #include <LLGI.Graphics.h>
 #include <LLGI.Platform.h>
 #include <Utils/LLGI.CommandListPool.h>
 #include <Vulkan/LLGI.CommandListVulkan.h>
 #include <Vulkan/LLGI.GraphicsVulkan.h>
+#include <Vulkan/LLGI.TextureVulkan.h>
 
 struct ContextLLGI {
     LLGI::Graphics *graphics;
     LLGI::RenderPass *renderPass;
     std::shared_ptr<LLGI::SingleFrameMemoryPool> memoryPool;
     std::shared_ptr<LLGI::CommandListPool> commandListPool;
-    LLGI::CommandList *commandList = nullptr;
     Effekseer::RefPtr<EffekseerRenderer::CommandList> commandListEfk;
     Effekseer::RefPtr<EffekseerRenderer::Renderer> renderer;
     Effekseer::RefPtr<Effekseer::Manager> manager;
@@ -57,36 +53,20 @@ VkCommandPool GetVkCommandPool() {
     return static_cast<VkCommandPool>(static_cast<LLGI::GraphicsVulkan *>(context->graphics)->GetCommandPool());
 }
 
-VkCommandBuffer GetCommandList() {
-    return static_cast<VkCommandBuffer>(static_cast<LLGI::CommandListVulkan *>(context->commandList)->GetCommandBuffer());
-}
-
-int GetSwapBufferCount() { return 3; }
-
-
-void Startup(void *vGraphic, void *vRenderPass) {
+void Startup(LLGI::Graphics *vGraphic, int32_t swap_buffer_count,
+             ::EffekseerRendererVulkan::RenderPassInformation &renderPassInfo) {
     context = std::make_shared<ContextLLGI>();
-    context->graphics = reinterpret_cast<LLGI::Graphics *>(vGraphic);
+    context->graphics = vGraphic;
     context->time = 0;
-
-    if (vRenderPass != nullptr) {
-        context->renderPass = reinterpret_cast<LLGI::RenderPass *>(vRenderPass);
-    }
-
     context->memoryPool = LLGI::CreateSharedPtr(
             context->graphics->CreateSingleFrameMemoryPool(1024 * 1024, 128));
     context->commandListPool = std::make_shared<LLGI::CommandListPool>(context->graphics,
                                                                        context->memoryPool.get(),
-                                                                       3);
+                                                                       swap_buffer_count);
 
-    ::EffekseerRendererVulkan::RenderPassInformation renderPassInfo;
-    renderPassInfo.DoesPresentToScreen = true;
-    renderPassInfo.RenderTextureCount = 1;
-    renderPassInfo.RenderTextureFormats[0] = VK_FORMAT_B8G8R8A8_UNORM;
-    renderPassInfo.DepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
     auto renderer = ::EffekseerRendererVulkan::Create(
             GetVkPhysicalDevice(), GetVkDevice(), GetVkQueue(), GetVkCommandPool(),
-            GetSwapBufferCount(), renderPassInfo, 8000);
+            swap_buffer_count, renderPassInfo, 8000);
     context->renderer = renderer;
 
     auto sfMemoryPoolEfk = EffekseerRenderer::CreateSingleFrameMemoryPool(
@@ -151,7 +131,7 @@ void Shutdown() {
 }
 
 
-void UpdateFrame(void *vRenderPass) {
+void UpdateFrame(void *vRenderPass, uint64_t externalCommandBufferHandle) {
     LLGI::RenderPass *renderPass = context->renderPass;
     if (vRenderPass != nullptr) {
         renderPass = reinterpret_cast<LLGI::RenderPass *>(vRenderPass);
@@ -159,25 +139,26 @@ void UpdateFrame(void *vRenderPass) {
 
     context->memoryPool->NewFrame();
 
-    context->commandList = context->commandListPool->Get();
+    auto commandList = context->commandListPool->Get();
 
-    LLGI::Color8 color;
-    color.R = 0;
-    color.G = 0;
-    color.B = 0;
-    color.A = 255;
+    auto vulkanList = static_cast<LLGI::CommandListVulkan *>(commandList);
 
-    context->commandList->Begin();
+    if(externalCommandBufferHandle != 0)
+    {
+        auto handle = (VkCommandBuffer) externalCommandBufferHandle;
+        auto vkCommandBuffer = vk::CommandBuffer(handle);
+        vulkanList->SetExternalCommandBuffer(vkCommandBuffer);
+    }
 
-    renderPass->SetClearColor(color);
-    renderPass->SetIsColorCleared(true);
-    renderPass->SetIsDepthCleared(true);
+    commandList->Begin();
 
-    context->commandList->BeginRenderPass(renderPass);
+    commandList->BeginRenderPass(renderPass);
 
     context->sfMemoryPoolEfk->NewFrame();
 
-    EffekseerRendererVulkan::BeginCommandList(context->commandListEfk, GetCommandList());
+    auto commandBuffer = static_cast<VkCommandBuffer>(vulkanList->GetCommandBuffer());
+
+    EffekseerRendererVulkan::BeginCommandList(context->commandListEfk, commandBuffer);
     context->renderer->SetCommandList(context->commandListEfk);
 
     auto manager = context->manager;
@@ -210,12 +191,161 @@ void UpdateFrame(void *vRenderPass) {
 
     EffekseerRendererVulkan::EndCommandList(context->commandListEfk);
 
-    context->commandList->EndRenderPass();
+    commandList->EndRenderPass();
 
-    context->commandList->End();
+    commandList->End();
 
-    context->graphics->Execute(context->commandList);
+    context->graphics->Execute(commandList);
 
     context->time = time + 1;
 }
 
+void RunWithPlatform() {
+
+    int32_t windowWidth = 1280;
+    int32_t windowHeight = 720;
+
+    LLGI::PlatformParameter platformParam{};
+    platformParam.Device = LLGI::DeviceType::Vulkan;
+    platformParam.WaitVSync = true;
+    auto window = std::shared_ptr<LLGI::Window>(
+            LLGI::CreateWindow("Vulkan", LLGI::Vec2I(windowWidth, windowHeight)));
+
+    auto platform = LLGI::CreateSharedPtr(
+            LLGI::CreatePlatform(platformParam, window.get()));
+
+    auto graphics = LLGI::CreateSharedPtr(platform->CreateGraphics());
+
+    ::EffekseerRendererVulkan::RenderPassInformation renderPassInfo;
+    renderPassInfo.DoesPresentToScreen = true;
+    renderPassInfo.RenderTextureCount = 1;
+    renderPassInfo.RenderTextureFormats[0] = VK_FORMAT_B8G8R8A8_UNORM;
+    renderPassInfo.DepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    Startup(graphics.get(), 3, renderPassInfo);
+
+    LLGI::Color8 color;
+    color.R = 0;
+    color.G = 0;
+    color.B = 0;
+    color.A = 255;
+
+    while (platform->NewFrame()) {
+        auto renderPass = platform->GetCurrentScreen(color, true, true);
+        UpdateFrame(renderPass, 0);
+        platform->Present();
+    }
+
+    Shutdown();
+}
+
+void get_image_and_view(ShareTexture &texture, vk::Image &image, vk::ImageView &view) {
+    auto imageHandle = (VkImage) texture.image;
+    auto imageViewHandle = (VkImageView) texture.view;
+
+    image = vk::Image(imageHandle);
+    view = vk::ImageView(imageViewHandle);
+}
+
+uint64_t StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device, uint64_t vk_queue,
+                                   uint64_t vk_command_pool, ShareTexture color,
+                                   ShareTexture depth) {
+
+    LLGI::CommandListVulkan::UseExternalCommandBuffer = true;
+
+    auto vkQueueHandle = (VkQueue) vk_queue;
+    auto vkDeviceHandle = (VkDevice) vk_device;
+    auto vkPhyDeviceHandle = (VkPhysicalDevice) vk_phy_device;
+    //   auto vkCommandPoolHandle = (VkCommandPool) vk_command_pool;
+
+    auto vkQueue = vk::Queue(vkQueueHandle);
+    auto vkDevice = vk::Device(vkDeviceHandle);
+    auto vkPhyDevice = vk::PhysicalDevice(vkPhyDeviceHandle);
+    // auto vkCommandPool = vk::CommandPool(vkCommandPoolHandle);
+
+    vk::CommandPoolCreateInfo cmdPoolInfo;
+    cmdPoolInfo.queueFamilyIndex = 0;
+    cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    auto vkCommandPool = vkDevice.createCommandPool(cmdPoolInfo);
+
+    auto addCommand = [vkQueue](vk::CommandBuffer commandBuffer, vk::Fence fence) -> void {
+//        std::array<vk::SubmitInfo, 1> copySubmitInfos;
+//        copySubmitInfos[0].commandBufferCount = 1;
+//        copySubmitInfos[0].pCommandBuffers = &commandBuffer;
+//        vkQueue.submit(static_cast<uint32_t>(copySubmitInfos.size()), copySubmitInfos.data(),
+//                       fence);
+    };
+
+    auto graphics = new LLGI::GraphicsVulkan(
+            vkDevice,
+            vkQueue,
+            vkCommandPool,
+            vkPhyDevice,
+            3,
+            addCommand,
+            nullptr,
+            nullptr);
+
+    auto colorTexture = new LLGI::TextureVulkan();
+    auto colorSize = LLGI::Vec2I(color.width, color.height);
+
+    {
+        vk::Image image;
+        vk::ImageView view;
+        get_image_and_view(color, image, view);
+
+        colorTexture->InitializeAsScreen(
+                image,
+                view,
+                static_cast<vk::Format>(color.format),
+                colorSize);
+
+        colorTexture->SetType(LLGI::TextureType::Render);
+    }
+
+    auto depthTexture = new LLGI::TextureVulkan();
+
+    auto depthSize = LLGI::Vec2I(depth.width, depth.height);
+
+    {
+
+        vk::Image image;
+        vk::ImageView view;
+        get_image_and_view(depth, image, view);
+
+        depthTexture->InitializeAsDepthExternal(
+                image,
+                view,
+                static_cast<vk::Format>(depth.format),
+                depthSize);
+
+        depthTexture->SetType(LLGI::TextureType::Depth);
+    }
+
+
+    ::EffekseerRendererVulkan::RenderPassInformation renderPassInfo;
+    renderPassInfo.DoesPresentToScreen = false;
+    renderPassInfo.RenderTextureCount = 1;
+    renderPassInfo.RenderTextureFormats[0] = static_cast<VkFormat>(color.format);
+    renderPassInfo.DepthFormat = static_cast<VkFormat>(depth.format);
+
+    Startup(graphics, 1, renderPassInfo);
+
+    auto renderPass = graphics->CreateRenderPass(colorTexture, nullptr, depthTexture, nullptr);
+
+    LLGI::Color8 colorClear;
+    colorClear.R = 0;
+    colorClear.G = 0;
+    colorClear.B = 0;
+    colorClear.A = 255;
+
+    renderPass->SetClearColor(colorClear);
+    renderPass->SetIsColorCleared(false);
+    renderPass->SetIsDepthCleared(false);
+
+    context->renderPass = renderPass;
+    return 0;
+}
+
+int32_t TestCall(int32_t input) {
+    return input + 1;
+}

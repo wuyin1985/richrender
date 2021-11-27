@@ -40,12 +40,9 @@
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/build.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/command_buffer_list.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/forward_render.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
@@ -55,11 +52,14 @@
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/LLGI.Texture.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/LLGI.Texture.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.CommandListVulkan.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.CommandListVulkan.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.CommandListVulkan.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.CommandListVulkan.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.RenderPassPipelineStateCacheVulkan.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.RenderPassPipelineStateCacheVulkan.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,6 +106,9 @@
   </component>
   <component name="MacroExpansionManager">
     <option name="directoryName" value="xm8ud3l5" />
+  </component>
+  <component name="OCResolveContextSettings">
+    <option name="configuration" value="0-Debug-LLGI" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedIndex" value="2" />
@@ -375,7 +378,7 @@
       <workItem from="1637656015184" duration="1872000" />
       <workItem from="1637719855750" duration="2124000" />
       <workItem from="1637740458896" duration="29717000" />
-      <workItem from="1637916832980" duration="6375000" />
+      <workItem from="1637916832980" duration="31479000" />
     </task>
     <servers />
   </component>
@@ -393,13 +396,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.RenderPassPipelineStateCacheVulkan.cpp</url>
-          <line>86</line>
-          <option name="timeStamp" value="31" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -412,6 +408,9 @@
       <configuration name="CargoCommandRunConfiguration">
         <watch expression="depth_texture.get_format()" language="Rust" />
         <watch expression="depth_texture-&gt;get_format().as_raw()" language="Rust" />
+        <watch expression="imageVew.format" language="ObjectiveC" />
+        <watch expression="command_buffer_handle" language="Rust" />
+        <watch expression="runner-&gt;addition_command_buffer" />
       </configuration>
     </watches-manager>
   </component>

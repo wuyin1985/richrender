@@ -96,9 +96,12 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
 
             let forward_render_pass = &runner.forward_render_pass;
 
-            runner.grass.compute_grass_data(context);
+            if runner.grass.enable_draw {
+                runner.grass.compute_grass_data(context);
 
-            runner.grass.cmd_barrier(context, command_buffer);
+                runner.grass.cmd_barrier(context, command_buffer);
+            }
+
             //shadow
             forward_render_pass.begin_shadow_pass(context, command_buffer);
 
@@ -339,7 +342,8 @@ impl Plugin for RenderPlugin {
         app.add_stage_after(CoreStage::PostUpdate, RenderStage::PrepareDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::PrepareDraw, RenderStage::BeginDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::BeginDraw, RenderStage::Draw, SystemStage::parallel());
-        app.add_stage_after(RenderStage::Draw, RenderStage::EndDraw, SystemStage::parallel());
+        app.add_stage_after(RenderStage::Draw, RenderStage::PostDraw, SystemStage::parallel());
+        app.add_stage_after(RenderStage::PostDraw, RenderStage::EndDraw, SystemStage::parallel());
 
         app.add_system_to_stage(RenderStage::PrepareDraw, Camera::update_camera_op_event_system.system());
         app.add_system_to_stage(RenderStage::PrepareDraw, render_system.exclusive_system());

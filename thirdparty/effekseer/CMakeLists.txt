@@ -28,7 +28,7 @@ find_package(Vulkan REQUIRED)
 
 add_subdirectory(Effekseer)
 
-add_library(${RichEffekseerLibName} SHARED export.cpp runner.cpp)
+add_library(${RichEffekseerLibName} SHARED export.cpp)
 
 message(STATUS "root : ${EFK_RUNTIME_ROOT}")
 

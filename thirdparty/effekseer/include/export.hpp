@@ -24,16 +24,14 @@ typedef struct {
 
 __declspec( dllexport ) void RunWithPlatform();
 
-
-__declspec( dllexport ) void Startup(void *graphic, void *renderPass);
-
-__declspec( dllexport ) void UpdateFrame(void *renderPass);
+__declspec( dllexport ) void UpdateFrame(void *renderPass, uint64_t externalCommandBufferHandle);
 
 __declspec( dllexport ) void Shutdown();
 
-__declspec( dllexport ) int StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device,
-                                                      uint64_t vk_queue, uint64_t vk_command_pool,
-                                                      ShareTexture color, ShareTexture depth);
+__declspec( dllexport ) uint64_t
+StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device,
+                          uint64_t vk_queue, uint64_t
+                          vk_command_pool, ShareTexture color, ShareTexture depth);
 
 __declspec( dllexport ) int32_t TestCall(int32_t input);
 

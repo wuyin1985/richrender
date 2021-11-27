@@ -9,5 +9,5 @@ edition = "2018"
 rich_editor = { path = "crates/rich_editor", features = ["manage_clipboard"] }
 rich_engine = { path = "crates/rich_engine" }
 
-[profile.dev.package."*"]
-opt-level = 3
+#[profile.dev.package."*"]
+#opt-level = 3

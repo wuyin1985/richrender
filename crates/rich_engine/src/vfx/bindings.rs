@@ -142,10 +142,7 @@ extern "C" {
     pub fn RunWithPlatform();
 }
 extern "C" {
-    pub fn Startup(graphic: *mut ::std::os::raw::c_void, renderPass: *mut ::std::os::raw::c_void);
-}
-extern "C" {
-    pub fn UpdateFrame(renderPass: *mut ::std::os::raw::c_void);
+    pub fn UpdateFrame(renderPass: *mut ::std::os::raw::c_void, externalCommandBufferHandle: u64);
 }
 extern "C" {
     pub fn Shutdown();
@@ -158,7 +155,7 @@ extern "C" {
         vk_command_pool: u64,
         color: ShareTexture,
         depth: ShareTexture,
-    ) -> ::std::os::raw::c_int;
+    ) -> u64;
 }
 extern "C" {
     pub fn TestCall(input: i32) -> i32;
