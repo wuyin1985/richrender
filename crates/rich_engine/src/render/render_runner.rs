@@ -241,31 +241,6 @@ impl RenderRunner {
             }
         }
 
-        //recover color layout
-        {
-            let image_barriers = [
-                vk::ImageMemoryBarrier::builder().image(self.forward_render_pass.get_final_render_image())
-                    .src_access_mask(vk::AccessFlags::MEMORY_WRITE).dst_access_mask(vk::AccessFlags::MEMORY_READ)
-                    .old_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
-                    .new_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-                    .subresource_range(vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        base_mip_level: 0,
-                        level_count: 1,
-                        base_array_layer: 0,
-                        layer_count: 1,
-                    }).build(),
-            ];
-
-            unsafe {
-                self.context.device.cmd_pipeline_barrier(command_buffer, vk::PipelineStageFlags::ALL_COMMANDS,
-                                                         vk::PipelineStageFlags::ALL_COMMANDS,
-                                                         vk::DependencyFlags::empty(), &[], &[],
-                                                         &image_barriers);
-            }
-        }
-
-
         unsafe {
             self.context.device.end_command_buffer(command_buffer);
         }
