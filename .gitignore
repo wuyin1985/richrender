@@ -1,6 +1,5 @@
 /target
-/assets/spv/temp
-/assets/gltf/Sample
+/assets
 /.idea
 /crates/rich_editor/target
 /crates/rich_engine/target
