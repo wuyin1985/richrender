@@ -6,6 +6,6 @@
 /crates/rich_engine/target
 /lib
 
-**/.idea
+*/**/.idea
 
 **/cmake-build-debug
