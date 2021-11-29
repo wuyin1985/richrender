@@ -39,13 +39,6 @@
   <component name="ChangeListManager">
     <list default="true" id="7acc5a68-14ed-4f0a-a8bb-16ca6b175b7f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_plugin.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/render/render_runner.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/bindings.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/rich_engine/src/vfx/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/CMakeLists.txt" afterDir="false" />
@@ -58,8 +51,6 @@
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/Effekseer/Dev/Cpp/3rdParty/LLGI/src/Vulkan/LLGI.TextureVulkan.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/export.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/thirdparty/effekseer/include/export.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/thirdparty/effekseer/runner.cpp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -256,11 +247,6 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Run richrender" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package richrender --bin richrender  search_dirs &quot;assets/gltf&quot;" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -379,6 +365,7 @@
       <workItem from="1637719855750" duration="2124000" />
       <workItem from="1637740458896" duration="29717000" />
       <workItem from="1637916832980" duration="31479000" />
+      <workItem from="1638155078417" duration="4346000" />
     </task>
     <servers />
   </component>
