@@ -1,1 +1,0 @@
-﻿{"layers":[{"diffuse":"moss_albedo.tif","normal":"moss_normal.tif","mask":"moss_mask.tif","normal_scale":5.0},{"diffuse":"sand_albedo.tif","normal":"sand_normal.tif","mask":"sand_mask.tif","normal_scale":5.0},{"diffuse":"rock_albedo.tif","normal":"rock_normal.tif","mask":"rock_mask.tif","normal_scale":5.0}],"x":100.0,"z":100.0,"height":20.0,"height_map_resolution":513}

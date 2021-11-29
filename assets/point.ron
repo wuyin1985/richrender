@@ -1,5 +1,0 @@
-Monster(
-    name: "Goblin",
-    description: "A small green creature",
-    health: 10,
-)
