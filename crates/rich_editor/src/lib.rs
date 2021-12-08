@@ -14,6 +14,7 @@ use crate::file_selector::FileSelector;
 use std::env;
 use structopt::StructOpt;
 use std::path::{Path, PathBuf};
+use egui::CursorIcon::Default;
 use crate::event::EditorEvent;
 
 #[derive(Debug, StructOpt)]
@@ -151,7 +152,14 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
                     .insert(t)
                     .insert(GlobalTransform::identity())
                     .insert(DisplayName::from_str(path))
-                    .insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]));
+                    .insert(AnimCommands::create_with_commands(vec![AnimCommand::Play { index: 0 }]))
+                    .with_children(|cb| {
+                        cb.spawn().insert(VfxReq {
+                            pos: Vec3::ZERO,
+                            rot: Quat::default(),
+                            path: "test.efk",
+                        });
+                    });
             }
 
             EditorEvent::DeleteEntity(e) => {

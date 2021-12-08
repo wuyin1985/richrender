@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "export.hpp"
+#include "Effekseer/Dev/Cpp/EffekseerRendererLLGI/GraphicsDevice.h"
 #include <Effekseer.h>
 #include <EffekseerRendererVulkan.h>
 
@@ -15,13 +16,14 @@ VkQueue GetVkQueue();
 
 VkCommandPool GetVkCommandPool();
 
-
 #include <LLGI.Graphics.h>
 #include <LLGI.Platform.h>
 #include <Utils/LLGI.CommandListPool.h>
 #include <Vulkan/LLGI.CommandListVulkan.h>
 #include <Vulkan/LLGI.GraphicsVulkan.h>
 #include <Vulkan/LLGI.TextureVulkan.h>
+#include <map>
+#include <iostream>
 
 struct ContextLLGI {
     LLGI::Graphics *graphics;
@@ -31,10 +33,10 @@ struct ContextLLGI {
     Effekseer::RefPtr<EffekseerRenderer::CommandList> commandListEfk;
     Effekseer::RefPtr<EffekseerRenderer::Renderer> renderer;
     Effekseer::RefPtr<Effekseer::Manager> manager;
-    Effekseer::RefPtr<Effekseer::Effect> effect;
     Effekseer::RefPtr<EffekseerRenderer::SingleFrameMemoryPool> sfMemoryPoolEfk;
-    Effekseer::Handle handle;
     int32_t time;
+    std::map<int32_t, Effekseer::RefPtr<Effekseer::Effect>> effectPrefabs;
+    int32_t effectPrefabIdx;
 };
 
 std::shared_ptr<ContextLLGI> context;
@@ -55,11 +57,17 @@ VkCommandPool GetVkCommandPool() {
 
 void Startup(LLGI::Graphics *vGraphic, int32_t swap_buffer_count,
              ::EffekseerRendererVulkan::RenderPassInformation &renderPassInfo) {
+
     context = std::make_shared<ContextLLGI>();
     context->graphics = vGraphic;
     context->time = 0;
+
+    context->effectPrefabs = {};
+    context->effectPrefabIdx = 0;
+
     context->memoryPool = LLGI::CreateSharedPtr(
             context->graphics->CreateSingleFrameMemoryPool(1024 * 1024, 128));
+
     context->commandListPool = std::make_shared<LLGI::CommandListPool>(context->graphics,
                                                                        context->memoryPool.get(),
                                                                        swap_buffer_count);
@@ -114,10 +122,6 @@ void Startup(LLGI::Graphics *vGraphic, int32_t swap_buffer_count,
             ::Effekseer::Matrix44().LookAtRH(g_position,
                                              ::Effekseer::Vector3D(0.0f, 0.0f, 0.0f),
                                              ::Effekseer::Vector3D(0.0f, 1.0f, 0.0f)));
-
-    // Load an effect
-    auto effect = Effekseer::Effect::Create(manager, u"assets/test.efk", 1.0f, nullptr);
-    context->effect = effect;
 }
 
 void Shutdown() {
@@ -132,6 +136,7 @@ void Shutdown() {
 
 
 void UpdateFrame(void *vRenderPass, uint64_t externalCommandBufferHandle) {
+
     LLGI::RenderPass *renderPass = context->renderPass;
     if (vRenderPass != nullptr) {
         renderPass = reinterpret_cast<LLGI::RenderPass *>(vRenderPass);
@@ -143,8 +148,7 @@ void UpdateFrame(void *vRenderPass, uint64_t externalCommandBufferHandle) {
 
     auto vulkanList = static_cast<LLGI::CommandListVulkan *>(commandList);
 
-    if(externalCommandBufferHandle != 0)
-    {
+    if (externalCommandBufferHandle != 0) {
         auto handle = (VkCommandBuffer) externalCommandBufferHandle;
         auto vkCommandBuffer = vk::CommandBuffer(handle);
         vulkanList->SetExternalCommandBuffer(vkCommandBuffer);
@@ -162,18 +166,7 @@ void UpdateFrame(void *vRenderPass, uint64_t externalCommandBufferHandle) {
     context->renderer->SetCommandList(context->commandListEfk);
 
     auto manager = context->manager;
-    auto handle = context->handle;
     int32_t time = context->time;
-
-    if (time % 120 == 0) {
-        context->handle = manager->Play(context->effect, 0, 0, 0);
-    }
-
-    if (time % 120 == 119) {
-        manager->StopEffect(handle);
-    }
-
-    manager->AddLocation(handle, ::Effekseer::Vector3D(0.2f, 0.0f, 0.0f));
 
     manager->Update();
 
@@ -346,6 +339,66 @@ uint64_t StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device, u
     return 0;
 }
 
-int32_t TestCall(int32_t input) {
-    return input + 1;
+int32_t LoadEffectPrefab(const void *effectData, int size, void *path) {
+    auto p = static_cast<char16_t *>(path);
+    auto effect = Effekseer::Effect::Create(context->manager, effectData, size, 1.0f, p);
+    auto idx = ++context->effectPrefabIdx;
+    context->effectPrefabs.insert(std::make_pair(idx, effect));
+    return idx;
+}
+
+void ReleaseEffectPrefab(int32_t handle) {
+    auto iter = context->effectPrefabs.find(handle);
+    if (iter == context->effectPrefabs.end()) {
+        return;
+    }
+    iter->second->Release();
+}
+
+int32_t PlayEffect(int32_t idx) {
+    auto iter = context->effectPrefabs.find(idx);
+    if (iter == context->effectPrefabs.end()) {
+        return -1;
+    }
+    auto handle = context->manager->Play(iter->second, 0, 0, 0);
+    return (int32_t) handle;
+}
+
+void StopEffect(int32_t handle) {
+    context->manager->StopEffect((Effekseer::Handle) handle);
+}
+
+void SetEffectLocation(int32_t handle, float x, float y, float z) {
+    context->manager->SetLocation(handle, x, y, z);
+}
+
+void SetEffectRotation(int32_t handle, float x, float y, float z) {
+    context->manager->SetRotation(handle, x, y, z);
+}
+
+void SyncProjectionMatrix(Matrix matrix) {
+    auto m = ::Effekseer::Matrix44{};
+    std::copy(&matrix.Values[0][0], &matrix.Values[0][0] + 16, &m.Values[0][0]);
+    context->renderer->SetProjectionMatrix(m);
+}
+
+void SyncViewMatrix(Matrix matrix) {
+    auto m = ::Effekseer::Matrix44{};
+    std::copy(&matrix.Values[0][0], &matrix.Values[0][0] + 16, &m.Values[0][0]);
+    context->renderer->SetCameraMatrix(m);
+}
+
+void SetThreadLockCall(void (*lock)(), void (*unlock)()) {
+    {
+        auto graphic = reinterpret_cast<LLGI::GraphicsVulkan *>(context->graphics);
+        graphic->lockCmd = lock;
+        graphic->unlockCmd = unlock;
+    }
+    {
+        auto gd = reinterpret_cast<EffekseerRendererLLGI::Backend::GraphicsDevice *>(context->renderer->GetGraphicsDevice().Get());
+        auto graphic = reinterpret_cast<LLGI::GraphicsVulkan *>(gd->GetGraphics());
+        graphic->lockCmd = lock;
+        graphic->unlockCmd = unlock;
+    }
+
 }

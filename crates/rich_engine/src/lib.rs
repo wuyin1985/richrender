@@ -24,6 +24,7 @@ pub mod prelude {
     pub use bevy::math::Vec3Swizzles;
     pub use crate::render::CameraOpEvent;
     pub use crate::core::destroy::Destroy;
+    pub use crate::vfx::VfxReq;
 }
 
 pub use winit::window::CursorIcon;

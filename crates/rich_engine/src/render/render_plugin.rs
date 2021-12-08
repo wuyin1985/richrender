@@ -14,6 +14,7 @@ use crate::render::gltf_asset_loader::{GltfAsset, GltfAssetLoader};
 use std::collections::HashSet;
 use crate::render::model_renderer::{ModelRenderer, ModelData, ShadeNames};
 use std::ops::DerefMut;
+use std::sync::Mutex;
 use bevy::math::Vec4Swizzles;
 use bevy::tasks::ComputeTaskPool;
 use bevy::transform::TransformSystem;
@@ -211,7 +212,10 @@ fn end_upload(mut runner: Option<ResMut<RenderRunner>>) {
         let context = &mut runner.context;
         unsafe {
             context.device.end_command_buffer(command_buffer);
-            context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
+            let mut guard = runner.mutex.lock().unwrap();
+            context.device.queue_submit(context.transfer_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()],
+                                        vk::Fence::null());
+            drop(guard);
             context.device.device_wait_idle();
         }
 
@@ -245,12 +249,8 @@ fn load_gltf_2_device_system(mut runner: Option<ResMut<RenderRunner>>,
                 AssetEvent::Modified { ref handle } => {
                     changed_gltf_set.insert(handle.clone_weak());
                     destroy_gltf_set.insert(handle.clone_weak());
-                    //todo remove resource
-                    //remove_current_mesh_resources(render_resource_context, handle);
                 }
                 AssetEvent::Removed { ref handle } => {
-                    //todo remove resource
-                    //remove_current_mesh_resources(render_resource_context, handle);
                     destroy_gltf_set.insert(handle.clone_weak());
                     changed_gltf_set.remove(handle);
                 }
@@ -342,7 +342,7 @@ impl Plugin for RenderPlugin {
         app.add_stage_after(CoreStage::PostUpdate, RenderStage::PrepareDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::PrepareDraw, RenderStage::BeginDraw, SystemStage::parallel());
         app.add_stage_after(RenderStage::BeginDraw, RenderStage::Draw, SystemStage::parallel());
-        app.add_stage_after(RenderStage::Draw, RenderStage::PostDraw, SystemStage::parallel());
+        app.add_stage_after(RenderStage::Draw, RenderStage::PostDraw, SystemStage::single_threaded());
         app.add_stage_after(RenderStage::PostDraw, RenderStage::EndDraw, SystemStage::parallel());
 
         app.add_system_to_stage(RenderStage::PrepareDraw, Camera::update_camera_op_event_system.system());

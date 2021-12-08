@@ -72,6 +72,7 @@ impl Nodes {
                     None
                 }
             };
+
             let node = Node {
                 name,
                 local_position,

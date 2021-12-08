@@ -143,6 +143,7 @@ pub struct RenderContext {
     pub graphics_queue: vk::Queue,
     pub present_queue: vk::Queue,
     pub compute_queue: vk::Queue,
+    pub transfer_queue: vk::Queue,
     pub device_memory_properties: vk::PhysicalDeviceMemoryProperties,
     pub swapchain_loader: ash::extensions::khr::Swapchain,
     pub graphics_queue_family_index: u32,
@@ -255,7 +256,7 @@ impl RenderContext {
         surface_khr: vk::SurfaceKHR,
         device: vk::PhysicalDevice,
     ) -> bool {
-        let (graphics, present, compute) = Self::find_queue_families(instance, surface, surface_khr, device);
+        let (graphics, present, compute, transfer) = Self::find_queue_families(instance, surface, surface_khr, device);
         let extention_support = Self::check_device_extension_support(instance, device);
         let is_swapchain_adequate = {
             let details = SwapchainSupportDetails::new(device, surface, surface_khr);
@@ -301,10 +302,11 @@ impl RenderContext {
         surface: &ash::extensions::khr::Surface,
         surface_khr: vk::SurfaceKHR,
         device: vk::PhysicalDevice,
-    ) -> (Option<u32>, Option<u32>, Option<u32>) {
+    ) -> (Option<u32>, Option<u32>, Option<u32>, Option<u32>) {
         let mut graphics = None;
         let mut present = None;
         let mut compute = None;
+        let mut transfer = None;
 
         let props = unsafe { instance.get_physical_device_queue_family_properties(device) };
         for (index, family) in props.iter().filter(|f| f.queue_count > 0).enumerate() {
@@ -316,6 +318,10 @@ impl RenderContext {
 
             if family.queue_flags.contains(vk::QueueFlags::COMPUTE) && compute.is_none() {
                 compute = Some(index);
+            }
+
+            if family.queue_flags.contains(vk::QueueFlags::TRANSFER) && transfer.is_none() {
+                transfer = Some(index);
             }
 
             let present_support = unsafe {
@@ -332,7 +338,7 @@ impl RenderContext {
             }
         }
 
-        (graphics, present, compute)
+        (graphics, present, compute, transfer)
     }
 
     #[cfg(feature = "statistic")]
@@ -405,12 +411,13 @@ impl RenderContext {
             .into_iter()
             .find(|device| Self::is_device_suitable(&instance, &surface_loader, surface, *device))
             .expect("No suitable physical device.");
-        let (graphics_index_o, present_index_o, compute_index_o) = Self::find_queue_families(&instance,
+        let (graphics_index_o, present_index_o, compute_index_o, transfer_index_o) = Self::find_queue_families(&instance,
                                                                                              &surface_loader, surface, physical_device);
 
         let graphics_index = graphics_index_o.expect("no graphic queue found");
         let present_index = present_index_o.expect("no present queue found");
         let compute_index = compute_index_o.expect("no compute queue found");
+        let transfer_index = transfer_index_o.expect("no transfer queue found");
 
         let device_extension_names_raw = [ash::extensions::khr::Swapchain::name().as_ptr(),
             ash::extensions::khr::Maintenance1::name().as_ptr()];
@@ -451,6 +458,7 @@ impl RenderContext {
         let present_queue = device.get_device_queue(present_index, 0);
         let graphics_queue = device.get_device_queue(graphics_index, 0);
         let compute_queue = device.get_device_queue(compute_index, 0);
+        let transfer_queue = device.get_device_queue(transfer_index, 0);
         let device_memory_properties = instance.get_physical_device_memory_properties(physical_device);
         let swapchain_loader = ash::extensions::khr::Swapchain::new(&instance, &device);
 
@@ -506,6 +514,7 @@ impl RenderContext {
             graphics_queue,
             present_queue,
             compute_queue,
+            transfer_queue,
             debug_utils_loader,
             physical_device,
             surface_loader,

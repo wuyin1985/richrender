@@ -10,6 +10,7 @@ use crate::render::model_renderer::ModelRenderer;
 use bevy::prelude::*;
 use crate::render::grass::GrassMgr;
 use crate::render::uniform::UniformObject;
+use std::sync::{Arc, Mutex};
 
 pub struct RenderRunner {
     pub context: RenderContext,
@@ -19,6 +20,7 @@ pub struct RenderRunner {
     pub grass: GrassMgr,
     last_tick: SystemTime,
     pub current_present_index: i32,
+    pub mutex: Arc<Mutex<i32>>,
 }
 
 impl Drop for RenderRunner {
@@ -67,7 +69,8 @@ impl RenderRunner {
 
             unsafe {
                 context.device.end_command_buffer(command_buffer);
-                context.device.queue_submit(context.graphics_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()], vk::Fence::null());
+                context.device.queue_submit(context.transfer_queue, &[vk::SubmitInfo::builder().command_buffers(&[command_buffer]).build()],
+                                            vk::Fence::null());
                 context.device.device_wait_idle();
             }
 
@@ -97,6 +100,7 @@ impl RenderRunner {
                 last_tick: SystemTime::now(),
                 current_present_index: -1,
                 grass,
+                mutex: Arc::new(Mutex::new(0)),
             }
         }
     }
@@ -251,13 +255,19 @@ impl RenderRunner {
             .command_buffers(&command_buffers).signal_semaphores(&[render_finish_semaphore]).build();
 
         unsafe {
+            let mut guard = self.mutex.lock().unwrap();
             self.context.device.queue_submit(self.context.graphics_queue, &[submit_info], cmd_buf_execute_fence);
+            drop(guard);
         }
 
         #[cfg(feature = "statistic")]
             self.context.statistic.require_results(&self.context.device);
 
-        self.swapchain_mgr.present(&self.context);
+        {
+            let mut guard = self.mutex.lock().unwrap();
+            self.swapchain_mgr.present(&self.context);
+            drop(guard);
+        }
     }
 
     fn on_window_size_changed(&mut self, window_width: u32, window_height: u32) {

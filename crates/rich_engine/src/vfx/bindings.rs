@@ -138,6 +138,34 @@ fn bindgen_test_layout_ShareTexture() {
         )
     );
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Matrix {
+    pub Values: [[f32; 4usize]; 4usize],
+}
+#[test]
+fn bindgen_test_layout_Matrix() {
+    assert_eq!(
+        ::std::mem::size_of::<Matrix>(),
+        64usize,
+        concat!("Size of: ", stringify!(Matrix))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<Matrix>(),
+        4usize,
+        concat!("Alignment of ", stringify!(Matrix))
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<Matrix>())).Values as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(Matrix),
+            "::",
+            stringify!(Values)
+        )
+    );
+}
 extern "C" {
     pub fn RunWithPlatform();
 }
@@ -158,5 +186,36 @@ extern "C" {
     ) -> u64;
 }
 extern "C" {
-    pub fn TestCall(input: i32) -> i32;
+    pub fn LoadEffectPrefab(
+        effectData: *const ::std::os::raw::c_void,
+        size: ::std::os::raw::c_int,
+        path: *mut ::std::os::raw::c_void,
+    ) -> i32;
+}
+extern "C" {
+    pub fn ReleaseEffectPrefab(handle: i32);
+}
+extern "C" {
+    pub fn PlayEffect(handle: i32) -> i32;
+}
+extern "C" {
+    pub fn StopEffect(handle: i32);
+}
+extern "C" {
+    pub fn SetEffectLocation(handle: i32, x: f32, y: f32, z: f32);
+}
+extern "C" {
+    pub fn SetEffectRotation(handle: i32, x: f32, y: f32, z: f32);
+}
+extern "C" {
+    pub fn SyncProjectionMatrix(matrix: Matrix);
+}
+extern "C" {
+    pub fn SyncViewMatrix(matrix: Matrix);
+}
+extern "C" {
+    pub fn SetThreadLockCall(
+        lock: ::std::option::Option<unsafe extern "C" fn()>,
+        unlock: ::std::option::Option<unsafe extern "C" fn()>,
+    );
 }
