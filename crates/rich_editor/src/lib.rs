@@ -157,8 +157,8 @@ fn process_editor_events(mut event_reader: EventReader<EditorEvent>
                         cb.spawn().insert(VfxReq {
                             pos: Vec3::ZERO,
                             rot: Quat::default(),
-                            path: "test.efk",
-                        });
+                            path: "vfx/001_magma_effect/aura.efk",
+                        }).insert(GlobalTransform::identity());
                     });
             }
 

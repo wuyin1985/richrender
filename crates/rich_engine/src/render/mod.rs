@@ -57,6 +57,7 @@ pub enum RenderStage {
     BeginUpload,
     Upload,
     EndUpload,
+    ThirdPartyUpload,
     BeginDraw,
     Draw,
     PostDraw,

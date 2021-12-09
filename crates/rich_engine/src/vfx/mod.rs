@@ -11,7 +11,7 @@ use crate::{ForwardRenderPass, RenderContext, RenderRunner};
 use crate::core::destroy::DestroyStage;
 use crate::prelude::*;
 use crate::render::CommandBufferList;
-use crate::vfx::vfx_resource::{VfxAsset, VfxAssetLoader};
+use crate::vfx::vfx_resource::{load_vfx_2_device_system, VfxAsset, VfxAssetLoader};
 use crate::vfx::vfx_system::{create_vfx_by_req_system, init_vfx_system, play_effect_system, stop_effect_system, update_vfx_system, update_vfx_transform, VfxSystemState};
 
 mod bindings;
@@ -49,6 +49,10 @@ impl Plugin for VfxPlugin {
                 .label(VfxSystemLabel::CreateEntity).after(VfxSystemLabel::Init),
         );
 
+        app.add_system_to_stage(
+            RenderStage::ThirdPartyUpload,
+            load_vfx_2_device_system.system()
+        );
 
         app.add_system_to_stage(
             CoreStage::Update,

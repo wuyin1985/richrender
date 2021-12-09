@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex, MutexGuard};
 use bevy::ecs::schedule::ShouldRun::No;
 
-use crate::RenderRunner;
+use crate::{RenderCamera, RenderRunner};
 use crate::vfx::vfx_resource::{VfxAsset, VfxReq};
 use crate::vfx::bindings::*;
 use crate::prelude::*;
@@ -90,7 +90,13 @@ pub(super) fn init_vfx_system(mut state: ResMut<VfxSystemState>, render_runner: 
     }
 }
 
-pub(super) fn update_vfx_system(mut state: ResMut<VfxSystemState>, time: Res<Time>, render_runner: Option<Res<RenderRunner>>) {
+fn matrix_convert(value: &Mat4) -> super::bindings::Matrix {
+    super::bindings::Matrix { Values: value.to_cols_array_2d() }
+}
+
+pub(super) fn update_vfx_system(mut state: ResMut<VfxSystemState>,
+                                time: Res<Time>,
+                                render_runner: Option<Res<RenderRunner>>) {
     use ash::vk::Handle;
 
     if !state.inited {
@@ -100,9 +106,15 @@ pub(super) fn update_vfx_system(mut state: ResMut<VfxSystemState>, time: Res<Tim
     unsafe {
         let p = 0 as *mut c_void;
         let mut render_runner = render_runner.unwrap();
-        let command_buffer = render_runner.get_current_command_buffer().unwrap();
+        let context = &render_runner.context;
+        let data = context.per_frame_uniform.as_ref().unwrap();
+        let proj = matrix_convert(&data.data.proj);
+        let view = matrix_convert(&data.data.view);
+        super::bindings::SyncProjectionMatrix(proj);
+        super::bindings::SyncViewMatrix(view);
 
-        crate::vfx::bindings::UpdateFrame(p, command_buffer.as_raw());
+        let command_buffer = render_runner.get_current_command_buffer().unwrap();
+        super::bindings::UpdateFrame(p, command_buffer.as_raw());
     }
 }
 
@@ -125,19 +137,16 @@ pub(super) fn create_vfx_by_req_system(
 }
 
 pub(super) fn update_vfx_transform(
-    mut query: Query<(&Handle<VfxAsset>, &GlobalTransform), Changed<GlobalTransform>>,
-    assets: Res<Assets<VfxAsset>>,
+    mut query: Query<(&VfxHasPlay, &GlobalTransform)>
 )
 {
-    for (vfx_handle, transform) in query.iter() {
-        if let Some(vfx) = assets.get(vfx_handle) {
-            let t = transform.translation;
-            let r = transform.rotation;
-            let (rx, ry, rz) = r.to_euler(EulerRot::ZXY);
-            unsafe {
-                SetEffectLocation(vfx.id, t.x, t.y, t.z);
-                SetEffectRotation(vfx.id, rx, ry, rz);
-            }
+    for (vfx, transform) in query.iter() {
+        let t = transform.translation;
+        let r = transform.rotation;
+        let (rx, ry, rz) = r.to_euler(EulerRot::ZXY);
+        unsafe {
+            SetEffectLocation(vfx.0, t.x, t.y, t.z);
+            SetEffectRotation(vfx.0, rx, ry, rz);
         }
     }
 }
@@ -150,10 +159,12 @@ pub(super) fn play_effect_system(
 {
     for (entity, vfx_handle) in query.iter() {
         if let Some(vfx) = assets.get(vfx_handle) {
-            let id = unsafe {
-                PlayEffect(vfx.id)
-            };
-            commands.entity(entity).insert(VfxHasPlay(id));
+            if let Some(pid) = vfx.id {
+                let id = unsafe {
+                    PlayEffect(pid)
+                };
+                commands.entity(entity).insert(VfxHasPlay(id));
+            }
         }
     }
 }

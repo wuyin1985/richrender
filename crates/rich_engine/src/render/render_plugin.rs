@@ -330,8 +330,9 @@ impl Plugin for RenderPlugin {
 
         //upload
         app.add_stage_after(CoreStage::PreUpdate, RenderStage::BeginUpload, SystemStage::parallel());
-        app.add_stage_after(RenderStage::BeginUpload, RenderStage::Upload, SystemStage::single_threaded());
+        app.add_stage_after(RenderStage::BeginUpload, RenderStage::Upload, SystemStage::parallel());
         app.add_stage_after(RenderStage::Upload, RenderStage::EndUpload, SystemStage::parallel());
+        app.add_stage_after(RenderStage::EndUpload, RenderStage::ThirdPartyUpload, SystemStage::single_threaded());
 
         app.add_system_to_stage(RenderStage::BeginUpload, begin_upload.system());
         app.add_system_to_stage(RenderStage::Upload, load_gltf_2_device_system.system().label(UploadLabel::Model));

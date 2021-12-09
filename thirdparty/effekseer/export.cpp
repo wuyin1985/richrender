@@ -104,24 +104,6 @@ void Startup(LLGI::Graphics *vGraphic, int32_t swap_buffer_count,
     manager->SetCurveLoader(Effekseer::MakeRefPtr<Effekseer::CurveLoader>());
 
     context->manager = manager;
-
-    // Specify a position of view
-    auto g_position = ::Effekseer::Vector3D(10.0f, 5.0f, 20.0f);
-
-    int32_t windowWidth = 1280;
-    int32_t windowHeight = 720;
-
-    // Specify a projection matrix
-    renderer->SetProjectionMatrix(
-            ::Effekseer::Matrix44().PerspectiveFovRH(90.0f / 180.0f * 3.14f,
-                                                     (float) windowWidth / (float) windowHeight,
-                                                     1.0f, 500.0f));
-
-    // Specify a camera matrix
-    renderer->SetCameraMatrix(
-            ::Effekseer::Matrix44().LookAtRH(g_position,
-                                             ::Effekseer::Vector3D(0.0f, 0.0f, 0.0f),
-                                             ::Effekseer::Vector3D(0.0f, 1.0f, 0.0f)));
 }
 
 void Shutdown() {
