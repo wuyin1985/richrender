@@ -126,7 +126,9 @@ impl RenderRunner {
             let command_buffer_begin_info = vk::CommandBufferBeginInfo::builder().
                 flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT).build();
             unsafe {
+                let g = self.mutex.lock();
                 self.context.device.begin_command_buffer(command_buffer, &command_buffer_begin_info);
+                drop(g);
             }
         }
 
@@ -246,13 +248,17 @@ impl RenderRunner {
         }
 
         unsafe {
+            let g = self.mutex.lock();
             self.context.device.end_command_buffer(command_buffer);
+            drop(g);
         }
 
         let mut command_buffers = vec![command_buffer];
+        let wait_semaphores = [present_image_available_semaphore];
+        let signal_semaphores = [render_finish_semaphore];
         let submit_info = vk::SubmitInfo::builder()
-            .wait_semaphores(&[present_image_available_semaphore]).wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
-            .command_buffers(&command_buffers).signal_semaphores(&[render_finish_semaphore]).build();
+            .wait_semaphores(&wait_semaphores).wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
+            .command_buffers(&command_buffers).signal_semaphores(&signal_semaphores).build();
 
         unsafe {
             let mut guard = self.mutex.lock().unwrap();

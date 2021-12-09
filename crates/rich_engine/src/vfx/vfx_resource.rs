@@ -11,8 +11,6 @@ use crate::vfx::bindings::ReleaseEffectPrefab;
 #[uuid = "bab83cf1-78b3-4f8f-b43f-d7e0d9d75099"]
 pub(super) struct VfxAsset {
     pub id: i32,
-    pub data: Vec<u8>,
-    pub loaded: bool,
 }
 
 #[derive(Default)]
@@ -35,7 +33,7 @@ impl AssetLoader for VfxAssetLoader {
                 LoadEffectPrefab(bytes.as_ptr() as *const c_void, bytes.len() as c_int, dir_utf16.as_ptr() as _)
             };
 
-            let data = VfxAsset { id, data: bytes.to_vec() , loaded:false};
+            let data = VfxAsset { id };
             load_context.set_default_asset(LoadedAsset::new(data));
             info!("parse vfx complete");
             Ok(())
