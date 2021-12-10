@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use bevy::ecs::schedule::ShouldRun::No;
 
 use crate::{RenderCamera, RenderRunner};
-use crate::vfx::vfx_resource::{VfxAsset, VfxReq};
+use crate::vfx::vfx_resource::{VfxAsset, VfxReq, VfxSystemState};
 use crate::vfx::bindings::*;
 use crate::prelude::*;
 
@@ -72,10 +72,6 @@ pub(super) fn startup_vfx_system(runner: &RenderRunner) {
     };
 }
 
-#[derive(Debug, Default)]
-pub(crate) struct VfxSystemState {
-    pub inited: bool,
-}
 
 pub(super) fn init_vfx_system(mut state: ResMut<VfxSystemState>, render_runner: Option<Res<RenderRunner>>, time: Res<Time>) {
     if render_runner.is_none() {
@@ -84,9 +80,9 @@ pub(super) fn init_vfx_system(mut state: ResMut<VfxSystemState>, render_runner: 
     let mut render_runner = render_runner.unwrap();
     let render_runner = render_runner.deref();
 
-    if !state.inited {
+    if !state.is_inited() {
         startup_vfx_system(render_runner);
-        state.inited = true;
+        state.set_inited();
     }
 }
 
@@ -99,7 +95,7 @@ pub(super) fn update_vfx_system(mut state: ResMut<VfxSystemState>,
                                 render_runner: Option<Res<RenderRunner>>) {
     use ash::vk::Handle;
 
-    if !state.inited {
+    if !state.is_inited() {
         return;
     }
 
@@ -154,17 +150,17 @@ pub(super) fn update_vfx_transform(
 pub(super) struct VfxHasPlay(i32);
 
 pub(super) fn play_effect_system(
-    mut query: Query<(Entity, &Handle<VfxAsset>), Without<VfxHasPlay>>, assets: Res<Assets<VfxAsset>>, mut commands: Commands,
+    mut query: Query<(Entity, &Handle<VfxAsset>), Without<VfxHasPlay>>,
+    state: Res<VfxSystemState>,
+    mut commands: Commands,
 )
 {
     for (entity, vfx_handle) in query.iter() {
-        if let Some(vfx) = assets.get(vfx_handle) {
-            if let Some(pid) = vfx.id {
-                let id = unsafe {
-                    PlayEffect(pid)
-                };
-                commands.entity(entity).insert(VfxHasPlay(id));
-            }
+        if let Some(vfx) = state.try_get_prefab(vfx_handle) {
+            let id = unsafe {
+                PlayEffect(vfx.id)
+            };
+            commands.entity(entity).insert(VfxHasPlay(id));
         }
     }
 }

@@ -11,8 +11,8 @@ use crate::{ForwardRenderPass, RenderContext, RenderRunner};
 use crate::core::destroy::DestroyStage;
 use crate::prelude::*;
 use crate::render::CommandBufferList;
-use crate::vfx::vfx_resource::{load_vfx_2_device_system, VfxAsset, VfxAssetLoader};
-use crate::vfx::vfx_system::{create_vfx_by_req_system, init_vfx_system, play_effect_system, stop_effect_system, update_vfx_system, update_vfx_transform, VfxSystemState};
+use crate::vfx::vfx_resource::{load_vfx_2_device_system, VfxAsset, VfxAssetLoader, VfxSystemState};
+use crate::vfx::vfx_system::{create_vfx_by_req_system, init_vfx_system, play_effect_system, stop_effect_system, update_vfx_system, update_vfx_transform};
 
 mod bindings;
 mod vfx_resource;
@@ -34,7 +34,7 @@ pub struct VfxPlugin {}
 
 impl Plugin for VfxPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.insert_resource(VfxSystemState { inited: false });
+        app.insert_resource(VfxSystemState::create());
         app.init_asset_loader::<VfxAssetLoader>();
         app.add_asset::<VfxAsset>();
 
@@ -51,7 +51,7 @@ impl Plugin for VfxPlugin {
 
         app.add_system_to_stage(
             RenderStage::ThirdPartyUpload,
-            load_vfx_2_device_system.system()
+            load_vfx_2_device_system.system(),
         );
 
         app.add_system_to_stage(

@@ -140,6 +140,45 @@ fn bindgen_test_layout_ShareTexture() {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct EffectInfo {
+    pub duration: i32,
+    pub prefabId: i32,
+}
+#[test]
+fn bindgen_test_layout_EffectInfo() {
+    assert_eq!(
+        ::std::mem::size_of::<EffectInfo>(),
+        8usize,
+        concat!("Size of: ", stringify!(EffectInfo))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<EffectInfo>(),
+        4usize,
+        concat!("Alignment of ", stringify!(EffectInfo))
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<EffectInfo>())).duration as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(EffectInfo),
+            "::",
+            stringify!(duration)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<EffectInfo>())).prefabId as *const _ as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(EffectInfo),
+            "::",
+            stringify!(prefabId)
+        )
+    );
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct Matrix {
     pub Values: [[f32; 4usize]; 4usize],
 }
@@ -190,7 +229,8 @@ extern "C" {
         effectData: *const ::std::os::raw::c_void,
         size: ::std::os::raw::c_int,
         path: *mut ::std::os::raw::c_void,
-    ) -> i32;
+        info: *mut EffectInfo,
+    );
 }
 extern "C" {
     pub fn ReleaseEffectPrefab(handle: i32);

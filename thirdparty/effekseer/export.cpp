@@ -321,12 +321,15 @@ uint64_t StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device, u
     return 0;
 }
 
-int32_t LoadEffectPrefab(const void *effectData, int size, void *path) {
+void LoadEffectPrefab(const void *effectData, int size, void *path, EffectInfo *info) {
     auto p = static_cast<char16_t *>(path);
     auto effect = Effekseer::Effect::Create(context->manager, effectData, size, 1.0f, p);
     auto idx = ++context->effectPrefabIdx;
     context->effectPrefabs.insert(std::make_pair(idx, effect));
-    return idx;
+    auto term = effect->CalculateTerm();
+    info->duration = term.TermMax;
+    info->prefabId = idx;
+
 }
 
 void ReleaseEffectPrefab(int32_t handle) {
@@ -334,7 +337,8 @@ void ReleaseEffectPrefab(int32_t handle) {
     if (iter == context->effectPrefabs.end()) {
         return;
     }
-    iter->second->Release();
+    //靠引用计数自动调用release
+    context->effectPrefabs.erase(iter);
 }
 
 int32_t PlayEffect(int32_t idx) {

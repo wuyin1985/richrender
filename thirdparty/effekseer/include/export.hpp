@@ -23,6 +23,11 @@ typedef struct {
 } ShareTexture;
 
 typedef struct {
+    int32_t duration;
+    int32_t prefabId;
+} EffectInfo;
+
+typedef struct {
     float Values[4][4];
 } Matrix;
 
@@ -38,8 +43,8 @@ StartupWithExternalVulkan(uint64_t vk_device, uint64_t vk_phy_device,
                           vk_command_pool, ShareTexture color, ShareTexture depth);
 
 
-__declspec( dllexport ) int32_t LoadEffectPrefab(const void *effectData, int size, void *
-path);
+__declspec( dllexport ) void LoadEffectPrefab(const void *effectData, int size, void *
+path,EffectInfo* info);
 
 __declspec( dllexport ) void ReleaseEffectPrefab(int32_t handle);
 
