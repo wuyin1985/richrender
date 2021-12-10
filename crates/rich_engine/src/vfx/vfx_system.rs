@@ -90,9 +90,9 @@ fn matrix_convert(value: &Mat4) -> super::bindings::Matrix {
     super::bindings::Matrix { Values: value.to_cols_array_2d() }
 }
 
-pub(super) fn update_vfx_system(mut state: ResMut<VfxSystemState>,
-                                time: Res<Time>,
-                                render_runner: Option<Res<RenderRunner>>) {
+pub(super) fn draw_vfx_system(mut state: ResMut<VfxSystemState>,
+                              time: Res<Time>,
+                              render_runner: Option<Res<RenderRunner>>) {
     use ash::vk::Handle;
 
     if !state.is_inited() {
@@ -132,22 +132,34 @@ pub(super) fn create_vfx_by_req_system(
     }
 }
 
-pub(super) fn update_vfx_transform(
-    mut query: Query<(&VfxHasPlay, &GlobalTransform)>
+pub(super) fn update_vfx_system(
+    mut query: Query<(Entity, &mut VfxHasPlay, &GlobalTransform)>,
+    mut commands: Commands,
 )
 {
-    for (vfx, transform) in query.iter() {
+    for (entity, mut vfx, transform) in query.iter_mut() {
         let t = transform.translation;
         let r = transform.rotation;
         let (rx, ry, rz) = r.to_euler(EulerRot::ZXY);
         unsafe {
-            SetEffectLocation(vfx.0, t.x, t.y, t.z);
-            SetEffectRotation(vfx.0, rx, ry, rz);
+            SetEffectLocation(vfx.instance_id, t.x, t.y, t.z);
+            SetEffectRotation(vfx.instance_id, rx, ry, rz);
+        }
+
+        if !vfx.is_loop {
+            vfx.left_frame -= 1;
+            if vfx.left_frame <= 0 {
+                commands.entity(entity).insert(Destroy {});
+            }
         }
     }
 }
 
-pub(super) struct VfxHasPlay(i32);
+pub(super) struct VfxHasPlay {
+    pub left_frame: i32,
+    pub is_loop: bool,
+    pub instance_id: i32,
+}
 
 pub(super) fn play_effect_system(
     mut query: Query<(Entity, &Handle<VfxAsset>), Without<VfxHasPlay>>,
@@ -160,7 +172,8 @@ pub(super) fn play_effect_system(
             let id = unsafe {
                 PlayEffect(vfx.id)
             };
-            commands.entity(entity).insert(VfxHasPlay(id));
+
+            commands.entity(entity).insert(VfxHasPlay { instance_id: id, left_frame: vfx.duration, is_loop: vfx.is_loop });
         }
     }
 }
@@ -171,7 +184,7 @@ pub(super) fn stop_effect_system(
 {
     for (vfx) in query.iter() {
         unsafe {
-            StopEffect(vfx.0);
+            StopEffect(vfx.instance_id);
         }
     }
 }
