@@ -1,3 +1,4 @@
+#![feature(in_band_lifetimes)]
 #[macro_use]
 extern crate lazy_static;
 
@@ -36,6 +37,7 @@ pub use bevy::input::mouse::*;
 pub use bevy::input::*;
 pub use bevy::diagnostic::*;
 use crate::core::CorePlugin;
+use crate::game::GamePlugin;
 
 pub use crate::render::Texture;
 pub use crate::render::RenderContext;
@@ -97,6 +99,8 @@ fn init(mut commmands: Commands, mut asset_server: ResMut<AssetServer>) {
     // }
 }
 
+fn create_io() {}
+
 pub struct ExternalStartupInfo {
     pub external_plugins: Vec<Box<dyn Plugin>>,
 }
@@ -113,6 +117,7 @@ pub fn startup(info: ExternalStartupInfo, args: Vec<String>) {
         .add_plugin(CorePlugin {})
         .add_plugin(RenderPlugin {})
         .add_plugin(VfxPlugin {})
+        .add_plugin(GamePlugin {})
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default());
 
     for p in info.external_plugins {

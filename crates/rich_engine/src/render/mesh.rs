@@ -117,20 +117,40 @@ fn buffer_view_slice<'a, 's>(
     &buffer[start..end]
 }
 
-fn read_no_sparse_buffer(accessor: &gltf::accessor::Accessor, datas: &Vec<gltf::buffer::Data>, element_count: u32) -> (Vec<u8>, usize) {
+fn read_no_sparse_buffer(accessor: &gltf::accessor::Accessor, datas: &Vec<gltf::buffer::Data>, element_count: u32) -> (Vec<u8>, usize, usize) {
     assert!(accessor.sparse().is_none(), "load sparse data is not supported");
     let view = accessor.view().expect("not view found");
-    let stride = VertexLayout::calculate_stride(accessor.data_type(), element_count);
-
-    if let Some(v_stride) = view.stride() {
-        assert_eq!(stride, v_stride as u32, "error stride");
-    }
+    let stride = VertexLayout::calculate_stride(accessor.data_type(), element_count) as usize;
+    let v_stride = if let Some(v) = view.stride() {
+        //assert_eq!(stride, v_stride as u32, "error stride");
+        v
+    } else {
+        stride
+    };
 
     let view_slice = buffer_view_slice(view, datas);
     let start = accessor.offset();
-    let end = start + (stride as usize) * accessor.count();
+    let count = accessor.count();
 
-    ((&view_slice[start..end]).to_vec(), accessor.count())
+    if stride == v_stride {
+        let end = start + (stride as usize) * count;
+        return ((&view_slice[start..end]).to_vec(), count, v_stride);
+    }
+
+    let mut ret = vec![];
+    let data_len = view_slice.len();
+    for i in 0..count {
+        let si = start + i * v_stride;
+        let mut ei = si + v_stride;
+        if ei > data_len {
+            ei = data_len;
+            assert_eq!(i, count - 1, "error data len");
+        }
+
+        ret.extend_from_slice(&view_slice[si..ei]);
+    }
+
+    (ret, count, v_stride)
 }
 
 fn read_no_sparse_vertex_data(primitive: &gltf::mesh::Primitive,
@@ -141,11 +161,10 @@ fn read_no_sparse_vertex_data(primitive: &gltf::mesh::Primitive,
                               layout: &mut VertexLayout,
                               location: u32) {
     if let Some(accessor) = &primitive.get(data_type) {
-        let vi = accessor.index();
-        let data = read_no_sparse_buffer(accessor, datas, element_count).0;
+        let (data, count, stride) = read_no_sparse_buffer(accessor, datas, element_count);
         let mut offset = output_data.len();
         output_data.extend(data);
-        const MOD:usize = 4;
+        const MOD: usize = 4;
         let m = output_data.len() % MOD;
         if m != 0 {
             let left = MOD - m;
@@ -153,8 +172,8 @@ fn read_no_sparse_vertex_data(primitive: &gltf::mesh::Primitive,
             output_data.extend(ar);
             offset += left;
         }
-        
-        layout.push_meta(accessor.data_type(), element_count, offset, location);
+
+        layout.push_meta(accessor.data_type(), element_count, offset, location, stride as _);
     }
 }
 
@@ -170,14 +189,11 @@ fn load_meshes(context: &mut RenderContext, upload_command_buffer: vk::CommandBu
         for primitive in mesh.primitives() {
             assert_eq!(primitive.mode(), gltf::mesh::Mode::Triangles, "error mode");
 
-            if primitive_count == 6{
-                let ff = 3;
-            }
             let mut vertex_layout = VertexLayout::create();
             let indices_offset = all_data.len();
 
             let indices_accessor = &primitive.indices().expect("no indices");
-            let (indices, indices_count) = read_no_sparse_buffer(indices_accessor, buffers, 1);
+            let (indices, indices_count, stride) = read_no_sparse_buffer(indices_accessor, buffers, 1);
             all_data.extend(indices);
 
 

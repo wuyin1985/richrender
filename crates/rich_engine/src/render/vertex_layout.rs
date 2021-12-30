@@ -93,9 +93,9 @@ impl VertexLayout {
         self.indices_type = Self::gltf_data_type_vk_index(data_type);
     }
 
-    pub fn push_meta(&mut self, data_type: DataType, element_count: u32, offset_in_buffer: usize, location: u32) {
+    pub fn push_meta(&mut self, data_type: DataType, element_count: u32, offset_in_buffer: usize, location: u32, size: u32) {
         let format = Self::gltf_data_type_2_vk_format(data_type, element_count);
-        let size = Self::vk_format_size(format);
+        //let size = Self::vk_format_size(format);
         self.metas.push(VertexMeta {
             format,
             size,
