@@ -12,7 +12,7 @@ use crate::render::uniform::UniformObject;
 use crate::render::aabb::Aabb;
 use crate::render::animation::Animations;
 use crate::render::gltf_asset_loader::{GltfAsset};
-use crate::render::material::Material;
+use crate::render::material::{Material, TextureInfo};
 use crate::render::vertex_layout::VertexLayout;
 use crate::render::mesh::Primitive;
 use crate::render::forward_render::ForwardRenderPass;
@@ -107,6 +107,7 @@ impl ModelRenderer {
                                                                0,
                                                                &render.buffers_ref_for_draw,
                                                                &vertex_layout.buffers_ref_offsets);
+
                         context.device.cmd_bind_index_buffer(command_buffer,
                                                              self.model.get_buffer().buffer,
                                                              vertex_layout.indices.index as _,
@@ -149,6 +150,10 @@ impl ModelRenderer {
                 for primitive in mesh.primitives() {
                     let render = &self.primitive_renders[primitive_idx];
                     let vertex_layout = &primitive.get_vertex_layout();
+                    let primitive_constant = &render.frag_constant;
+                    let primitive_constant_bytes = unsafe {util::any_as_u8_slice(primitive_constant)};
+
+
                     primitive_idx += 1;
                     let set = render.descriptor_set;
                     unsafe {
@@ -156,6 +161,10 @@ impl ModelRenderer {
 
                         context.device.cmd_push_constants(command_buffer, render.graphic_pipeline.get_layout(),
                                                           vk::ShaderStageFlags::VERTEX, 0, model_data_bytes);
+
+                        context.device.cmd_push_constants(command_buffer, render.graphic_pipeline.get_layout(),
+                                                          vk::ShaderStageFlags::FRAGMENT, model_data_bytes.len() as _,
+                                                          primitive_constant_bytes);
 
                         context.device.cmd_bind_vertex_buffers(command_buffer,
                                                                0,
@@ -189,6 +198,12 @@ impl ModelRenderer {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Debug, Copy)]
+struct PrimitiveFragConstant {
+    color_tex_tilling: Vec4,
+}
+
 
 struct PrimitiveRender {
     pub descriptor_set_layout: vk::DescriptorSetLayout,
@@ -196,6 +211,7 @@ struct PrimitiveRender {
     pub graphic_pipeline: GraphicPipeline,
     pub shadow_pipeline: GraphicPipeline,
     pub buffers_ref_for_draw: Vec<vk::Buffer>,
+    pub frag_constant: PrimitiveFragConstant,
 }
 
 impl PrimitiveRender {
@@ -308,6 +324,18 @@ impl PrimitiveRender {
     ) -> Self {
         let vertex_layout = primitive.get_vertex_layout();
         let material = primitive.get_material();
+        let color_tex_tilling = {
+            if let Some(t) = material.get_color_texture() {
+                t.get_tilling()
+            } else {
+                TextureInfo::get_default_tilling()
+            }
+        };
+
+        let frag_constant = PrimitiveFragConstant {
+            color_tex_tilling,
+        };
+
         let vertex_bindings = vertex_layout.build_vk_bindings();
         let vertex_attributes = vertex_layout.build_vk_attributes();
         let vertex_input = PipelineVertexInputInfo::from(&vertex_bindings, &vertex_attributes);
@@ -327,8 +355,11 @@ impl PrimitiveRender {
             all_layout.push(context.skin_buffer_mgr.descriptor_set_layout);
         }
 
+        let model_data_size = size_of::<ModelData>() as u32;
         let constant_ranges = [
-            vk::PushConstantRange::builder().offset(0).size(size_of::<ModelData>() as _).stage_flags(vk::ShaderStageFlags::VERTEX).build()
+            vk::PushConstantRange::builder().offset(0).size(model_data_size).stage_flags(vk::ShaderStageFlags::VERTEX).build(),
+            vk::PushConstantRange::builder().offset(model_data_size)
+                .size(size_of::<PrimitiveFragConstant>() as _).stage_flags(vk::ShaderStageFlags::FRAGMENT).build(),
         ];
 
         let pipeline_layout_ci = vk::PipelineLayoutCreateInfo::builder().set_layouts(&all_layout).push_constant_ranges(&constant_ranges).build();
@@ -363,6 +394,7 @@ impl PrimitiveRender {
             descriptor_set_layout,
             descriptor_set,
             buffers_ref_for_draw,
+            frag_constant,
         }
     }
 }

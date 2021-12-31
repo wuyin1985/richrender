@@ -108,7 +108,6 @@ fn draw_models_system(mut runner: Option<ResMut<RenderRunner>>,
 
             let mut list = Vec::new();
             for (runtime, skins, handle, transform) in model_query.iter_mut() {
-
                 let model_renderer = context.get_model(handle);
                 if let Some(mr) = model_renderer {
                     mr.draw_shadow(context, command_buffer, &runtime, skins, &transform_query);
@@ -316,10 +315,9 @@ impl Plugin for RenderPlugin {
         let light_look_at = Vec3::ZERO;
         let light_mat = Mat4::look_at_rh(light_pos, light_look_at, Vec3::Y).inverse();
 
-        let light = world.spawn().insert(MainLight {})
+        world.spawn().insert(MainLight {})
             .insert(Transform::from_matrix(light_mat))
             .insert(DisplayName::from_str("main_light"));
-
 
         let render_system = get_render_system(app.world_mut());
         app.init_asset_loader::<GltfAssetLoader>();

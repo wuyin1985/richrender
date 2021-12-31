@@ -37,6 +37,7 @@ mod model_runtime;
 
 use bevy::prelude::*;
 pub use render_plugin::RenderPlugin;
+pub use render_plugin::MainLight;
 pub use texture::Texture;
 pub use render_context::RenderContext;
 pub use forward_render::ForwardRenderPass;

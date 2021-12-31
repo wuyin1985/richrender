@@ -1,3 +1,4 @@
+use bevy::prelude::Vec4;
 use gltf::{
     material::{AlphaMode, Material as GltfMaterial, NormalTexture, OcclusionTexture},
     texture::Info,
@@ -27,6 +28,7 @@ pub struct Material {
 pub struct TextureInfo {
     index: usize,
     channel: u32,
+    tilling: Vec4,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -163,6 +165,14 @@ impl TextureInfo {
     pub fn get_channel(&self) -> u32 {
         self.channel
     }
+
+    pub fn get_tilling(&self) -> Vec4 {
+        self.tilling
+    }
+
+    pub fn get_default_tilling() -> Vec4 {
+        Vec4::new(1f32, 1f32, 0f32, 0f32)
+    }
 }
 
 impl<'a> From<gltf::material::Material<'a>> for Material {
@@ -178,6 +188,7 @@ impl<'a> From<gltf::material::Material<'a>> for Material {
             Some(pbr) => pbr.diffuse_texture(),
             _ => material.pbr_metallic_roughness().base_color_texture(),
         };
+
         let color_texture = get_texture(color_texture);
         let emissive_texture = get_texture(material.emissive_texture());
         let normals_texture = get_normals_texture(material.normal_texture());
@@ -223,10 +234,22 @@ impl<'a> From<gltf::material::Material<'a>> for Material {
     }
 }
 
+fn convert_transform_to_tilling(t: Option<gltf::texture::TextureTransform>) -> Vec4 {
+    match t {
+        None => { TextureInfo::get_default_tilling() }
+        Some(t) => {
+            let [x, y] = t.scale();
+            let [z, w] = t.offset();
+            Vec4::new(x, y, z, w)
+        }
+    }
+}
+
 fn get_texture(texture_info: Option<Info>) -> Option<TextureInfo> {
     texture_info.map(|tex_info| TextureInfo {
         index: tex_info.texture().index(),
         channel: tex_info.tex_coord(),
+        tilling: convert_transform_to_tilling(tex_info.texture_transform()),
     })
 }
 
@@ -234,6 +257,7 @@ fn get_normals_texture(texture_info: Option<NormalTexture>) -> Option<TextureInf
     texture_info.map(|tex_info| TextureInfo {
         index: tex_info.texture().index(),
         channel: tex_info.tex_coord(),
+        tilling: convert_transform_to_tilling(None),
     })
 }
 
@@ -245,6 +269,7 @@ fn get_occlusion(texture_info: Option<OcclusionTexture>) -> (f32, Option<Texture
     let texture = texture_info.map(|tex_info| TextureInfo {
         index: tex_info.texture().index(),
         channel: tex_info.tex_coord(),
+        tilling: convert_transform_to_tilling(None),
     });
 
     (strength, texture)

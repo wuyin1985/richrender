@@ -23,7 +23,7 @@ ron = "0.7"
 
 [dependencies.gltf]
 version = "0.16"
-features = ["KHR_lights_punctual", "KHR_materials_unlit", "KHR_materials_pbrSpecularGlossiness"]
+features = ["KHR_lights_punctual", "KHR_materials_unlit", "KHR_materials_pbrSpecularGlossiness", "KHR_texture_transform"]
 
 [features]
 default = ["statistic"]
