@@ -32,7 +32,7 @@ fn game_startup(attack_table: Res<TableData<AttackerConfig>>,
     });
 
     //add terrain
-    let terrain_handle: Handle<GltfAsset> = asset_server.load("gltf/Sample/Terrain_mesh.glb");
+    let terrain_handle: Handle<GltfAsset> = asset_server.load("gltf/Map_export.glb");
 
     command.spawn().insert(terrain_handle)
         .insert(Transform::from_translation(Vec3::new(50f32, 0f32, -50f32)))

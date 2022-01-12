@@ -87,7 +87,8 @@ impl Gltf2VkConvertor {
     pub fn sampler(context: &RenderContext, texture: &Texture, gltf_sampler: gltf::texture::Sampler) -> vk::Sampler {
         let min_filter = gltf_sampler.min_filter().unwrap_or(gltf::texture::MinFilter::Linear);
         let mag_filter = gltf_sampler.mag_filter().unwrap_or(gltf::texture::MagFilter::Linear);
-        let has_mipmaps = has_mipmaps(min_filter);
+        //let has_mipmaps = has_mipmaps(min_filter);
+        let has_mipmaps = true;
         let max_lod = if has_mipmaps {
             texture.get_mip_map_count() as f32
         } else {

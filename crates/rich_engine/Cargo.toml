@@ -20,6 +20,8 @@ serde_json = "0.9.10"
 image = "0.23"
 rand = "0.8"
 ron = "0.7"
+quick-protobuf = "0.8.0"
+structopt = "0.3.25"
 
 [dependencies.gltf]
 version = "0.16"
